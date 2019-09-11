@@ -32,3 +32,5 @@ eg[eg['Lokalitetsnavn']=='Hevring Bugt']['Farvandsområde'].value_counts()
 
 eg['Lokalitetsnavn'].value_counts().nlargest(40)
 eg['Lokalitetsnavn'].value_counts().nsmallest(41)
+
+eg['Beskrivelse'].value_counts()
