@@ -3,13 +3,19 @@ import numpy as np
 import pandas as pd
 import os
 
-# Work pc:
+### Work pc:
 os.chdir('C:/Users/jwz766/Documents/GitHub/gnnp') # one level up
-# Home pc:
+### Home pc:
 # os.chdir('C:/Users/thorn/OneDrive/Dokumenter/GitHub/gnnp') # one level up
 
-# Danish Water Fauna Index (DVFI)
+### Read data and lingage table
 wf = pd.read_excel('streams/DFI_1970-2000.xlsx')
+
+wf['Indekstype'].value_counts()
+
+
+
+### Danish Water Fauna Index (DVFI) only
 wf = wf[wf['Indekstype'].str.contains('DVFI')]
 
 wf['År'] = wf['Dato'].astype(str).str.slice(0,4).astype(int)
@@ -26,11 +32,10 @@ for y in range(1990,2001):
     antal.append(len(l))
     kommuner.append(', '.join([str(elem) for elem in l]))
 
-
-år
-antal
-kommuner
 pd.DataFrame({'År':år, 'Antal kommuner':antal, 'Kommuner':kommuner})
 
 wf['Lokalitetsnavn'].value_counts().nlargest(50)
 wf['Lokalitetsnavn'].value_counts().nsmallest(50)
+
+wf['MC-stationsnr'].value_counts().nlargest(50)
+wf['MC-stationsnr'].value_counts().nsmallest(50)
