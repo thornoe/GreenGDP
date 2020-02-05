@@ -1,14 +1,14 @@
 # Imports
-import numpy as np
 import pandas as pd
 import os
 
 os.chdir('C:/Users/jwz766/Documents/GitHub/gnnp') # one level up
 
 # Eelgrass
-eg = pd.read_excel('data/Hav_Vegetation_Paravane træk_2018-19.xlsx')
+eg = pd.read_excel('sea/Hav_Vegetation_Paravane træk_1998-2009.xlsx')
 
 eg.head(1)
+
 
 eg['MarinReferenceKode'].value_counts().count()
 eg['Farvandsområde'].value_counts().count()
