@@ -1,6 +1,6 @@
 # PDF test
 
-*what does a multi-page pdf look like? v. 1.03*
+*what does a multi-page pdf look like? v. 1.04*
 
 <html lang="en" style="width:100%; height:100%;">
   <body style="width:100%; height:100%; margin:0;">
