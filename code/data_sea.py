@@ -10,6 +10,7 @@ eg = pd.read_excel('sea/Hav_Vegetation_Paravane træk_1998-2009.xlsx')
 eg.head(1)
 
 
+
 eg['MarinReferenceKode'].value_counts().count()
 eg['Farvandsområde'].value_counts().count()
 eg['Lokalitetsnavn'].value_counts().count()

@@ -1,0 +1,24 @@
+!table
+!version 450
+!charset WindowsLatin1
+
+Definition Table
+  Type NATIVE Charset "WindowsLatin1"
+  Fields 11
+    Stationsnr Char (20) Index 1 ;
+    Navn Char (100) ;
+    Lokalitet Char (100) ;
+    LokalEnhed Char (3) ;
+    g_del_cd Char (20) Index 2 ;
+    DceStationsnr Char (20) Index 3 ;
+    UtmX Float ;
+    UtmY Float ;
+    UtmZone Float ;
+    GældendeFra Char (10) ;
+    G_vandplan Integer ;
+begin_metadata
+"\IsReadOnly" = "FALSE"
+"\MapInfo" = ""
+"\MapInfo\TableID" = "c0cf9765-331f-4847-9754-9757e9c48a3c"
+"\MapInfo\ParentTableID" = "384be412-49d8-41ec-a9a5-cdd7e7933cfc"
+end_metadata
