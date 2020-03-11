@@ -1,9 +1,6 @@
-# gnnp
-
-### PDF test
+# PDF test
 
 *what does a multi-page pdf look like?*
-
 
 <html>
 <body style="width:100%; height:100%; margin:0;">
