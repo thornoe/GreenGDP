@@ -36,8 +36,6 @@ def get_data(folderName, fileNames):
                     print(msg)            # print error message in Python
                     # arcpy.AddError(msg)   # return error message in ArcGIS
                     # raise SystemExit(1)
-            else:
-                print('alles gut')
 
     except OSError as e:
         ## Report system errors
