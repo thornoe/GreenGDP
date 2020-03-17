@@ -7,14 +7,14 @@ os.chdir('C:/Users/jwz766/Documents/GitHub/gnnp') # one level up
 ### Home pc:
 # os.chdir('C:/Users/thorn/OneDrive/Dokumenter/GitHub/gnnp') # one level up
 
-### Read data and lingage table
+### Read data
 wf = pd.read_excel('streams/DFI_1970-2000.xlsx')
 
 wf['Indekstype'].value_counts()
 
 
 
-### Danish Water Fauna Index (DVFI) only
+### Danish Stream Fauna Index (DVFI) only
 wf = wf[wf['Indekstype'].str.contains('DVFI')]
 
 wf['År'] = wf['Dato'].astype(str).str.slice(0,4).astype(int)

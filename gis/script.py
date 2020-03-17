@@ -33,25 +33,21 @@ linkage = {'streams':'streams_stations_VP2.xlsx'}
 # Import the module with all the homemade functions
 import script_module
 
-# Dictionary for all data and linkage files
-allFiles = {'data': [y for x in list(data.values()) for y in x],
-            'linkage': [y for y in list(linkage.values())]}
+# Initialize the class for all data processing and mapping functions
+c = script_module.dataClass(data, linkage)
 
 # Check that the folders with data and linkage files exist or create them
-for key, filenames in allFiles.items():
-    script_module.get_data(key, filenames)
+c.get_data()
 
-# Read data and set up longitudinal data
+# Create a longitudinal DataFrame for stations in streams
+long, years = c.longitudinal('streams')
+long.tail(1)
 
+### Read the linkage table
+waterbodyType = 'streams'
 
-
-key = 'streams'
-filenames = data['streams']
-
-df   = pd.read_excel('data\\' + data[0])
-df2  = pd.read_excel('data\\' + data[1])
-link =
+link = pd.read_excel('linkage\\' + linkage[waterbodyType])
 
 
-d = pd.Series([0,3])
-d.median()
+
+### Link station numbers with stream IDs

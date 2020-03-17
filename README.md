@@ -20,8 +20,8 @@ The most recent data on indicators can be downloaded from the Danish surface wat
 For streams:
 
 - Go to `Hent data` > `Vandløb` > `Bundfauna` > `DVFI-indeks`
-  - In `Fra` write `01-01-2019`
-  - Under `Data` choose `Fravælg alle` (optional as the scipt can also handle excessive columns)
+  - Set the *from* date: In `Fra` write `01-01-2019`
+  - Set the *to* date: In `Til` (optional)
   - In the bottom right corner, click `Excel (<no. rows> rækker)` and save to the `gis/data` folder as `streams_DVFI_2019-.xlsx` (overwrite the existing file)
 
 Run the script tool as described above to update the time series and recreate all the illustrations with the most recent data.
@@ -29,6 +29,8 @@ Run the script tool as described above to update the time series and recreate al
 
 ### Run ArcPy commands in the Anaconda Spyder environment
 The version of Python used in ArcGIS is usually older than the one installed in the [Anaconda platform](https://www.anaconda.com/distribution/), making [Spyder](https://www.spyder-ide.org/) incompatible with the ArcPy package as it depends on the ArcGIS installation. Thus, to be able to run ArcPy commands via Spyder, you need to:
-1. [Clone the Python environment](https://support.esri.com/en/technical-article/000020560) and make it the default for the ArcGIS Pro application and the *Python Command Prompt* by typing `proswap <new enviroment name>`.
-2. Within the *Python Command Prompt*, install Python and Spyder `conda install python=<version> spyder` based on the [version of Python used in ArcGIS](https://support.esri.com/en/technical-article/000013224), e.g. for ArcGIS 2.5.0: `conda install python=3.6.9 spyder`
-3. To use ArcPy commands, open Spyder by typing `spyder` within the *Python Command Prompt* and `import arcpy`.
+1. Click the **Start** icon.
+2. Navigate to the **ArcGIS** folder.
+3. Click **Python Command Prompt** within which you
+   - Add Spyder by typing `conda install spyder`
+   - Open Spyder by typing `spyder` and `import arcpy`. You need to open Spyder this way whenever you are to use ArcPy commands.
