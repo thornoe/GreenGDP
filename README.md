@@ -26,6 +26,13 @@ For streams:
 
 Run the script tool as described above to update the time series and recreate all the illustrations with the most recent data.
 
+Gitdown table v. 0.2
+
+{"gitdown": "include", "file": "./gis/data/streams_stats.md"}
+
+html:
+
+{"gitdown": "include", "file": "./gis/data/streams_stats.html"}
 
 ### Run ArcPy commands in the Anaconda Spyder environment
 The version of Python used in ArcGIS is usually older than the one installed in the [Anaconda platform](https://www.anaconda.com/distribution/), making [Spyder](https://www.spyder-ide.org/) incompatible with the ArcPy package as it depends on the ArcGIS installation. Thus, to be able to run ArcPy commands via Spyder, you need to:
