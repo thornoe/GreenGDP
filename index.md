@@ -62,6 +62,14 @@ Table
 W3 Table
 <div w3-include-html="https://github.com/thornoe/GNNP/raw/master/gis/data/streams_stats.md"></div>
 
-*what does a multi-page pdf look like? v. 1.05*
+Trying with iframe v. 0.1:
+html
+<iframe src="https://github.com/thornoe/GNNP/raw/master/gis/data/streams_stats.html" style="width:100%; height:900px;" seamless frameborder="0" scrolling="no"></iframe>
+
+md:
+<iframe src="https://github.com/thornoe/GNNP/raw/master/gis/data/streams_stats.md" style="width:100%; height:900px;" seamless frameborder="0" scrolling="no"></iframe>
+
+
+*what does a multi-page pdf look like? v. 0.0*
 
 <iframe src="https://docs.google.com/gview?url=https://github.com/thornoe/gnnp/raw/master/gis/Elforsyningens_nettariffer_og_priser_2018.pdf&embedded=true" style="width:100%; height:900px;" seamless frameborder="0" scrolling="no"></iframe>
