@@ -106,7 +106,7 @@ for i in years:
 # Convert statistics to integers
 stats = stats.astype(int)
 
-stats.to_html('data\\' + waterbodyType + '_stats.md')
+stats.to_html('data\\' + waterbodyType + '_stats.html')
 
 
 # Create the map book
