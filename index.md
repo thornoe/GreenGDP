@@ -1,12 +1,12 @@
 # The Green Net National Product: *Subproject regarding pollution of the water environment*
 
-Eutrophication is the process of nutrient over-enrichment of water bodies due to pollution from agriculture and point sources. Such pollution can lead to high algae growth and thus oxygen depletion which reduces the ecological conditions.
+Eutrophication is the process of nutrient over-enrichment of water bodies due to pollution from agriculture and point sources. Such pollution can lead to high algae growth and thus oxygen depletion which reduces the ecological conditions of water bodies.
 
-## Assessing the ecological status of streams
+## Assessing the ecological status of water bodies
 
-The ecological status in water bodies can be quantified directly in form of the concentration of chlorophyll *a* (for lakes and coastal waters) found in algae or indirectly using biological indicators that are responsive to eutrophication.
+The ecological conditions in water bodies can be quantified directly in form of the concentration of chlorophyll *a* (for lakes and coastal waters) found in algae or indirectly using biological indicators that are responsive to eutrophication.
 
-For **streams**, the most long-lasting biological indicator for water quality is the Danish index for benthic macroinvertebrates in streams (DVFI) which divides
+For **streams**, the most long-lasting biological indicator for water quality is the Danish index for benthic macroinvertebrates in streams (DVFI - *Dansk Vandløbsfaunaindeks*) which measures the biological conditions in terms of occurence and
 
 
 
@@ -244,9 +244,9 @@ The current water body plan (VP2) covers 17933 km of streams, of which streams r
 
 <iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" width="595" height="842" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe>
 
-100% x 842px
+880px x 1245px
 
-<iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" style="width:100%; height:842px;" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe>
+<iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" width="880" height="1245" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe>
 
 ### Demarcation of water bodies
 
