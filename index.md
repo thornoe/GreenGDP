@@ -22,52 +22,11 @@ quality assessment of
 
 Multiple observations within a year
 
-Table v. 0.2
-<html>
-  <head>
-    <script src="jquery.js"></script>
-    <script>
-    $(function(){
-      $("#includedContent").load("https://github.com/thornoe/GNNP/raw/master/gis/data/streams_stats.html");
-    });
-    </script>
-  </head>
+Gitdown table v. 0.1
+{"gitdown": "include", "file": ".gis/data/streams_stats.md"}
 
-  <body>
-     <div id="includedContent"></div>
-  </body>
-</html>
-
-W3 Table v. 0.1
-<div w3-include-html="https://github.com/thornoe/GNNP/raw/master/gis/data/streams_stats.html"></div>
-
-Same, but with .md:
-
-Table
-<html>
-  <head>
-    <script src="jquery.js"></script>
-    <script>
-    $(function(){
-      $("#includedContent").load("https://github.com/thornoe/GNNP/raw/master/gis/data/streams_stats.md");
-    });
-    </script>
-  </head>
-
-  <body>
-     <div id="includedContent"></div>
-  </body>
-</html>
-
-W3 Table
-<div w3-include-html="https://github.com/thornoe/GNNP/raw/master/gis/data/streams_stats.md"></div>
-
-Trying with iframe v. 0.1:
-html
-<iframe src="https://github.com/thornoe/GNNP/raw/master/gis/data/streams_stats.html" style="width:100%; height:900px;" seamless frameborder="0" scrolling="no"></iframe>
-
-md:
-<iframe src="https://github.com/thornoe/GNNP/raw/master/gis/data/streams_stats.md" style="width:100%; height:900px;" seamless frameborder="0" scrolling="no"></iframe>
+html:
+{"gitdown": "include", "file": ".gis/data/streams_stats.html"}
 
 
 *what does a multi-page pdf look like? v. 0.0*

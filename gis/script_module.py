@@ -414,49 +414,82 @@ class Water_Quality:
         """ Based on the type of water body, set up a longitudinal dataframe
             and convert it to the EU index of ecological status, i.e. from 1-5
             for bad, poor, moderate, good, and high water quality respectively.
+            
+            Create a table of statistics and export it.
         """
-        if waterbodyType == 'streams':
-            # Create longitudinal df and use linkage table to assign stations to water bodies
-            allVP, years = self.stations_to_streams(waterbodyType,
+        try:
+            if waterbodyType == 'streams':
+                # Create longitudinal df and use linkage table to assign stations to water bodies
+                allVP, years = self.stations_to_streams(waterbodyType,
                                                         stationID='DCE_stationsnr',
                                                         waterBodyID='VP2_g_del_cd',
                                                         waterBodyName='Navn',
                                                         booleanVar='VP2_gældende')
 
-            # Convert DVFI fauna index for streams to index of ecological status
-            df = self.DVFI_to_status(allVP, years)
+                # Convert DVFI fauna index for streams to index of ecological status
+                df = self.DVFI_to_status(allVP, years)
 
-        # Save to CSV for later statistical work
-        df.to_csv('data\\' + waterbodyType + '_ecological_status.csv')
+            # Save to CSV for later statistical work
+            df.to_csv('data\\' + waterbodyType + '_ecological_status.csv')
+   
+            # Specify name of size-variable
+            size = self.wfs_size[waterbodyType]
+            
+            # Calculate total size of all water bodies in current water body plan (VP2)
+            totalSize = df[size].sum()
+            
+            # Create an empty df for statistics
+            stats = pd.DataFrame(index=['Status known (%)',
+                                        'Share of known is high (%)',
+                                        'Share of known is good (%)',
+                                        'Share of known is moderate (%)',
+                                        'Share of known is poor (%)',
+                                        'Share of known is bad (%)'])
+            
+            # Calculate the above statistics for each year
+            for i in years:
+                y = df[[size, i]].reset_index(drop=True)
+                y['Known'] = np.select([y[i].notna()], [y[size]])
+                y['High'] = np.select([y[i]==5], [y[size]])
+                y['Good'] = np.select([y[i]==4], [y[size]])
+                y['Moderate'] = np.select([y[i]==3], [y[size]])
+                y['Poor'] = np.select([y[i]==2], [y[size]])
+                y['Bad'] = np.select([y[i]==1], [y[size]])
+                
+                # Add shares of total size to stats
+                knownSize = y['Known'].sum()
+                stats[i] = [100*knownSize/totalSize,
+                            100*y['High'].sum()/knownSize,
+                            100*y['Good'].sum()/knownSize,
+                            100*y['Moderate'].sum()/knownSize,
+                            100*y['Poor'].sum()/knownSize,
+                            100*y['Bad'].sum()/knownSize]
+            
+            # Convert statistics to integers
+            stats = stats.astype(int)
+            
+            # Save to html for online presentation
+            stats.to_html('data\\' + waterbodyType + '_stats.md')
 
-        return df, years
-
-#        try:
+#            # Report across years statistics
 #            if waterbodyType == 'streams':
-#                # Create longitudinal df and use linkage table to assign stations to water bodies
-#                allVP, years = self.stations_to_streams(waterbodyType,
-#                                                        stationID='DCE_stationsnr',
-#                                                        waterBodyID='VP2_g_del_cd',
-#                                                        waterBodyName='Navn',
-#                                                        booleanVar='VP2_gældende')
-#
-#                # Convert DVFI fauna index for streams to index of ecological status
-#                df = self.DVFI_to_status(allVP, years)
-#
-#            # Save to CSV for later statistical work
-#            df.to_csv('data\\' + waterbodyType + '_ecological_status.csv')
-#
-#            return df, years
-#
-#        except:
-#            ## Report severe error messages
-#            tb = sys.exc_info()[2]  # get traceback object for Python errors
-#            tbinfo = traceback.format_tb(tb)[0]
-#            msg = 'Could not create df with ecological status for {0}:\nTraceback info:\n{1}Error Info:\n{2}'\
+#                measure = 'km'
+#            else:
+#                measure = 'sq. km'
+#            msg = ' {0}:\nTraceback info:\n{1}Error Info:\n{2}'\
 #                  .format(waterbodyType, tbinfo, str(sys.exc_info()[1]))
-#            print(msg)            # print error message in Python
-#            arcpy.AddError(msg)   # return error message in ArcGIS
-#            sys.exit(1)
+    
+            return df, years
+
+        except:
+            ## Report severe error messages
+            tb = sys.exc_info()[2]  # get traceback object for Python errors
+            tbinfo = traceback.format_tb(tb)[0]
+            msg = 'Could not create df with ecological status for {0}:\nTraceback info:\n{1}Error Info:\n{2}'\
+                  .format(waterbodyType, tbinfo, str(sys.exc_info()[1]))
+            print(msg)            # print error message in Python
+            arcpy.AddError(msg)   # return error message in ArcGIS
+            sys.exit(1)
 
 
     def map_book(self, fc, df, yearsList):
