@@ -238,7 +238,9 @@ The current water body plan (VP2) covers 17933 km of streams, of which streams r
   </tbody>
 </table>
 
-*what does a multi-page pdf look like? v. 0.0*
+The map book below shows the ecological status of streams for each year from 1992-2019. Initially, the index was mostly used in the two [counties](https://en.wikipedia.org/wiki/Counties_of_Denmark) Viborg and Ringkjøbing (in mid-western Jutland).
+
+If you cannot navigate the map book in your browser, [download it here](https://github.com/thornoe/GNNP/raw/master/gis/streams.pdf) instead.
 
 595px x 842px
 
