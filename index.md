@@ -250,14 +250,25 @@ The map book below shows the ecological status of streams for each year from 199
 
 If your browser does not allow you to navigate the map book, you can [download it here](https://github.com/thornoe/GNNP/raw/master/gis/streams.pdf) instead.
 
-890px x 1235px
+900px x 1200px
 
-<iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" width="890" height="1235" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe>
+<iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" width="900" height="1200" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe>
 
-100% max-height
+900px x 1270px (100% max-height?)
 
-<iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" width="890" height="1235" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%; max-height: 100%;" allowfullscreen> </iframe>
+<iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" width="900" height="1270" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%; max-height: 100%;" allowfullscreen> </iframe>
 
-595px x 842px
+100% width, height max-width, max-height
 
-<iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" width="595" height="842" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe>
+<iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; width:100%; height:100%, max-width: 100%; max-height: 100%;" allowfullscreen> </iframe>
+
+100% width, height max-width, max-height
+
+<iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; width:100%; height:100%;" allowfullscreen> </iframe>
+
+only 100% max-width, max-height
+
+<iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%; max-height: 100%;" allowfullscreen> </iframe>
+
+
+## References
