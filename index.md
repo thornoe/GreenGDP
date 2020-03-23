@@ -6,7 +6,7 @@ Eutrophication is the process of nutrient over-enrichment of water bodies due to
 
 The ecological conditions in water bodies can be quantified directly in form of the concentration of chlorophyll *a* (for lakes and coastal waters) found in algae or indirectly using biological indicators that are responsive to eutrophication.
 
-For **streams**, the most long-lasting biological indicator for water quality in Danish streams is the DVFI index *(Dansk Vandløbsfaunaindeks)* which measures the occurrence and composition of benthic macroinvertebrates (small bottom-living animals without backbone) which is one of many improved versions of the Trent Biotic Index (TBI) that was developed in 1964 for the River Trent watershed in England ([Danish Environmental Protection Agency, 1998](https://www2.mst.dk/udgiv/Publikationer/1998/87-7810-995-7/pdf/87-7810-995-7.PDF), *Danish*).
+For **streams**, the most long-lasting biological indicator for water quality in Danish streams is the DVFI index *(Dansk Vandløbsfaunaindeks)* which measures the occurrence and composition of benthic macroinvertebrates (small bottom-living animals without backbone) which is one of many modified versions of the Trent Biotic Index (TBI) that was developed in 1964 for the River Trent watershed in England ([Andersen et al, 1984 - *English*](https://www.sciencedirect.com/science/article/abs/pii/0043135484900629)). In 1998 the Danish index was improved as observations before that are less consistent ([Danish Environmental Protection Agency, 1998 - *Danish*](https://www2.mst.dk/udgiv/Publikationer/1998/87-7810-995-7/pdf/87-7810-995-7.PDF)).
 
 ### Demarcation of water bodies
 
