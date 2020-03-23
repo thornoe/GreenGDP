@@ -22,13 +22,14 @@ quality assessment of
 
 Multiple observations within a year
 
-Gitdown table v. 0.2
+gist-it table v. 0.1
 
-{"gitdown": "include", "file": "./gis/data/streams_stats.md"}
+<script src="http://gist-it.appspot.com/https://github.com/thornoe/GNNP/raw/master/gis/data/streams_stats.md"></script>
+
 
 html:
 
-{"gitdown": "include", "file": "./gis/data/streams_stats.html"}
+<script src="http://gist-it.appspot.com/https://github.com/thornoe/GNNP/raw/master/gis/data/streams_stats.html"></script>
 
 
 *what does a multi-page pdf look like? v. 0.0*
