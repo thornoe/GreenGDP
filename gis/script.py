@@ -3,10 +3,10 @@
 ###############################################################################
 # Import packages
 import os
-import pandas as pd
-import numpy as np
-import arcpy, sys, traceback
-arcpy.env.overwriteOutput = True    # set overwrite option
+#import pandas as pd
+#import numpy as np
+#import arcpy, sys, traceback
+#arcpy.env.overwriteOutput = True    # set overwrite option
 
 
 ###############################################################################
@@ -49,65 +49,17 @@ import script_module
 c = script_module.Water_Quality(data, linkage, wfs_fc, wfs_vpID, wfs_size)
 
 ## Check that the folders with data and linkage files exist or create them
-#c.get_data()
-#
-# For each type of water body (code only covers streams so far)
-#for waterbodyType in data:
-#
-#    # Get the feature class from the WFS service
-#    c.get_fc_from_WFS(waterbodyType, wfs_service)
-#
-#    # Create a Pandas DataFrame with ecological status by year
-#    df, years = c.ecological_status(waterbodyType)
-#
-#    # Create a map book with yearly maps of ecological status
-#    c.map_book(waterbodyType, df, years)
+c.get_data()
 
+# Loop over each type of water body (to be extended with lakes and coastal waters)
+for waterbodyType in data:
 
-waterbodyType = 'streams'
-c.get_fc_from_WFS(waterbodyType, wfs_service)
+    # Get the feature class from the WFS service
+    c.get_fc_from_WFS(waterbodyType, wfs_service)
 
+    # Create a Pandas DataFrame with ecological status by year
+    df, years = c.ecological_status(waterbodyType)
 
-# Create Pandas DataFrame with ecological status for each water body by year
-df, years = c.ecological_status(waterbodyType)
+    # Create a map book with yearly maps of ecological status
+    c.map_book(waterbodyType, df, years)
 
-# Calculate total size of all water bodies in current water body plan (VP2)
-#####################size = self.wfs_size[waterbodyType]
-size = wfs_size[waterbodyType]
-totalSize = df[size].sum()
-
-# Create an empty df for statistics
-stats = pd.DataFrame(index=['Status known (%)',
-                            'Share of known is high (%)',
-                            'Share of known is good (%)',
-                            'Share of known is moderate (%)',
-                            'Share of known is poor (%)',
-                            'Share of known is bad (%)'])
-
-# Calculate the above statistics for each year
-for i in years:
-    y = df[[size, i]].reset_index(drop=True)
-    y['Known'] = np.select([y[i].notna()], [y[size]])
-    y['High'] = np.select([y[i]==5], [y[size]])
-    y['Good'] = np.select([y[i]==4], [y[size]])
-    y['Moderate'] = np.select([y[i]==3], [y[size]])
-    y['Poor'] = np.select([y[i]==2], [y[size]])
-    y['Bad'] = np.select([y[i]==1], [y[size]])
-    
-    # Add shares of total size to stats
-    knownSize = y['Known'].sum()
-    stats[i] = [100*knownSize/totalSize,
-                100*y['High'].sum()/knownSize,
-                100*y['Good'].sum()/knownSize,
-                100*y['Moderate'].sum()/knownSize,
-                100*y['Poor'].sum()/knownSize,
-                100*y['Bad'].sum()/knownSize]
-
-# Convert statistics to integers
-stats = stats.astype(int)
-
-stats.to_html('data\\' + waterbodyType + '_stats.html')
-
-
-# Create the map book
-#c.map_book(waterbodyType, df, years)

@@ -358,7 +358,7 @@ class Water_Quality:
             dataLength = [row for row in arcpy.da.SearchCursor(waterbodyType, [ID, length])]
             dfLength = pd.DataFrame(dataLength, columns=[ID, length])
 
-            # Merge length df with df for water bodies in the current water body plan (VP2)
+            # Merge length-df with df for water bodies in the current water body plan (VP2)
             allVP = dfLength.merge(waterBodies, how="outer", left_on=ID,
                                    right_index=True).set_index(vpID)
 
@@ -415,7 +415,9 @@ class Water_Quality:
             and convert it to the EU index of ecological status, i.e. from 1-5
             for bad, poor, moderate, good, and high water quality respectively.
             
-            Create a table of statistics and export it.
+            Create a table of statistics and export it as an html table.
+            
+            Print the size and share of water bodies observed at least once.
         """
         try:
             if waterbodyType == 'streams':
@@ -471,18 +473,28 @@ class Water_Quality:
             # Save to html for online presentation
             stats.to_html('data\\' + waterbodyType + '_stats.md')
 
-#            # Report across years statistics
-#            if waterbodyType == 'streams':
-#                measure = 'km'
-#            else:
-#                measure = 'sq. km'
-#            msg = ' {0}:\nTraceback info:\n{1}Error Info:\n{2}'\
-#                  .format(waterbodyType, tbinfo, str(sys.exc_info()[1]))
-    
+            # Water bodies observed at least once
+            observed = df[[size]].merge(df.drop(columns=[size]).dropna(how="all"),
+                                        how="inner", left_index=True, right_index=True)
+
+            # Unit of measurement
+            if waterbodyType == 'streams':
+                unit = 'km'
+            else:
+                unit = 'sq. km'
+            
+            # Report size and share of water bodies observed at least once.
+            msg = 'The current water body plan covers {0} {1} of {2}, of which {2} representing {3} {1} ({4}%) have been observed at least once.'\
+                  .format(str(int(totalSize)), unit, waterbodyType, 
+                          str(int(observed[size].sum())),
+                          int(100*observed[size].sum()/totalSize))
+            print(msg)            # print statistics in Python
+            arcpy.AddMessage(msg) # return statistics in ArcGIS
+                
             return df, years
 
         except:
-            ## Report severe error messages
+            # Report severe error messages
             tb = sys.exc_info()[2]  # get traceback object for Python errors
             tbinfo = traceback.format_tb(tb)[0]
             msg = 'Could not create df with ecological status for {0}:\nTraceback info:\n{1}Error Info:\n{2}'\
@@ -532,20 +544,20 @@ class Water_Quality:
                                     cursor.updateRow(row)
 
                         except:
-                            ## Report severe error messages from Python or ArcPy
+                            # Report severe error messages from Python or ArcPy
                             tb = sys.exc_info()[2]  # get traceback object for Python errors
                             tbinfo = traceback.format_tb(tb)[0]
                             pymsg = 'Python errors while updating {0} in {1}:\nTraceback info:\n{2}Error Info:\n{3}'\
-                                    .format(vpID, fc, tbinfo, str(sys.exc_info()[1]))
+                                    .format(row[0], fc, tbinfo, str(sys.exc_info()[1]))
                             arcmsg = 'ArcPy errors while updating {0} in {1}:\n{2}'\
-                                     .format(vpID, fc, arcpy.GetMessages(severity=2))
+                                     .format(row[0], fc, arcpy.GetMessages(severity=2))
                             print(pymsg)            # print Python error message in Python
                             print(arcmsg)           # print ArcPy error message in Python
                             arcpy.AddError(pymsg)   # return Python error message in ArcGIS
                             arcpy.AddError(arcmsg)  # return ArcPy error message in ArcGIS
 
                         finally:
-                            ## Clean up for next iteration
+                            # Clean up for next iteration
                             del cursor, row
 
                     # Create a feature layer for the feature class (name of layer applies to the legend)
@@ -578,7 +590,7 @@ class Water_Quality:
                     book.appendPages(self.path + '\\' + 'temp.pdf')
 
                 except:
-                    ## Report severe error messages from Python or ArcPy
+                    # Report severe error messages from Python or ArcPy
                     tb = sys.exc_info()[2]  # get traceback object for Python errors
                     tbinfo = traceback.format_tb(tb)[0]
                     pymsg = 'Python errors while creating a PDF for {0} in {1}:\nTraceback info:\n{2}Error Info:\n{3}'\
@@ -591,7 +603,7 @@ class Water_Quality:
                     arcpy.AddError(arcmsg)  # return ArcPy error message in ArcGIS
 
                 finally:
-                    ## Clean up after each iteration of loop
+                    # Clean up after each iteration of loop
                     if arcpy.Exists(fcYear):
                         arcpy.Delete_management(fcYear)
                     if arcpy.Exists(layerYear + '.lyrx'):
@@ -602,7 +614,7 @@ class Water_Quality:
             book.saveAndClose()
 
         except:
-            ## Report severe error messages from Python or ArcPy
+            # Report severe error messages from Python or ArcPy
             tb = sys.exc_info()[2]  # get traceback object for Python errors
             tbinfo = traceback.format_tb(tb)[0]
             pymsg = 'Python errors while creating a map book for {0}:\nTraceback info:\n{1}Error Info:\n{2}'\
@@ -615,7 +627,7 @@ class Water_Quality:
             arcpy.AddError(arcmsg)  # return ArcPy error message in ArcGIS
 
         finally:
-            ## Clean up
+            # Clean up
             if arcpy.Exists(fcTemplate):
                 arcpy.Delete_management(fcTemplate)
             if os.path.exists('temp.pdf'):
