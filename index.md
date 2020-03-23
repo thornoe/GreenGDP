@@ -20,14 +20,9 @@ quality assessment of
 
 ### Assigning monitoring stations to water bodies
 
-
-
-
-
-
 Multiple observations within a year
 
-
+<iframe src="https://github.com/thornoe/GNNP/raw/master/gis/data/streams_stats.md" style="width:100%; height:100%;" seamless frameborder="0" scrolling="yes"></iframe>
 
 
 
