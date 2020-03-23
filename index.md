@@ -6,11 +6,19 @@ Eutrophication is the process of nutrient over-enrichment of water bodies due to
 
 The ecological conditions in water bodies can be quantified directly in form of the concentration of chlorophyll *a* (for lakes and coastal waters) found in algae or indirectly using biological indicators that are responsive to eutrophication.
 
-For **streams**, the most long-lasting biological indicator for water quality is the Danish index for benthic macroinvertebrates in streams (DVFI - *Dansk Vandløbsfaunaindeks*) which measures the biological conditions in terms of occurence and
+For **streams**, the most long-lasting biological indicator for water quality in Danish streams is the DVFI index *(Dansk Vandløbsfaunaindeks)* which measures the occurrence and composition of benthic macroinvertebrates (small bottom-living animals without backbone) which is one of many improved versions of the Trent Biotic Index (TBI) that was developed in 1964 for the River Trent watershed in England ([Danish Environmental Protection Agency, 1998](https://www2.mst.dk/udgiv/Publikationer/1998/87-7810-995-7/pdf/87-7810-995-7.PDF), *Danish*).
+
+### Demarcation of water bodies
+
+This project follows the demarcation of water bodies given by the current water body plan (VP2) which is the Danish Government's implementation of phase two of the European Union's [Water Framework Directive](https://ec.europa.eu/environment/water/water-framework/).
+
+### Assigning monitoring stations to water bodies
 
 
+Multiple observations within a year
 
-## Ecological status by year
+
+## Ecological status of streams by year
 
 The current water body plan (VP2) covers 17933 km of streams, of which streams representing 16444 km (91%) have been assessed at least once. On average streams representing 4413 km (24%) are assessed each year.
 
@@ -238,22 +246,18 @@ The current water body plan (VP2) covers 17933 km of streams, of which streams r
   </tbody>
 </table>
 
-The map book below shows the ecological status of streams for each year from 1992-2019. Initially, the index was mostly used in the two [counties](https://en.wikipedia.org/wiki/Counties_of_Denmark) Viborg and Ringkjøbing (in mid-western Jutland).
+The map book below shows the ecological status of streams for each year from 1992-2019. Initially, the DVFI index was mostly used in the two [counties](https://en.wikipedia.org/wiki/Counties_of_Denmark) Viborg and Ringkjøbing (in mid-western Jutland).
 
-If you cannot navigate the map book in your browser, [download it here](https://github.com/thornoe/GNNP/raw/master/gis/streams.pdf) instead.
+If your browser does not allow you to navigate the map book, you can [download it here](https://github.com/thornoe/GNNP/raw/master/gis/streams.pdf) instead.
+
+890px x 1235px
+
+<iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" width="890" height="1235" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe>
+
+100% max-height
+
+<iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" width="890" height="1235" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%; max-height: 100%;" allowfullscreen> </iframe>
 
 595px x 842px
 
 <iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" width="595" height="842" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe>
-
-880px x 1245px
-
-<iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" width="880" height="1245" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe>
-
-### Demarcation of water bodies
-
-This project follows the demarcation of water bodies given by the current water body plan (VP2) which is the Danish Government's implementation of phase two of the European Union's [Water Framework Directive](https://ec.europa.eu/environment/water/water-framework/).
-
-### Assigning monitoring stations to water bodies
-
-Multiple observations within a year
