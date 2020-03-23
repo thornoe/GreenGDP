@@ -22,11 +22,13 @@ quality assessment of
 
 Multiple observations within a year
 
-Gitdown table v. 0.1
-{"gitdown": "include", "file": ".gis/data/streams_stats.md"}
+Gitdown table v. 0.2
+
+{"gitdown": "include", "file": "./gis/data/streams_stats.md"}
 
 html:
-{"gitdown": "include", "file": ".gis/data/streams_stats.html"}
+
+{"gitdown": "include", "file": "./gis/data/streams_stats.html"}
 
 
 *what does a multi-page pdf look like? v. 0.0*
