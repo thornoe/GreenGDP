@@ -22,8 +22,21 @@ quality assessment of
 
 Multiple observations within a year
 
-<iframe src="https://github.com/thornoe/GNNP/raw/master/gis/data/streams_stats.md" style="width:100%; height:100%;" seamless frameborder="0" scrolling="yes"></iframe>
+Table v. 0.1
+<html>
+  <head>
+    <script src="jquery.js"></script>
+    <script>
+    $(function(){
+      $("#includedContent").load("https://github.com/thornoe/GNNP/raw/master/gis/data/streams_stats.md");
+    });
+    </script>
+  </head>
 
+  <body>
+     <div id="includedContent"></div>
+  </body>
+</html>
 
 
 *what does a multi-page pdf look like? v. 1.05*
