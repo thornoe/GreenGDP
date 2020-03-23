@@ -484,13 +484,15 @@ class Water_Quality:
                 unit = 'sq. km'
             
             # Report size and share of water bodies observed at least once.
-            msg = 'The current water body plan covers {0} {1} of {2}, of which {2} representing {3} {1} ({4}%) have been observed at least once.'\
-                  .format(str(int(totalSize)), unit, waterbodyType, 
-                          str(int(observed[size].sum())),
-                          int(100*observed[size].sum()/totalSize))
+            msg = 'The current water body plan covers {0} {1} of {2}, of which {2} representing {3} {1} ({4}%) have been assessed at least once. On average {2} representing {5} {1} ({6}%) are assessed each year.'\
+                  .format(int(totalSize), unit, waterbodyType, 
+                          int(observed[size].sum()),
+                          int(100*observed[size].sum()/totalSize),
+                          int(stats.iloc[0].mean()*totalSize/100),
+                          int(stats.iloc[0].mean()))
             print(msg)            # print statistics in Python
             arcpy.AddMessage(msg) # return statistics in ArcGIS
-                
+            
             return df, years
 
         except:

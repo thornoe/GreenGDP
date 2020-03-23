@@ -8,23 +8,11 @@ The ecological status in water bodies can be quantified directly in form of the 
 
 For **streams**, the most long-lasting biological indicator for water quality is the Danish index for benthic macroinvertebrates in streams (DVFI) which divides
 
-quality assessment of
 
-
-
-
-
-
-
-
-
-### Assigning monitoring stations to water bodies
-
-Multiple observations within a year
 
 ## Ecological status by year
 
-The current water body plan (VP2) covers 17933 km of streams, of which streams representing 16444 km (91%) have been observed at least once.
+The current water body plan (VP2) covers 17933 km of streams, of which streams representing 16444 km (91%) have been assessed at least once. On average streams representing 4413 km (24%) are assessed each year.
 
 <table border="1" class="dataframe">
   <thead>
@@ -252,9 +240,18 @@ The current water body plan (VP2) covers 17933 km of streams, of which streams r
 
 *what does a multi-page pdf look like? v. 0.0*
 
-<iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" width="668" height="714" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe> <div style="margin-bottom:5px"> <strong> <a href="//www.slideshare.net/ThorNoe/streams-230746612" title="Streams" target="_blank">Streams</a> </strong> from <strong><a href="https://www.slideshare.net/ThorNoe" target="_blank">ThorNoe</a></strong> </div>
+595px x 842px
 
+<iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" width="595" height="842" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe>
+
+100% x 842px
+
+<iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" style="width:100%; height:842px;" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:5px; max-width: 100%;" allowfullscreen> </iframe>
 
 ### Demarcation of water bodies
 
 This project follows the demarcation of water bodies given by the current water body plan (VP2) which is the Danish Government's implementation of phase two of the European Union's [Water Framework Directive](https://ec.europa.eu/environment/water/water-framework/).
+
+### Assigning monitoring stations to water bodies
+
+Multiple observations within a year

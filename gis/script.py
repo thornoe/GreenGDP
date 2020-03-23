@@ -1,13 +1,8 @@
 ###############################################################################
 #   0. Imports                                                                #
 ###############################################################################
-# Import packages
+# Import Operation System (os) package
 import os
-#import pandas as pd
-#import numpy as np
-#import arcpy, sys, traceback
-#arcpy.env.overwriteOutput = True    # set overwrite option
-
 
 ###############################################################################
 #   1. Setup                                                                  #
