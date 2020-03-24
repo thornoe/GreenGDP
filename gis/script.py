@@ -9,8 +9,7 @@ import arcpy
 #   1. Setup                                                                  #
 ###############################################################################
 # Specify the parent folder as the working directory of the operating system
-path = arcpy.GetParameterAsText(0)
-os.chdir(path)
+os.chdir(arcpy.GetParameterAsText(0))
 
 
 ###############################################################################
