@@ -650,6 +650,6 @@ class Water_Quality:
             del book
             if self.cleanup=='true':
                 # Clean up the entire geodatabase
-                if arcpy.Exists(arcPath):
-                    arcpy.Delete_management(arcPath)
+                if arcpy.Exists(self.arcPath):
+                    arcpy.Delete_management(self.arcPath)
             
