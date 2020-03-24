@@ -39,23 +39,23 @@ wfs_size = {'streams':'g_len'}
 #   3. Import module and run the functions                                    #
 ###############################################################################
 # Import the module with all the homemade functions
-import script_module
-
-# Initialize the class for all data processing and mapping functions
-c = script_module.Water_Quality(data, linkage, wfs_fc, wfs_vpID, wfs_size, cleanup)
-
-## Check that the folders with data and linkage files exist or create them
-c.get_data()
-
-# Loop over each type of water body (to be extended with lakes and coastal waters)
-for waterbodyType in data:
-
-    # Get the feature class from the WFS service
-    c.get_fc_from_WFS(waterbodyType, wfs_service)
-
-    # Create a Pandas DataFrame with ecological status by year
-    df, years = c.ecological_status(waterbodyType)
-
-    # Create a map book with yearly maps of ecological status
-    c.map_book(waterbodyType, df, years)
+#import script_module
+#
+## Initialize the class for all data processing and mapping functions
+#c = script_module.Water_Quality(data, linkage, wfs_fc, wfs_vpID, wfs_size, cleanup)
+#
+### Check that the folders with data and linkage files exist or create them
+#c.get_data()
+#
+## Loop over each type of water body (to be extended with lakes and coastal waters)
+#for waterbodyType in data:
+#
+#    # Get the feature class from the WFS service
+#    c.get_fc_from_WFS(waterbodyType, wfs_service)
+#
+#    # Create a Pandas DataFrame with ecological status by year
+#    df, years = c.ecological_status(waterbodyType)
+#
+#    # Create a map book with yearly maps of ecological status
+#    c.map_book(waterbodyType, df, years)
 

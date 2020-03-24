@@ -19,7 +19,7 @@ class Water_Quality:
         self.path = os.getcwd()
         self.arcPath = self.path + '\\waterbodies.gdb'
         arcpy.env.workspace = self.arcPath  # Set the ArcPy workspace
-
+        print(self.arcPath)
 
 
     def get_data(self):
@@ -648,7 +648,7 @@ class Water_Quality:
             if os.path.exists('temp.pdf'):
                     os.remove('temp.pdf')
             del book
-            if self.cleanup==True:
+            if self.cleanup=='true':
                 # Clean up the entire geodatabase
                 if arcpy.Exists(arcPath):
                     arcpy.Delete_management(arcPath)

@@ -10,8 +10,8 @@ For more information and preliminary results for streams, see: [ThorNoe.github.i
 One will need to have [ArcGIS Pro](https://www.esri.com/en-us/arcgis/products/arcgis-pro/overview) installed and up to date.
 
 1. Click the green `Clone or download` button at the top right corner of this GitHub page ^^
-2. Within the `gnnp\gis` folder, open `gis.aprx` with ArcGIS Pro.
-3. In the `Catalog Pane`, open `Toolboxes` > `gis.tbx` > `WaterbodiesScriptTool`. Select the `gnnp\gis` folder and `Run` the script.
+2. Within the downloaded `gnnp` folder, go to the `gis` folder and open `waterbodies.aprx` with ArcGIS Pro.
+3. In the `Catalog Pane`, open `Toolboxes` > `waterbodies.tbx` > `WaterbodiesScriptTool`. Select the `gis` folder and `Run` the script.
 
 
 ### Update with the most recent data
