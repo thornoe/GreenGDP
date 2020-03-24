@@ -1,20 +1,26 @@
 # The Green Net National Product: *Subproject regarding pollution of the water environment*
 
-Eutrophication is the process of nutrient over-enrichment of water bodies due to pollution from agriculture and point sources. Such pollution can lead to high algae growth and thus oxygen depletion which reduces the ecological conditions of water bodies.
+Eutrophication is the process of nutrient over-enrichment of water bodies due to pollution from agriculture and point sources. Such pollution can lead to high algae growth and thus oxygen depletion which leads to worse ecological conditions and loss of ecosystem services.
+
+The first part of this project is to construct longitudinal datasets with a time series of ecological status for each Danish stream, lake and coastal water. The results for streams are illustrated below. The second part will consist of estimating time trends and use valuation studies to be able to estimate the development in the Green Net National Product for Denmark since 1990 and help answer the overall research question whether economic growth can be considered to have been "green" or at the cost of the environment.
 
 ## Assessing the ecological status of water bodies
 
 The ecological conditions in water bodies can be quantified directly in form of the concentration of chlorophyll *a* (for lakes and coastal waters) found in algae or indirectly using biological indicators that are responsive to eutrophication.
 
-For **streams**, the most long-lasting biological indicator for water quality in Danish streams is the DVFI index *(Dansk Vandløbsfaunaindeks)* which measures the occurrence and composition of benthic macroinvertebrates (small bottom-living animals without backbone) which is one of many modified versions of the Trent Biotic Index (TBI) that was developed in 1964 for the River Trent watershed in England ([Andersen et al, 1984 - *English*](https://www.sciencedirect.com/science/article/abs/pii/0043135484900629)). In 1998 the Danish index was improved as observations before that are less consistent ([Danish Environmental Protection Agency, 1998 - *Danish*](https://www2.mst.dk/udgiv/Publikationer/1998/87-7810-995-7/pdf/87-7810-995-7.PDF)).
+For **streams**, the most long-lasting biological indicator for nutrient pollution in Danish streams is the **DVFI index** *(Dansk Vandløbsfaunaindeks)* which measures the occurrence and composition of benthic macroinvertebrates (small bottom-living animals without backbone). The index is one of many modified versions of the Trent Biotic Index (TBI) that was developed in 1964 for the River Trent watershed in England ([Andersen et al, 1984 - *English*](https://www.sciencedirect.com/science/article/abs/pii/0043135484900629)). In 1998 the Danish index was improved as observations before that were less consistent ([Danish Environmental Protection Agency, 1998 - *Danish*](https://www2.mst.dk/udgiv/Publikationer/1998/87-7810-995-7/pdf/87-7810-995-7.PDF)).
 
 ### Demarcation of water bodies
 
-This project follows the demarcation of water bodies given by the current water body plan (VP2) which is the Danish Government's implementation of phase two of the European Union's [Water Framework Directive](https://ec.europa.eu/environment/water/water-framework/).
+This project follows the demarcation given by the current water body plan for 2015-2021 *(Vandområdeplan 2)* which is the Danish Government's implementation of phase two of the European Union's [Water Framework Directive](https://ec.europa.eu/environment/water/water-framework/). The water bodies are constituted by a total of 6979 streams, 857 lakes and 119 coastal waters. The demarcation and the results of a very thorough status assessment can be seen at the interactive [MiljøGIS](http://miljoegis.mim.dk/spatialmap?profile=vandrammedirektiv2-bek-2019). It is based on data from 2007-2012 and encompass several new indicators.
 
-## Ecological status of water bodies by year
+## Ecological status of streams by year
 
-The current water body plan (VP2) covers 17933 km of streams, of which streams representing 16444 km (91%) have been assessed at least once. On average streams representing 4413 km (24%) are assessed each year.
+The water body plan covers 17933 km of streams, of which streams representing 16444 km (91%) have been assessed at least once. On average streams representing 4413 km (24%) are assessed each year. The composition as well as the extent of stations being monitored within a year is everchanging, topping with 43% in 2002 as seen in the first row of the table below.
+
+While the monitoring of water quality in Danish streams does cover the range of different pollution sources and physical conditions, it must be underlined that there is an overrepresentation of larger streams which generally have higher water quality. Moreover, a moderate to bad ecological status can in some cases be caused by influence of ochre or poor physical conditions due to stream straightening or intensive dredging and cutting of water weeds ([DCE, 2019 - *Danish*](https://dce.au.dk/udgivelser/vr/nr-351-400/abstracts/nr-353-vandloeb-2018-novana/)).
+
+Thus, the statistics shown in the table should be taken with a grain of salt but shows the same positive trend that can be identified for many individual streams in the map book below.
 
 #### Streams: Ecological status 1992-2019
 <table border="1" class="dataframe">
@@ -241,7 +247,7 @@ The current water body plan (VP2) covers 17933 km of streams, of which streams r
   </tbody>
 </table>
 
-The map book below shows the ecological status of streams for each year from 1992-2019. Initially, the DVFI index was mostly used in the two [counties](https://en.wikipedia.org/wiki/Counties_of_Denmark) Viborg and Ringkjøbing (in mid-western Jutland).
+The map book shows the ecological status of streams for each year from 1992-2019. As stands out, the DVFI index was initially merely used in the two [counties](https://en.wikipedia.org/wiki/Counties_of_Denmark) Viborg and Ringkjøbing (in mid-western Jutland).
 
 If your browser does not allow you to navigate the map book, you can [download it here](https://github.com/thornoe/GNNP/raw/master/gis/streams.pdf) instead.
 
@@ -253,6 +259,6 @@ If your browser does not allow you to navigate the map book, you can [download i
 
 Multiple observations within a year
 
-### Further documentation and code
+### Data and reproducible code
 
-See [github.com/thornoe/gnnp](https://github.com/thornoe/gnnp).
+See [github.com/thornoe/gnnp](https://github.com/thornoe/gnnp) for data, code and instructions on how to reproduce or update the data and maps.
