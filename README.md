@@ -31,8 +31,8 @@ For streams:
 
 Run the script tool as described above to update the longitudinal datasets and recreate the map book with the most recent data.
 
-### Updated specification of water bodies in 2022
+### Updated identification for water bodies in 2022
 
-VP3, the third water body plan covering 2021-2027 should be passed by ultimo 2021. Thereafter, an updated [MiljøGIS](https://mst.dk/service/miljoegis/) will be published and the Danish Environmental Protection Agency will produce updated linkage tables to report the new specification of water bodies to the EU EPA.
+VP3, the third water body plan covering 2021-2027 should be passed by ultimo 2021. Thereafter, an updated [MiljøGIS](https://mst.dk/service/miljoegis/) will be published and the Danish Environmental Protection Agency will produce updated linkage tables to report the new identification of water bodies to the EU EPA.
 
 If interested in implementing the new specifications by then, update `script.py` with names of the new linkage tables as well as the specifications for the updated MiljøGIS map (first, open it with the ArcGIS Pro Geoprocessing tool `WFS To Feature Class`). In `script_module.py`, edit the function `ecological_status()` where it specifies the parameters for calling `self.stations_to_streams()`. If there is no boolean variable in the new linkage table, modify the function `stations_to_streams()` accordingly.
