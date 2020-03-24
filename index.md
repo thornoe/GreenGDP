@@ -12,16 +12,11 @@ For **streams**, the most long-lasting biological indicator for water quality in
 
 This project follows the demarcation of water bodies given by the current water body plan (VP2) which is the Danish Government's implementation of phase two of the European Union's [Water Framework Directive](https://ec.europa.eu/environment/water/water-framework/).
 
-### Assigning monitoring stations to water bodies
-
-
-Multiple observations within a year
-
-
 ## Ecological status of water bodies by year
 
 The current water body plan (VP2) covers 17933 km of streams, of which streams representing 16444 km (91%) have been assessed at least once. On average streams representing 4413 km (24%) are assessed each year.
 
+#### Streams: Ecological status 1992-2019
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
@@ -250,4 +245,14 @@ The map book below shows the ecological status of streams for each year from 199
 
 If your browser does not allow you to navigate the map book, you can [download it here](https://github.com/thornoe/GNNP/raw/master/gis/streams.pdf) instead.
 
+#### Streams: Ecological status mapped for each year
 <iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" width="900" height="1200" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:0px; max-width: 100%; max-height: 100%;" allowfullscreen> </iframe>
+
+## Assigning monitoring stations to water bodies
+
+
+Multiple observations within a year
+
+### Further documentation and code
+
+See [github.com/thornoe/gnnp](https://github.com/thornoe/gnnp).
