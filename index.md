@@ -4,7 +4,7 @@ Eutrophication is the process of nutrient over-enrichment of water bodies due to
 
 The first part of this project is to construct longitudinal datasets with a time series of ecological status for each Danish stream, lake and coastal water. The results for streams are illustrated below. The second part will consist of estimating time trends and use valuation studies to be able to estimate the development in the Green Net National Product for Denmark since 1990 and help answer the overall research question whether economic growth can be considered to have been "green" or at the cost of the environment.
 
-### Identification of water bodies
+## Identification of water bodies
 
 This project follows the selection and demarcation given by **VP2** *([Vandområdeplan 2](https://mst.dk/natur-vand/vandmiljoe/vandomraadeplaner/vandomraadeplaner-2015-2021/))* which is the Danish water body plan for 2015-2021 that implements phase two of the **EU-WFD** ([the European Union's Water Framework Directive](https://ec.europa.eu/environment/water/water-framework/)). The water bodies in VP2 are constituted by a total of 6979 streams, 857 lakes and 119 coastal waters.
 
@@ -12,8 +12,7 @@ This project follows the selection and demarcation given by **VP2** *([Vandområ
 
 Geographically, streams are identified as vectors while the monitoring stations are recorded as point observations. Official linkage tables link water bodies and stations that were used in the basis analysis for VP2. That is, stations that were monitored at some point during 2008-2012 for streams or during 2007-2012 for lakes and coastal waters. [MiljøGIS](http://miljoegis.mim.dk/spatialmap?profile=vandrammedirektiv2-bek-2019) interactively shows the demarcation and the result of the basis analysis which also encompassed several new indicators in a very thorough assessment of both ecological and chemical status.
 
-
-For **streams**, 9640 stations were matched to a water body by the official linkage table (covering stations used in the basis analysis for VP2). Besides, 836 were found within 15 meters of a water body carrying the name of the station's location.
+For **streams**, 9640 stations were matched to a water body by the official linkage table (covering stations used in the basis analysis for VP2). Besides, I matched 836 stations within 15 meters of a water body carrying the name of the station's location. The radius of 15 meters was chosen to allow for imprecision and potential changes in a streambed over time.
 
 
 ## Ecological status of streams by year
@@ -265,7 +264,7 @@ For **streams**, the most long-lasting biological indicator for nutrient polluti
 
 ### From DVFI observations to ecological status of streams
 
-If a station has multiple observations within a year, take the median and round down. Subsequently, do the same if a stream has multiple stations with observation within a year. Thus, a unique DVFI fauna class is obtained for each stream for every year it is observed, ([SVANA, 2016 *- Danish*](https://mst.dk/media/121345/retningslinjer-vandomraadeplaner-for-anden-planperiode.pdf)).
+If a station has multiple observations within a year, take the median and round down. Subsequently, do the same if a stream has observations for multiple stations within a year. Thus, a unique DVFI fauna class is obtained for each stream for every year it has been observed ([SVANA, 2016 *- Danish*](https://mst.dk/media/121345/retningslinjer-vandomraadeplaner-for-anden-planperiode.pdf)).
 
 Finally, the seven fauna classes are converted to the five EU-WFD categories of ecological status: Bad, Poor, Moderate, Good, or High ([ministerial order no. 1001, 2016, Appendix 3 *- Danish*](https://www.retsinformation.dk/Forms/R0710.aspx?id=181970)).
 
