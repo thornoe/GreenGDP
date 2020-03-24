@@ -1,4 +1,4 @@
-# Ecological status of Danish water bodies
+# Ecological status of water bodies in Denmark
 
 Eutrophication is the process of nutrient over-enrichment of water bodies due to pollution from agriculture and point sources. Such pollution can lead to high algae growth and thus oxygen depletion which leads to worse ecological conditions and loss of ecosystem services.
 

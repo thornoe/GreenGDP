@@ -3,13 +3,13 @@
 ###############################################################################
 # Import Operation System (os) package
 import os
-
+import arcpy
 
 ###############################################################################
 #   1. Setup                                                                  #
 ###############################################################################
 # Specify the parent folder as the working directory of the operating system
-path = r'C:\Users\jwz766\Documents\GitHub\gnnp\gis'
+path = arcpy.GetParameterAsText(0)
 os.chdir(path)
 
 
@@ -57,5 +57,5 @@ for waterbodyType in data:
     df, years = c.ecological_status(waterbodyType)
 
     # Create a map book with yearly maps of ecological status
-    c.map_book(waterbodyType, df, years, numberOfRetries=4, sleepError=2)
+    c.map_book(waterbodyType, df, years)
 

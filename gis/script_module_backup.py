@@ -284,7 +284,7 @@ class Water_Quality:
                         try:
                             # Use cursor to insert new row in feature class
                             cursor.insertRow([(row['X'], row['Y']), row['Station'], row['Location']])
-    
+
                         except:
                             # Report other severe error messages from Python or ArcPy
                             tb = sys.exc_info()[2]  # get traceback object for Python errors
@@ -293,7 +293,7 @@ class Water_Quality:
                                   .format(str(row['Station']), fcStations, tbinfo, str(sys.exc_info()[1])))
                             print('ArcPy errors while inserting station {0} in {1}:\n{2}'\
                                   .format(str(row['Station']), fcStations, tbinfo, str(arcpy.GetMessages(severity=2))))
-    
+
                         finally:
                             # Clean up for next iteration
                             del index, row
@@ -420,9 +420,9 @@ class Water_Quality:
         """ Based on the type of water body, set up a longitudinal dataframe
             and convert it to the EU index of ecological status, i.e. from 1-5
             for bad, poor, moderate, good, and high water quality respectively.
-            
+
             Create a table of statistics and export it as an html table.
-            
+
             Print the size and share of water bodies observed at least once.
         """
         try:
@@ -439,13 +439,13 @@ class Water_Quality:
 
             # Save to CSV for later statistical work
             df.to_csv('data\\' + waterbodyType + '_ecological_status.csv')
-   
+
             # Specify name of size-variable
             size = self.wfs_size[waterbodyType]
-            
+
             # Calculate total size of all water bodies in current water body plan (VP2)
             totalSize = df[size].sum()
-            
+
             # Create an empty df for statistics
             stats = pd.DataFrame(index=['Status known (%)',
                                         'Share of known is high (%)',
@@ -453,7 +453,7 @@ class Water_Quality:
                                         'Share of known is moderate (%)',
                                         'Share of known is poor (%)',
                                         'Share of known is bad (%)'])
-            
+
             # Calculate the above statistics for each year
             for i in years:
                 y = df[[size, i]].reset_index(drop=True)
@@ -463,7 +463,7 @@ class Water_Quality:
                 y['Moderate'] = np.select([y[i]==3], [y[size]])
                 y['Poor'] = np.select([y[i]==2], [y[size]])
                 y['Bad'] = np.select([y[i]==1], [y[size]])
-                
+
                 # Add shares of total size to stats
                 knownSize = y['Known'].sum()
                 stats[i] = [100*knownSize/totalSize,
@@ -472,10 +472,10 @@ class Water_Quality:
                             100*y['Moderate'].sum()/knownSize,
                             100*y['Poor'].sum()/knownSize,
                             100*y['Bad'].sum()/knownSize]
-            
+
             # Convert statistics to integers
             stats = stats.astype(int)
-            
+
             # Save to html for online presentation
             stats.to_html('data\\' + waterbodyType + '_stats.md')
 
@@ -488,17 +488,17 @@ class Water_Quality:
                 unit = 'km'
             else:
                 unit = 'sq. km'
-            
+
             # Report size and share of water bodies observed at least once.
             msg = 'The current water body plan covers {0} {1} of {2}, of which {2} representing {3} {1} ({4}%) have been assessed at least once. On average {2} representing {5} {1} ({6}%) are assessed each year.'\
-                  .format(int(totalSize), unit, waterbodyType, 
+                  .format(int(totalSize), unit, waterbodyType,
                           int(observed[size].sum()),
                           int(100*observed[size].sum()/totalSize),
                           int(stats.iloc[0].mean()*totalSize/100),
                           int(stats.iloc[0].mean()))
             print(msg)            # print statistics in Python
             arcpy.AddMessage(msg) # return statistics in ArcGIS
-            
+
             return df, years
 
         except:
@@ -535,7 +535,6 @@ class Water_Quality:
 
             ##### Make a feature class, layer and pdf map for each year
             for i in yearsList:
-                for iteration in range(retryNumber):
                 try:
                     # Copy feature class from template
                     fcYear = fc + str(i) + 'fc'
