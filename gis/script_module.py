@@ -366,7 +366,7 @@ class Water_Quality:
                                    right_index=True).set_index(vpID)
 
             # Save to CSV for later statistical work
-            allVP.to_csv('data\\streams_DVFI_longitudinal.csv')
+            allVP.to_csv('output\\streams_DVFI_longitudinal.csv')
 
             # Report the number of stations matched by linkage table and ArcPy
             msg = "{0} stations were matched to a water body by the official linkage table. Besides, {1} were located within 15 meters of a water body carrying the name of the station's location."\
@@ -429,6 +429,9 @@ class Water_Quality:
             Print the size and share of water bodies observed at least once.
         """
         try:
+            # Create an output folder if it doesn't exist
+            os.makedirs(self.path + '\\output', exist_ok=True)
+            
             if waterbodyType == 'streams':
                 # Create longitudinal df and use linkage table to assign stations to water bodies
                 allVP, years = self.stations_to_streams(waterbodyType,
@@ -441,7 +444,7 @@ class Water_Quality:
                 df = self.DVFI_to_status(allVP, years)
 
             # Save to CSV for later statistical work
-            df.to_csv('data\\' + waterbodyType + '_ecological_status.csv')
+            df.to_csv('output\\' + waterbodyType + '_ecological_status.csv')
    
             # Specify name of size-variable
             size = self.wfs_size[waterbodyType]
@@ -480,7 +483,7 @@ class Water_Quality:
             stats = stats.astype(int)
             
             # Save to html for online presentation
-            stats.to_html('data\\' + waterbodyType + '_stats.md')
+            stats.to_html('output\\' + waterbodyType + '_stats.md')
 
             # Water bodies observed at least once
             observed = df[[size]].merge(df.drop(columns=[size]).dropna(how="all"),
@@ -529,7 +532,7 @@ class Water_Quality:
             arcpy.AddField_management(fcTemplate, 'status', 'INTEGER')
 
             # Create a map book to contain a pdf page for each year
-            bookPath = self.path + '\\' + fc + '.pdf'
+            bookPath = self.path + '\\output\\' + fc + '.pdf'
             if os.path.exists(bookPath):
                 os.remove(bookPath)
 
@@ -645,7 +648,7 @@ class Water_Quality:
             if os.path.exists('temp.pdf'):
                     os.remove('temp.pdf')
             del book
-            if self.cleanup=True:
+            if self.cleanup==True:
                 # Clean up the entire geodatabase
                 if arcpy.Exists(arcPath):
                     arcpy.Delete_management(arcPath)
