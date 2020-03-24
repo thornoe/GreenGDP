@@ -9,12 +9,13 @@ class Water_Quality:
     """ Class for all data processing and mapping functions
     """
     def __init__(self, dataFilenames, linkageFilenames, WFS_featureClassNames,
-                 WFS_fieldNamesForWaterBodyID, WFS_fieldNamesForWaterBodySize):
+                 WFS_fieldNamesWaterBodyID, WFS_fieldNamesWaterBodySize, cleanup):
         self.data = dataFilenames
         self.linkage = linkageFilenames
         self.wfs_fc = WFS_featureClassNames
-        self.wfs_vpID = WFS_fieldNamesForWaterBodyID
-        self.wfs_size = WFS_fieldNamesForWaterBodySize
+        self.wfs_vpID = WFS_fieldNamesWaterBodyID
+        self.wfs_size = WFS_fieldNamesWaterBodySize
+        self.cleanup = cleanup
         self.path = os.getcwd()
         self.arcPath = self.path + '\\gis.gdb'
         arcpy.env.workspace = self.arcPath  # Set the ArcPy workspace
@@ -641,8 +642,11 @@ class Water_Quality:
 
         finally:
             # Clean up
-            if arcpy.Exists(fcTemplate):
-                arcpy.Delete_management(fcTemplate)
             if os.path.exists('temp.pdf'):
                     os.remove('temp.pdf')
             del book
+            if self.cleanup=True:
+                # Clean up the entire geodatabase
+                if arcpy.Exists(arcPath):
+                    arcpy.Delete_management(arcPath)
+            

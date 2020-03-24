@@ -1,28 +1,29 @@
 # The Green Net National Product: *Subproject regarding pollution of the water environment*
 
-This subproject is a part of a larger research project on [UCPH](https://www.ku.dk/english/) that aims to estimate the Green Net National Product (GNNP) for Denmark since 1990.
+This subproject is a part of a larger research project on [UCPH](https://www.ku.dk/english/) that aims to estimate the Green Net National Product (GNNP) for Denmark since 1990. The first stage of this subproject constructs longitudinal datasets and maps the ecological status of Danish water bodies.
 
-The first stage of this subproject map the ecological status quality of Danish water bodies since 1990.
-
-For more information and preliminary results for streams, see: [thornoe.github.io/GNNP](https://thornoe.github.io/GNNP/)
+For more information and preliminary results for streams, see: [ThorNoe.github.io/GNNP](https://thornoe.github.io/GNNP/)
 
 
 ### How to run the script tool in ArcGIS Pro
 
+One will need to have [ArcGIS Pro](https://www.esri.com/en-us/arcgis/products/arcgis-pro/overview) installed and up to date.
+
 1. Click the green `Clone or download` button at the top right corner of this GitHub page ^^
-2. Within the `gis` folder, open `gis.aprx` with ArcGIS Pro.
-3. Open the script tool `Process and map data` under the `Catalog Pane` > `Folders` > `gis` > `gis.tbx`
+2. Within the `gnnp\gis` folder, open `gis.aprx` with ArcGIS Pro.
+3. In the `Catalog Pane`, open `Toolboxes` > `gis.tbx` > `WaterbodiesScriptTool`. Select the `gnnp\gis` folder and `Run` the script.
 
 
 ### Update with the most recent data
-The most recent data on indicators can be downloaded from the Danish surface water database by opening [odaforalle.au.dk](https://odaforalle.au.dk/) in Internet Explorer. To access the data, it is only required to supply your e-mail address.
+
+The most recent data on indicators can be downloaded from the Danish surface water database by opening [odaforalle.au.dk](https://odaforalle.au.dk/) in Internet Explorer. To access the data, it is required that you supply your e-mail address.
 
 For streams:
 
 - Go to `Hent data` > `Vandløb` > `Bundfauna` > `DVFI-indeks`
   - Set the *from* date: In `Fra` write `01-01-2019`
   - Set the *to* date: In `Til` (optional)
-  - In the bottom right corner, click `Excel (<no. rows> rækker)` and save to the `gis/data` folder as `streams_DVFI_2019-.xlsx` (overwrite the existing file)
+  - In the bottom right corner, click `Excel (<no. rows> rækker)` and save to the `gis/data` folder as `streams_DVFI_2019-.xlsx` *(overwrite the existing file with the exact same name!)*
 
 Run the script tool as described above to update the time series and recreate all the illustrations with the most recent data.
 
