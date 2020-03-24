@@ -1,3 +1,31 @@
+"""
+Name:       script.py
+
+Label:      Creating polylines for GPS coordinates
+
+Tags:       AcrPy, Polyline, Cursor, Feature Class, Spatial Reference, parse
+
+Summary:    This script downloads a CSV file and parses it to get its GPS
+            coordinates and map each lap as a polyline in a new shapefile,
+            e.g. reconstruct the path a car followed during time of recording.
+
+Rqmts:      ArcGIS must be installed on the system. For your Python environment,
+            the ArcPy package and Pandas package must be installed.
+
+Setup:      Place P4_script.py and P4_module.py in a the same working folder.
+
+Usage:      Specify this working folder as the ArcPy workspace and OS working
+            directory (section 1). If using a different dataset, adjust the
+            specifications (section 2) before running the entire script.
+
+Course:     This script is a hand-in for the master's course GEOG 485 at PSU:
+            Project 4: Reconstructing a car's path
+            https://www.e-education.psu.edu/geog485/node/294
+
+Created:    03/03/2020
+Author:     Thor Noe
+"""
+
 ###############################################################################
 #   0. Imports                                                                #
 ###############################################################################

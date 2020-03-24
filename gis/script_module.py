@@ -603,7 +603,7 @@ class Water_Quality:
                     lyt.exportToPDF('temp.pdf', resolution = 300)
         
                     # Append the page to the map book
-                    book.appendPages(self.path + '\\' + 'temp.pdf')
+                    book.appendPages(self.path + '\\temp.pdf')
                                     
                 except:
                     # Report severe error messages from Python or ArcPy
