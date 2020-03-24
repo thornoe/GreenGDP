@@ -6,16 +6,14 @@ The first part of this project is to construct longitudinal datasets with a time
 
 ### Identification of water bodies
 
-This project follows the demarcation given by the current water body plan for 2015-2021 *(Vandområdeplan 2)* which is the Danish Government's implementation of phase two of the European Union's [Water Framework Directive](https://ec.europa.eu/environment/water/water-framework/). The water bodies are constituted by a total of 6979 streams, 857 lakes and 119 coastal waters.
+This project follows the selection and demarcation given by **VP2** *([Vandområdeplan 2](https://mst.dk/natur-vand/vandmiljoe/vandomraadeplaner/vandomraadeplaner-2015-2021/))* which is the Danish water body plan for 2015-2021 that implements phase two of the **EU-WFD** ([the European Union's Water Framework Directive](https://ec.europa.eu/environment/water/water-framework/)). The water bodies in VP2 are constituted by a total of 6979 streams, 857 lakes and 119 coastal waters.
 
 ### Assigning monitoring stations to water bodies
 
-Geographically, streams are identified as vectors while the monitoring stations are recorded as point observations. Official linkage tables exist for water bodies and stations that have  with data to the basis analysis for the water body plan
+Geographically, streams are identified as vectors while the monitoring stations are recorded as point observations. Official linkage tables link water bodies and stations that were used in the basis analysis for VP2. That is, stations that were monitored at some point during 2008-2012 for streams or during 2007-2012 for lakes and coastal waters. [MiljøGIS](http://miljoegis.mim.dk/spatialmap?profile=vandrammedirektiv2-bek-2019) interactively shows the demarcation and the result of the basis analysis which also encompassed several new indicators in a very thorough assessment of both ecological and chemical status.
 
-The demarcation and the results of a very thorough status assessment can be seen at the interactive [MiljøGIS](http://miljoegis.mim.dk/spatialmap?profile=vandrammedirektiv2-bek-2019) showing the basis analysis for the water body plan which is based on data from 2007-2012 and encompass several new indicators.
 
-For **streams**, {0} stations were matched to a water body by the linkage table (for 2008-2012). Besides, {1} were located within 15 meters of a water body carrying the name of the station's location.
-
+For **streams**, 9640 stations were matched to a water body by the official linkage table (covering stations used in the basis analysis for VP2). Besides, 836 were found within 15 meters of a water body carrying the name of the station's location.
 
 
 ## Ecological status of streams by year
@@ -251,7 +249,7 @@ Thus, the statistics shown in the table should be taken with a grain of salt but
   </tbody>
 </table>
 
-The map book below shows the ecological status of streams for each year from 1992-2019. As stands out, the DVFI index was initially merely used in the two [counties](https://en.wikipedia.org/wiki/Counties_of_Denmark) Viborg and Ringkjøbing (in mid-western Jutland).
+The map book below shows the ecological status of streams for each year from 1992-2019. As stands out, initially the DVFI index was merely used in the two [counties](https://en.wikipedia.org/wiki/Counties_of_Denmark) Viborg and Ringkjøbing (in mid-western Jutland).
 
 If your browser does not allow you to navigate the map book, you can [download it here](https://github.com/thornoe/GNNP/raw/master/gis/streams.pdf) instead.
 
@@ -267,10 +265,10 @@ For **streams**, the most long-lasting biological indicator for nutrient polluti
 
 ### From DVFI observations to ecological status of streams
 
-For the
+If a station has multiple observations within a year, take the median and round down. Subsequently, do the same if a stream has multiple stations with observation within a year. Thus, a unique DVFI fauna class is obtained for each stream for every year it is observed, ([SVANA, 2016 *- Danish*](https://mst.dk/media/121345/retningslinjer-vandomraadeplaner-for-anden-planperiode.pdf)).
 
-Multiple observations within a year
+Finally, the seven fauna classes are converted to the five EU-WFD categories of ecological status: Bad, Poor, Moderate, Good, or High ([ministerial order no. 1001, 2016, Appendix 3 *- Danish*](https://www.retsinformation.dk/Forms/R0710.aspx?id=181970)).
 
 ### Data and reproducible code
 
-See [github.com/thornoe/gnnp](https://github.com/thornoe/gnnp) for data, code and instructions on how to reproduce or update the data and maps.
+See [github.com/ThorNoe/GNNP](https://github.com/ThorNoe/GNNP) for data, code and instructions on how to reproduce or update the data and maps.

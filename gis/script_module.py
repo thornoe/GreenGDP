@@ -127,6 +127,7 @@ class Water_Quality:
             print(arcmsg)           # print ArcPy error message in Python
             arcpy.AddError(pymsg)   # return Python error message in ArcGIS
             arcpy.AddError(arcmsg)  # return ArcPy error message in ArcGIS
+            sys.exit(1)
 
 
 
@@ -293,6 +294,7 @@ class Water_Quality:
                                   .format(str(row['Station']), fcStations, tbinfo, str(sys.exc_info()[1])))
                             print('ArcPy errors while inserting station {0} in {1}:\n{2}'\
                                   .format(str(row['Station']), fcStations, tbinfo, str(arcpy.GetMessages(severity=2))))
+                            sys.exit(1)
     
                         finally:
                             # Clean up for next iteration
@@ -366,7 +368,7 @@ class Water_Quality:
             allVP.to_csv('data\\streams_DVFI_longitudinal.csv')
 
             # Report the number of stations matched by linkage table and ArcPy
-            msg = "{0} stations were matched to a water body by the linkage table (for 2008-2012). Besides, {1} were located within 15 meters of a water body carrying the name of the station's location."\
+            msg = "{0} stations were matched to a water body by the official linkage table. Besides, {1} were located within 15 meters of a water body carrying the name of the station's location."\
                   .format(len(match), len(jMatches))
             print(msg)            # print number of stations in Python
             arcpy.AddMessage(msg) # return number of stations in ArcGIS
@@ -512,9 +514,11 @@ class Water_Quality:
             sys.exit(1)
 
 
-    def map_book(self, fc, df, yearsList):
+    def map_book(self, fc, df, yearsList, numberOfRetries=0, sleepError=0):
         """ Create a pdf map book with a page for each year
         """
+        import time
+
         try:
             # Set the name of the field (column) containing the water body plan IDs
             vpID = self.wfs_vpID[fc]
@@ -536,87 +540,100 @@ class Water_Quality:
             ##### Make a feature class, layer and pdf map for each year
             for i in yearsList:
                 try:
-                    # Copy feature class from template
-                    fcYear = fc + str(i) + 'fc'
-                    if arcpy.Exists(fcYear):
-                        arcpy.Delete_management(fcYear)
-                    arcpy.CopyFeatures_management(fcTemplate, fcYear)
-
-                    # Create update cursor for feature layer
-                    with arcpy.da.UpdateCursor(fcYear, [vpID, 'status']) as cursor:
+                    errlist = []
+                    for iteration in range(1+numberOfRetries):
                         try:
-                            # For each row/object in feature class add ecological status from df
-                            for row in cursor:
-                                if row[0] in df.index:
-                                    row[1] = df.loc[row[0], i]
-                                    cursor.updateRow(row)
-
+                            # Copy feature class from template
+                            fcYear = fc + str(i) + 'fc'
+                            if arcpy.Exists(fcTemplate):
+                                arcpy.Delete_management(fcTemplate)
+                            arcpy.CopyFeatures_management(fcTemplate, fcYear)
+        
+                            # Create update cursor for feature layer
+                            with arcpy.da.UpdateCursor(fcYear, [vpID, 'status']) as cursor:
+                                try:
+                                    # For each row/object in feature class add ecological status from df
+                                    for row in cursor:
+                                        if row[0] in df.index:
+                                            row[1] = df.loc[row[0], i]
+                                            cursor.updateRow(row)
+        
+                                except:
+                                    # Report severe error messages from Python or ArcPy
+                                    tb = sys.exc_info()[2]  # get traceback object for Python errors
+                                    tbinfo = traceback.format_tb(tb)[0]
+                                    pymsg = 'Python errors while updating {0} in {1}:\nTraceback info:\n{2}Error Info:\n{3}'\
+                                            .format(row[0], fc, tbinfo, str(sys.exc_info()[1]))
+                                    arcmsg = 'ArcPy errors while updating {0} in {1}:\n{2}'\
+                                             .format(row[0], fc, arcpy.GetMessages(severity=2))
+                                    print(pymsg)            # print Python error message in Python
+                                    print(arcmsg)           # print ArcPy error message in Python
+                                    arcpy.AddError(pymsg)   # return Python error message in ArcGIS
+                                    arcpy.AddError(arcmsg)  # return ArcPy error message in ArcGIS
+        
+                                finally:
+                                    # Clean up for next iteration
+                                    del cursor, row
+        
+                            # Create a feature layer for the feature class (name of layer applies to the legend)
+                            layerYear = fc + str(i)
+                            arcpy.MakeFeatureLayer_management(fcYear, layerYear)
+        
+                            # Apply symbology for ecological status from layer
+                            arcpy.ApplySymbologyFromLayer_management(layerYear,
+                                            self.path + '\\' + fc + '_symbology.lyrx')
+        
+                            # Save temporary layer file
+                            arcpy.SaveToLayerFile_management(layerYear,
+                                                             layerYear + '.lyrx')
+        
+                            # Reference the temporary layer file
+                            lyrFile = arcpy.mp.LayerFile(layerYear + '.lyrx')
+        
+                            # Reference the ArcGIS Pro project, its map, and the layout to export
+                            aprx = arcpy.mp.ArcGISProject(self.path + '\\gis.aprx')
+                            m = aprx.listMaps("Map")[0]
+                            lyt = aprx.listLayouts("Layout")[0]
+        
+                            # Add layer to map
+                            m.addLayer(lyrFile, "TOP")
+        
+                            # Export layout to a temporary PDF
+                            lyt.exportToPDF('temp.pdf', resolution = 300)
+        
+                            # Append the page to the map book
+                            book.appendPages(self.path + '\\' + 'temp.pdf')
+                            
+                            # Skip retrying and jump to next year
+                            break
+        
                         except:
-                            # Report severe error messages from Python or ArcPy
+                            # Save severe error messages from Python or ArcPy
                             tb = sys.exc_info()[2]  # get traceback object for Python errors
                             tbinfo = traceback.format_tb(tb)[0]
-                            pymsg = 'Python errors while updating {0} in {1}:\nTraceback info:\n{2}Error Info:\n{3}'\
-                                    .format(row[0], fc, tbinfo, str(sys.exc_info()[1]))
-                            arcmsg = 'ArcPy errors while updating {0} in {1}:\n{2}'\
-                                     .format(row[0], fc, arcpy.GetMessages(severity=2))
-                            print(pymsg)            # print Python error message in Python
-                            print(arcmsg)           # print ArcPy error message in Python
-                            arcpy.AddError(pymsg)   # return Python error message in ArcGIS
-                            arcpy.AddError(arcmsg)  # return ArcPy error message in ArcGIS
-
+                            pymsg = 'Python errors while creating a PDF for {0}, {1}:\nTraceback info:\n{2}Error Info:\n{3}'\
+                                    .format(fc, i, tbinfo, str(sys.exc_info()[1]))
+                            arcmsg = 'ArcPy errors while creating a PDF for {0}, {1}:\n{1}'\
+                                    .format(fc, i, arcpy.GetMessages(severity=2))
+                            errlist.append(pymsg)   # Save Python error message
+                            errlist.append(arcmsg)  # Save ArcPy error message
+                            
+                            # Sleep before trying again in case of error
+                            time.sleep(sleepError)
+        
                         finally:
-                            # Clean up for next iteration
-                            del cursor, row
+                            # Clean up after each iteration of loop
+                            if arcpy.Exists(fcYear):
+                                arcpy.Delete_management(fcYear)
+                            if arcpy.Exists(fc + str(i) + '.lyrx'):
+                                arcpy.Delete_management(fc + str(i) + '.lyrx')
+                            del fcYear, layerYear, lyrFile, aprx, m, lyt
 
-                    # Create a feature layer for the feature class (name of layer applies to the legend)
-                    layerYear = fc + str(i)
-                    arcpy.MakeFeatureLayer_management(fcYear, layerYear)
-
-                    # Apply symbology for ecological status from layer
-                    arcpy.ApplySymbologyFromLayer_management(layerYear,
-                                    self.path + '\\' + fc + '_symbology.lyrx')
-
-                    # Save temporary layer file
-                    arcpy.SaveToLayerFile_management(layerYear,
-                                                     layerYear + '.lyrx')
-
-                    # Reference the temporary layer file
-                    lyrFile = arcpy.mp.LayerFile(layerYear + '.lyrx')
-
-                    # Reference the ArcGIS Pro project, its map, and the layout to export
-                    aprx = arcpy.mp.ArcGISProject(self.path + '\\gis.aprx')
-                    m = aprx.listMaps("Map")[0]
-                    lyt = aprx.listLayouts("Layout")[0]
-
-                    # Add layer to map
-                    m.addLayer(lyrFile, "TOP")
-
-                    # Export layout to a temporary PDF
-                    lyt.exportToPDF('temp.pdf', resolution = 300)
-
-                    # Append the page to the map book
-                    book.appendPages(self.path + '\\' + 'temp.pdf')
-
-                except:
-                    # Report severe error messages from Python or ArcPy
-                    tb = sys.exc_info()[2]  # get traceback object for Python errors
-                    tbinfo = traceback.format_tb(tb)[0]
-                    pymsg = 'Python errors while creating a PDF for {0} in {1}:\nTraceback info:\n{2}Error Info:\n{3}'\
-                            .format(i, fc, tbinfo, str(sys.exc_info()[1]))
-                    arcmsg = 'ArcPy errors while creating a PDF for {0} in {1}:\n{2}'\
-                             .format(i, fc, arcpy.GetMessages(severity=2))
-                    print(pymsg)            # print Python error message in Python
-                    print(arcmsg)           # print ArcPy error message in Python
-                    arcpy.AddError(pymsg)   # return Python error message in ArcGIS
-                    arcpy.AddError(arcmsg)  # return ArcPy error message in ArcGIS
-
-                finally:
-                    # Clean up after each iteration of loop
-                    if arcpy.Exists(fcYear):
-                        arcpy.Delete_management(fcYear)
-                    if arcpy.Exists(layerYear + '.lyrx'):
-                        arcpy.Delete_management(layerYear + '.lyrx')
-                    del fcYear, layerYear, lyrFile, aprx, m, lyt
+                    except:
+                        # Report severe error messages from Python or ArcPy
+                        for e in errlist:
+                            print(e)                # print error messages in Python
+                            arcpy.AddError(arcmsg)  # return error messages in ArcGIS
 
             # Commit changes and save the map book
             book.saveAndClose()
@@ -633,6 +650,7 @@ class Water_Quality:
             print(arcmsg)           # print ArcPy error message in Python
             arcpy.AddError(pymsg)   # return Python error message in ArcGIS
             arcpy.AddError(arcmsg)  # return ArcPy error message in ArcGIS
+            sys.exit(1)
 
         finally:
             # Clean up

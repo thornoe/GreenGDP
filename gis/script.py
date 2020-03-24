@@ -4,6 +4,7 @@
 # Import Operation System (os) package
 import os
 
+
 ###############################################################################
 #   1. Setup                                                                  #
 ###############################################################################
@@ -56,5 +57,5 @@ for waterbodyType in data:
     df, years = c.ecological_status(waterbodyType)
 
     # Create a map book with yearly maps of ecological status
-    c.map_book(waterbodyType, df, years)
+    c.map_book(waterbodyType, df, years, numberOfRetries=4, sleepError=2)
 
