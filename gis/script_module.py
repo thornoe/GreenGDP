@@ -341,7 +341,7 @@ class Water_Quality:
 
             # Inner merge of noMatch and j_matches stations with their closest matching water body
             jMatches = noMatch.merge(jMatches[['Station', waterBodyID]],
-                                      how='inner', on='Station')
+                                     how='inner', on='Station')
 
             # Concatenate the dfs of stations that have been matched to a water body
             allMatches = pd.concat([match, jMatches])
@@ -364,6 +364,12 @@ class Water_Quality:
 
             # Save to CSV for later statistical work
             allVP.to_csv('data\\streams_DVFI_longitudinal.csv')
+
+            # Report the number of stations matched by linkage table and ArcPy
+            msg = "{0} stations were matched to a water body by the linkage table (for 2008-2012). Besides, {1} were located within 15 meters of a water body carrying the name of the station's location."\
+                  .format(len(match), len(jMatches))
+            print(msg)            # print number of stations in Python
+            arcpy.AddMessage(msg) # return number of stations in ArcGIS
 
             return allVP, years
 

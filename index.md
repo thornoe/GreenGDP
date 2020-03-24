@@ -4,15 +4,19 @@ Eutrophication is the process of nutrient over-enrichment of water bodies due to
 
 The first part of this project is to construct longitudinal datasets with a time series of ecological status for each Danish stream, lake and coastal water. The results for streams are illustrated below. The second part will consist of estimating time trends and use valuation studies to be able to estimate the development in the Green Net National Product for Denmark since 1990 and help answer the overall research question whether economic growth can be considered to have been "green" or at the cost of the environment.
 
-## Assessing the ecological status of water bodies
+### Identification of water bodies
 
-The ecological conditions in water bodies can be quantified directly in form of the concentration of chlorophyll *a* (for lakes and coastal waters) found in algae or indirectly using biological indicators that are responsive to eutrophication.
+This project follows the demarcation given by the current water body plan for 2015-2021 *(Vandområdeplan 2)* which is the Danish Government's implementation of phase two of the European Union's [Water Framework Directive](https://ec.europa.eu/environment/water/water-framework/). The water bodies are constituted by a total of 6979 streams, 857 lakes and 119 coastal waters.
 
-For **streams**, the most long-lasting biological indicator for nutrient pollution in Danish streams is the **DVFI index** *(Dansk Vandløbsfaunaindeks)* which measures the occurrence and composition of benthic macroinvertebrates (small bottom-living animals without backbone). The index is one of many modified versions of the Trent Biotic Index (TBI) that was developed in 1964 for the River Trent watershed in England ([Andersen et al, 1984 - *English*](https://www.sciencedirect.com/science/article/abs/pii/0043135484900629)). In 1998 the Danish index was improved as observations before that were less consistent ([Danish Environmental Protection Agency, 1998 - *Danish*](https://www2.mst.dk/udgiv/Publikationer/1998/87-7810-995-7/pdf/87-7810-995-7.PDF)).
+### Assigning monitoring stations to water bodies
 
-### Demarcation of water bodies
+Geographically, streams are identified as vectors while the monitoring stations are recorded as point observations. Official linkage tables exist for water bodies and stations that have  with data to the basis analysis for the water body plan
 
-This project follows the demarcation given by the current water body plan for 2015-2021 *(Vandområdeplan 2)* which is the Danish Government's implementation of phase two of the European Union's [Water Framework Directive](https://ec.europa.eu/environment/water/water-framework/). The water bodies are constituted by a total of 6979 streams, 857 lakes and 119 coastal waters. The demarcation and the results of a very thorough status assessment can be seen at the interactive [MiljøGIS](http://miljoegis.mim.dk/spatialmap?profile=vandrammedirektiv2-bek-2019). It is based on data from 2007-2012 and encompass several new indicators.
+The demarcation and the results of a very thorough status assessment can be seen at the interactive [MiljøGIS](http://miljoegis.mim.dk/spatialmap?profile=vandrammedirektiv2-bek-2019) showing the basis analysis for the water body plan which is based on data from 2007-2012 and encompass several new indicators.
+
+For **streams**, {0} stations were matched to a water body by the linkage table (for 2008-2012). Besides, {1} were located within 15 meters of a water body carrying the name of the station's location.
+
+
 
 ## Ecological status of streams by year
 
@@ -254,8 +258,16 @@ If your browser does not allow you to navigate the map book, you can [download i
 #### Streams: Ecological status mapped for each year
 <iframe src="//www.slideshare.net/slideshow/embed_code/key/m8zqVbxF3sX5g2" width="900" height="1200" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:0px; max-width: 100%; max-height: 100%;" allowfullscreen> </iframe>
 
-## Assigning monitoring stations to water bodies
 
+## Assessing the ecological status of water bodies
+
+The ecological conditions in water bodies can be quantified directly in form of the concentration of chlorophyll *a* (for lakes and coastal waters) found in algae or indirectly using biological indicators that are responsive to eutrophication.
+
+For **streams**, the most long-lasting biological indicator for nutrient pollution in Danish streams is the **DVFI index** *(Dansk Vandløbsfaunaindeks)* which measures the occurrence and composition of benthic macroinvertebrates (small bottom-living animals without backbone). The index is one of many modified versions of the Trent Biotic Index (TBI) that was developed in 1964 for the River Trent watershed in England ([Andersen et al, 1984 - *English*](https://www.sciencedirect.com/science/article/abs/pii/0043135484900629)). In 1998 the Danish index was improved as observations before that were less consistent ([Danish Environmental Protection Agency, 1998 - *Danish*](https://www2.mst.dk/udgiv/Publikationer/1998/87-7810-995-7/pdf/87-7810-995-7.PDF)).
+
+### From DVFI observations to ecological status of streams
+
+For the
 
 Multiple observations within a year
 
