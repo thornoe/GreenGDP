@@ -10,7 +10,7 @@ import arcpy
 ###############################################################################
 # Specify the parent folder as the working directory of the operating system
 os.chdir(arcpy.GetParameterAsText(0))
-cleanup = arcpy.GetParameterAsText(1)
+keep_gdb = arcpy.GetParameterAsText(1)
 
 
 ###############################################################################
@@ -42,7 +42,7 @@ wfs_size = {'streams':'g_len'}
 import script_module
 
 # Initialize the class for all data processing and mapping functions
-c = script_module.Water_Quality(data, linkage, wfs_fc, wfs_vpID, wfs_size, cleanup)
+c = script_module.Water_Quality(data, linkage, wfs_fc, wfs_vpID, wfs_size, keep_gdb)
 
 # Check that the folders with data and linkage files exist or create them
 c.get_data()

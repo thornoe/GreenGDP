@@ -7,11 +7,15 @@ For more information and preliminary results for streams, see: [ThorNoe.github.i
 
 ### How to run the script tool in ArcGIS Pro
 
-One will need to have [ArcGIS Pro](https://www.esri.com/en-us/arcgis/products/arcgis-pro/overview) installed and up to date.
+[ArcGIS Pro](https://www.esri.com/en-us/arcgis/products/arcgis-pro/overview) must be installed and up to date.
 
 1. Click the green `Clone or download` button at the top right corner of this GitHub page ^^
 2. Within the downloaded `gnnp` folder, go to the `gis` folder and open `waterbodies.aprx` with ArcGIS Pro.
 3. In the `Catalog Pane`, open `Toolboxes` > `waterbodies.tbx` > `WaterbodiesScriptTool`. Select the `gis` folder and `Run` the script.
+
+### Output
+
+Besides the map book [streams.pdf], the script tool creates two longitudinal datasets for streams. [streams_DVFI_longitudinal.csv] is for DVFI index and [streams_DVFI_longitudinal.csv] is for the ecological status. They should be opened with `pandas.read_csv()` in Python rather than with Excel.
 
 
 ### Update with the most recent data
@@ -25,18 +29,11 @@ For streams:
   - Set the *to* date: In `Til` (optional)
   - In the bottom right corner, click `Excel (<no. rows> rækker)` and save to the `gis/data` folder as `streams_DVFI_2019-.xlsx` *(overwrite the existing file with the exact same name!)*
 
-Run the script tool as described above to update the time series and recreate all the illustrations with the most recent data.
+Run the script tool as described above to update the longitudinal datasets and recreate all the illustrations with the most recent data.
 
-Gitdown table v. 0.2
-
-{"gitdown": "include", "file": "./gis/data/streams_stats.md"}
-
-html:
-
-{"gitdown": "include", "file": "./gis/data/streams_stats.html"}
 
 ### Run ArcPy commands in the Anaconda Spyder environment
-The version of Python used in ArcGIS is usually older than the one installed in the [Anaconda platform](https://www.anaconda.com/distribution/), making [Spyder](https://www.spyder-ide.org/) incompatible with the ArcPy package as it depends on the ArcGIS installation. Thus, to be able to run ArcPy commands via Spyder, you need to:
+The version of Python used in ArcGIS Pro is usually older than the one installed in the [Anaconda platform](https://www.anaconda.com/distribution/), making [Spyder](https://www.spyder-ide.org/) incompatible with the ArcPy package which depends on the ArcGIS Pro installation. Thus, to be able to run ArcPy commands within the Spyder editor, you need to:
 1. Click the **Start** icon.
 2. Navigate to the **ArcGIS** folder.
 3. Click **Python Command Prompt** within which you
