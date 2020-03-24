@@ -17,7 +17,7 @@ class Water_Quality:
         self.wfs_size = WFS_fieldNamesWaterBodySize
         self.cleanup = cleanup
         self.path = os.getcwd()
-        self.arcPath = self.path + '\\gis.gdb'
+        self.arcPath = self.path + '\\waterbodies.gdb'
         arcpy.env.workspace = self.arcPath  # Set the ArcPy workspace
 
 
@@ -591,7 +591,7 @@ class Water_Quality:
                     lyrFile = arcpy.mp.LayerFile(layerYear + '.lyrx')
         
                     # Reference the ArcGIS Pro project, its map, and the layout to export
-                    aprx = arcpy.mp.ArcGISProject(self.path + '\\gis.aprx')
+                    aprx = arcpy.mp.ArcGISProject(self.path + '\\waterbodies.aprx')
                     m = aprx.listMaps("Map")[0]
                     lyt = aprx.listLayouts("Layout")[0]
         
