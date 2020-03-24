@@ -2,9 +2,9 @@
 
 This subproject is a part of a larger research project on [UCPH](https://www.ku.dk/english/) that aims to estimate the Green Net National Product (GNNP) for Denmark since 1990.
 
-The first stage of this subproject is to map the so-called ecological water quality of Danish water bodies since 1990.
+The first stage of this subproject map the ecological status quality of Danish water bodies since 1990.
 
-For more information and preliminary results, see: [thornoe.github.io/GNNP](https://thornoe.github.io/GNNP/)
+For more information and preliminary results for streams, see: [thornoe.github.io/GNNP](https://thornoe.github.io/GNNP/)
 
 
 ### How to run the script tool in ArcGIS Pro
