@@ -9,18 +9,15 @@ class Water_Quality:
     """ Class for all data processing and mapping functions
     """
     def __init__(self, dataFilenames, linkageFilenames, WFS_featureClassNames,
-                 WFS_fieldNamesWaterBodyID, WFS_fieldNamesWaterBodySize,
-                 keepGeodatabase):
+                 WFS_fieldNamesWaterBodyID, WFS_fieldNamesWaterBodySize):
         self.data = dataFilenames
         self.linkage = linkageFilenames
         self.wfs_fc = WFS_featureClassNames
         self.wfs_vpID = WFS_fieldNamesWaterBodyID
         self.wfs_size = WFS_fieldNamesWaterBodySize
-        self.keep_gdb = keepGeodatabase
         self.path = os.getcwd()
-        self.arcPath = self.path + '\\waterbodies.gdb'
+        self.arcPath = self.path + '\\gis.gdb'
         arcpy.env.workspace = self.arcPath  # Set the ArcPy workspace
-        print(self.arcPath)
 
 
     def get_data(self):
@@ -194,7 +191,7 @@ class Water_Quality:
                 df = df[df.Indeks != 'U']
                 df['Indeks'] = df['Indeks'].astype(int)
 
-            # Set up a longitudinal df with very station and its latest records
+            # Set up a longitudinal df with every station and its latest records
             long = df[['Station', 'Location', 'X', 'Y']]\
                      .groupby(['Station'], as_index=False).last()
 
@@ -354,16 +351,15 @@ class Water_Quality:
             waterBodies = allMatches.groupby([waterBodyID]).median().apply(np.floor)\
                                     .drop(columns=['Station', 'X', 'Y'])
 
-            # Field/column names
-            ID = self.wfs_vpID[waterbodyType]
+            # Field/column names for length of water bodies
             length = self.wfs_size[waterbodyType]
 
             # Use SeachCursor to create df with length (km) of all water bodies
-            dataLength = [row for row in arcpy.da.SearchCursor(waterbodyType, [ID, length])]
-            dfLength = pd.DataFrame(dataLength, columns=[ID, length])
+            dataLength = [row for row in arcpy.da.SearchCursor(waterbodyType, [vpID, length])]
+            dfLength = pd.DataFrame(dataLength, columns=[vpID, length])
 
             # Merge length-df with df for water bodies in the current water body plan (VP2)
-            allVP = dfLength.merge(waterBodies, how="outer", left_on=ID,
+            allVP = dfLength.merge(waterBodies, how="outer", left_on=vpID,
                                    right_index=True).set_index(vpID)
 
             # Save to CSV for later statistical work
@@ -390,6 +386,12 @@ class Water_Quality:
             arcpy.AddError(pymsg)   # return Python error message in ArcGIS
             arcpy.AddError(arcmsg)  # return ArcPy error message in ArcGIS
             sys.exit(1)
+
+        finally:
+            # Clean up
+            for fc in [waterbodyType, fcStations, joinedFC]:
+                if arcpy.Exists(fc):
+                    arcpy.Delete_management(fc)
 
 
 
@@ -519,6 +521,7 @@ class Water_Quality:
             sys.exit(1)
 
 
+
     def map_book(self, fc, df, yearsList):
         """ Create a pdf map book with a page for each year
         """
@@ -592,7 +595,7 @@ class Water_Quality:
                     lyrFile = arcpy.mp.LayerFile(layerYear + '.lyrx')
         
                     # Reference the ArcGIS Pro project, its map, and the layout to export
-                    aprx = arcpy.mp.ArcGISProject(self.path + '\\waterbodies.aprx')
+                    aprx = arcpy.mp.ArcGISProject(self.path + '\\gis.aprx')
                     m = aprx.listMaps("Map")[0]
                     lyt = aprx.listLayouts("Layout")[0]
         
@@ -623,8 +626,8 @@ class Water_Quality:
                     # Clean up after each iteration of loop
                     if arcpy.Exists(fcYear):
                         arcpy.Delete_management(fcYear)
-                    if arcpy.Exists(fc + str(i) + '.lyrx'):
-                        arcpy.Delete_management(fc + str(i) + '.lyrx')
+                    if arcpy.Exists(layerYear + '.lyrx'):
+                        arcpy.Delete_management(layerYear + '.lyrx')
                     del fcYear, layerYear, lyrFile, aprx, m, lyt
 
             # Commit changes and save the map book
@@ -646,11 +649,8 @@ class Water_Quality:
 
         finally:
             # Clean up
+            if arcpy.Exists(fc + 'Template'):
+                arcpy.Delete_management(fc + 'Template')
             if os.path.exists('temp.pdf'):
-                    os.remove('temp.pdf')
+                os.remove('temp.pdf')
             del book
-            if self.keep_gdb=='false':
-                # Clean up the entire geodatabase
-                if arcpy.Exists(self.arcPath):
-                    arcpy.Delete_management(self.arcPath)
-            
