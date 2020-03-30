@@ -250,7 +250,7 @@ Thus, the statistics shown in the table should be taken with a grain of salt but
   </tbody>
 </table>
 
-The map book below shows the ecological status of streams for each year from 1992-2019. As stands out, initially the DVFI index was merely used in the two [counties](https://en.wikipedia.org/wiki/Counties_of_Denmark) Viborg and Ringkjøbing (in mid-western Jutland).
+The map book below shows the ecological status of streams for each year from 1992-2019. As stands out, initially the DVFI index was mostly used in the two [counties](https://en.wikipedia.org/wiki/Counties_of_Denmark) Viborg and Ringkjøbing (in mid-western Jutland).
 
 If your browser does not allow you to navigate the map book, you can [download it here](https://github.com/thornoe/GNNP/raw/master/gis/output/streams.pdf) instead.
 
