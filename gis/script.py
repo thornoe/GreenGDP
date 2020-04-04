@@ -73,4 +73,3 @@ for waterbodyType in data:
 
     # Create a map book with yearly maps of ecological status
     c.map_book(waterbodyType, df, years)
-

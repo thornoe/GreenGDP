@@ -33,12 +33,12 @@ class Water_Quality:
     """ Class for all data processing and mapping functions
     """
     def __init__(self, dataFilenames, linkageFilenames, WFS_featureClassNames,
-                 WFS_fieldNamesWaterBodyID, WFS_fieldNamesWaterBodySize):
+                 WFS_fieldNamesWaterbodyID, WFS_fieldNamesWaterbodySize):
         self.data = dataFilenames
         self.linkage = linkageFilenames
         self.wfs_fc = WFS_featureClassNames
-        self.wfs_vpID = WFS_fieldNamesWaterBodyID
-        self.wfs_size = WFS_fieldNamesWaterBodySize
+        self.wfs_vpID = WFS_fieldNamesWaterbodyID
+        self.wfs_size = WFS_fieldNamesWaterbodySize
         self.path = os.getcwd()
         self.arcPath = self.path + '\\gis.gdb'
         arcpy.env.workspace = self.arcPath  # Set the ArcPy workspace
@@ -207,7 +207,7 @@ class Water_Quality:
                      observations by taking the median and rounding down.
         """
         try:
-            # Set up a Pandas DataFrame for the chosen type of waterbody
+            # Set up a Pandas DataFrame for the chosen type of water body
             if waterbodyType == 'streams':
                 df = self.frame(waterbodyType, 'Indekstype', 'DVFI', 'Indeks')
 
@@ -253,8 +253,8 @@ class Water_Quality:
 
 
 
-    def stations_to_streams(self, waterbodyType, stationID, waterBodyID,
-                            waterBodyName, booleanVar):
+    def stations_to_streams(self, waterbodyType, stationID, waterbodyID,
+                            waterbodyName, booleanVar):
         """ Streams: Assign monitoring stations to water bodies via linkage table.
 
             For unmatched stations: Assign to stream within a radius of 15 meters
@@ -273,7 +273,7 @@ class Water_Quality:
             # Read the linkage table
             link = pd.read_excel('linkage\\' + self.linkage[waterbodyType])
 
-            df = long.merge(link[[stationID, waterBodyID, booleanVar]], how="left",
+            df = long.merge(link[[stationID, waterbodyID, booleanVar]], how="left",
                             left_on='Station', right_on=stationID)
 
             # Drop water bodies that were only present in the draft for VP2
@@ -286,7 +286,7 @@ class Water_Quality:
             match = df.dropna(subset=[stationID]).drop(columns=[stationID])
 
             # Stations not covered by the linkage table
-            noMatch = df[df[stationID].isna()].drop(columns=[stationID, waterBodyID])
+            noMatch = df[df[stationID].isna()].drop(columns=[stationID, waterbodyID])
 
             # Create a spatial reference object with the same geoprachical coordinate system
             spatialRef = arcpy.SpatialReference("ETRS 1989 UTM Zone 32N")
@@ -308,7 +308,7 @@ class Water_Quality:
                         try:
                             # Use cursor to insert new row in feature class
                             cursor.insertRow([(row['X'], row['Y']), row['Station'], row['Location']])
-    
+
                         except:
                             # Report other severe error messages from Python or ArcPy
                             tb = sys.exc_info()[2]  # get traceback object for Python errors
@@ -318,7 +318,7 @@ class Water_Quality:
                             print('ArcPy errors while inserting station {0} in {1}:\n{2}'\
                                   .format(str(row['Station']), fcStations, tbinfo, str(arcpy.GetMessages(severity=2))))
                             sys.exit(1)
-    
+
                         finally:
                             # Clean up for next iteration
                             del index, row
@@ -350,29 +350,29 @@ class Water_Quality:
             joined = pd.DataFrame(data, columns=fieldNames)
 
             # Add water body names from linkage table and sort by distance (ascending)
-            j = joined.merge(link[[waterBodyName, waterBodyID]], how="inner",
-                             left_on=vpID, right_on=waterBodyID)\
+            j = joined.merge(link[[waterbodyName, waterbodyID]], how="inner",
+                             left_on=vpID, right_on=waterbodyID)\
                              .drop([vpID], axis=1)\
                              .sort_values('Distance')
 
             # Capitalize water body names
-            j[waterBodyName] = j[waterBodyName].str.upper()
+            j[waterbodyName] = j[waterbodyName].str.upper()
 
             # Indicate matching water body names
-            j['Match'] = np.select([j['Location']==j[waterBodyName]], [True])
+            j['Match'] = np.select([j['Location']==j[waterbodyName]], [True])
 
             # Subset to unique stations with their closest matching water body
             jMatches = j[j['Match']==True].groupby(['Station'], as_index=False).first()
 
             # Inner merge of noMatch and j_matches stations with their closest matching water body
-            jMatches = noMatch.merge(jMatches[['Station', waterBodyID]],
+            jMatches = noMatch.merge(jMatches[['Station', waterbodyID]],
                                      how='inner', on='Station')
 
             # Concatenate the dfs of stations that have been matched to a water body
             allMatches = pd.concat([match, jMatches])
 
             # Group multiple stations in a water body: Take the median and round down
-            waterBodies = allMatches.groupby([waterBodyID]).median().apply(np.floor)\
+            waterBodies = allMatches.groupby([waterbodyID]).median().apply(np.floor)\
                                     .drop(columns=['Station', 'X', 'Y'])
 
             # Field/column names for length of water bodies
@@ -450,21 +450,21 @@ class Water_Quality:
         """ Based on the type of water body, set up a longitudinal dataframe
             and convert it to the EU index of ecological status, i.e. from 1-5
             for bad, poor, moderate, good, and high water quality respectively.
-            
+
             Create a table of statistics and export it as an html table.
-            
+
             Print the size and share of water bodies observed at least once.
         """
         try:
             # Create an output folder if it doesn't exist
             os.makedirs(self.path + '\\output', exist_ok=True)
-            
+
             if waterbodyType == 'streams':
                 # Create longitudinal df and use linkage table to assign stations to water bodies
                 allVP, years = self.stations_to_streams(waterbodyType,
                                                         stationID='DCE_stationsnr',
-                                                        waterBodyID='VP2_g_del_cd',
-                                                        waterBodyName='Navn',
+                                                        waterbodyID='VP2_g_del_cd',
+                                                        waterbodyName='Navn',
                                                         booleanVar='VP2_gældende')
 
                 # Convert DVFI fauna index for streams to index of ecological status
@@ -472,13 +472,13 @@ class Water_Quality:
 
             # Save to CSV for later statistical work
             df.to_csv('output\\' + waterbodyType + '_ecological_status.csv')
-   
+
             # Specify name of size-variable
             size = self.wfs_size[waterbodyType]
-            
+
             # Calculate total size of all water bodies in current water body plan (VP2)
             totalSize = df[size].sum()
-            
+
             # Create an empty df for statistics
             stats = pd.DataFrame(index=['Status known (%)',
                                         'Share of known is high (%)',
@@ -486,7 +486,7 @@ class Water_Quality:
                                         'Share of known is moderate (%)',
                                         'Share of known is poor (%)',
                                         'Share of known is bad (%)'])
-            
+
             # Calculate the above statistics for each year
             for i in years:
                 y = df[[size, i]].reset_index(drop=True)
@@ -496,7 +496,7 @@ class Water_Quality:
                 y['Moderate'] = np.select([y[i]==3], [y[size]])
                 y['Poor'] = np.select([y[i]==2], [y[size]])
                 y['Bad'] = np.select([y[i]==1], [y[size]])
-                
+
                 # Add shares of total size to stats
                 knownSize = y['Known'].sum()
                 stats[i] = [100*knownSize/totalSize,
@@ -505,10 +505,10 @@ class Water_Quality:
                             100*y['Moderate'].sum()/knownSize,
                             100*y['Poor'].sum()/knownSize,
                             100*y['Bad'].sum()/knownSize]
-            
+
             # Convert statistics to integers
             stats = stats.astype(int)
-            
+
             # Save to html for online presentation
             stats.to_html('output\\' + waterbodyType + '_stats.md')
 
@@ -521,17 +521,17 @@ class Water_Quality:
                 unit = 'km'
             else:
                 unit = 'sq. km'
-            
+
             # Report size and share of water bodies observed at least once.
             msg = 'The current water body plan covers {0} {1} of {2}, of which {2} representing {3} {1} ({4}%) have been assessed at least once. On average {2} representing {5} {1} ({6}%) are assessed each year.'\
-                  .format(int(totalSize), unit, waterbodyType, 
+                  .format(int(totalSize), unit, waterbodyType,
                           int(observed[size].sum()),
                           int(100*observed[size].sum()/totalSize),
                           int(stats.iloc[0].mean()*totalSize/100),
                           int(stats.iloc[0].mean()))
             print(msg)            # print statistics in Python
             arcpy.AddMessage(msg) # return statistics in ArcGIS
-            
+
             return df, years
 
         except:
@@ -584,7 +584,7 @@ class Water_Quality:
                                 if row[0] in df.index:
                                     row[1] = df.loc[row[0], i]
                                     cursor.updateRow(row)
-        
+
                         except:
                             # Report severe error messages from Python or ArcPy
                             tb = sys.exc_info()[2]  # get traceback object for Python errors
@@ -597,16 +597,16 @@ class Water_Quality:
                             print(arcmsg)           # print ArcPy error message in Python
                             arcpy.AddError(pymsg)   # return Python error message in ArcGIS
                             arcpy.AddError(arcmsg)  # return ArcPy error message in ArcGIS
-                            sys.exit(1)                                
-        
+                            sys.exit(1)
+
                         finally:
                             # Clean up for next iteration
                             del cursor, row
-        
+
                     # Create a feature layer for the feature class (name of layer applies to the legend)
                     layerYear = fc + str(i)
                     arcpy.MakeFeatureLayer_management(fcYear, layerYear)
-        
+
                     # Apply symbology for ecological status from layer
                     arcpy.ApplySymbologyFromLayer_management(layerYear,
                                      self.path + '\\' + fc + '_symbology.lyrx')
@@ -614,24 +614,24 @@ class Water_Quality:
                     # Save temporary layer file
                     arcpy.SaveToLayerFile_management(layerYear,
                                                      layerYear + '.lyrx')
-        
+
                     # Reference the temporary layer file
                     lyrFile = arcpy.mp.LayerFile(layerYear + '.lyrx')
-        
+
                     # Reference the ArcGIS Pro project, its map, and the layout to export
                     aprx = arcpy.mp.ArcGISProject(self.path + '\\gis.aprx')
                     m = aprx.listMaps("Map")[0]
                     lyt = aprx.listLayouts("Layout")[0]
-        
+
                     # Add layer to map
                     m.addLayer(lyrFile, "TOP")
-        
+
                     # Export layout to a temporary PDF
                     lyt.exportToPDF('temp.pdf', resolution = 300)
-        
+
                     # Append the page to the map book
                     book.appendPages(self.path + '\\temp.pdf')
-                                    
+
                 except:
                     # Report severe error messages from Python or ArcPy
                     tb = sys.exc_info()[2]  # get traceback object for Python errors

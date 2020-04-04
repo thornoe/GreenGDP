@@ -8,18 +8,18 @@ Ecological status is observed through biological indicators of eutrophication, w
 
 ## Identification of water bodies
 
-This project follows the selection and demarcation given by **VP2** *([Vandområdeplan 2](https://mst.dk/natur-vand/vandmiljoe/vandomraadeplaner/vandomraadeplaner-2015-2021/))* which is the Danish water body plan for 2015-2021 that implements phase two of the **EU-WFD** ([the European Union's Water Framework Directive](https://ec.europa.eu/environment/water/water-framework/)). The water bodies in VP2 are constituted by a total of 6979 streams, 857 lakes and 119 coastal waters.
+This project follows the selection and demarcation given by **VP2** *([Vandområdeplan 2](https://mst.dk/natur-vand/vandmiljoe/vandomraadeplaner/vandomraadeplaner-2015-2021/))* which is the Danish waterbody plan for 2015-2021 that implements phase two of the **EU-WFD** ([the European Union's Water Framework Directive](https://ec.europa.eu/environment/water/water-framework/)). The water bodies in VP2 are constituted by a total of 6979 streams, 857 lakes and 119 coastal waters.
 
 ### Assigning monitoring stations to water bodies
 
 Geographically, streams are identified as vectors while the monitoring stations are recorded as point observations. Official linkage tables link water bodies and stations that were used in the basis analysis for VP2. That is, stations that were monitored at some point during 2008-2012 for streams or during 2007-2012 for lakes and coastal waters. [MiljøGIS](http://miljoegis.mim.dk/spatialmap?profile=vandrammedirektiv2-bek-2019) interactively shows the demarcation and the result of the basis analysis which also encompassed several new indicators in a very thorough assessment of both ecological and chemical status.
 
-For **streams**, 9640 stations were matched to a water body by the official linkage table (covering stations used in the basis analysis for VP2). Besides, I matched 836 stations within 15 meters of a water body carrying the name of the station's location. The radius of 15 meters was chosen to allow for imprecision and potential changes in a streambed over time.
+For **streams**, 9640 stations were matched to a waterbody by the official linkage table (covering stations used in the basis analysis for VP2). Besides, I matched 836 stations within 15 meters of a waterbody carrying the name of the station's location. The radius of 15 meters was chosen to allow for imprecision and potential changes in a streambed over time.
 
 
 ## Ecological status of streams by year
 
-The water body plan covers 17933 km of streams, of which streams representing 16444 km (91%) have been assessed at least once. On average streams representing 4413 km (24%) are assessed each year. The composition as well as the extent of stations being monitored within a year is everchanging, topping with 43% in 2002 as seen in the first row of the table below.
+The waterbody plan covers 17933 km of streams, of which streams representing 16444 km (91%) have been assessed at least once. On average streams representing 4413 km (24%) are assessed each year. The composition as well as the extent of stations being monitored within a year is everchanging, topping with 43% in 2002 as seen in the first row of the table below.
 
 While the monitoring of water quality in Danish streams does cover the range of different pollution sources and physical conditions, it must be underlined that there is an overrepresentation of larger streams which generally have higher water quality. Moreover, a moderate to bad ecological status can in some cases be caused by influence of ochre or poor physical conditions due to stream straightening or intensive dredging and cutting of water weeds ([DCE, 2019 - *Danish*](https://dce.au.dk/udgivelser/vr/nr-351-400/abstracts/nr-353-vandloeb-2018-novana/)).
 
