@@ -8,11 +8,15 @@ Ecological status is observed through biological indicators of eutrophication, w
 
 ## Identification of water bodies
 
+<<<<<<< HEAD
 This project follows the selection and demarcation given by **VP2** *([Vandområdeplan 2](https://mst.dk/natur-vand/vandmiljoe/vandomraadeplaner/vandomraadeplaner-2015-2021/))* which is the Danish waterbody plan for 2015-2021 that implements phase two of the **EU-WFD** ([the European Union's Water Framework Directive](https://ec.europa.eu/environment/water/water-framework/)). The water bodies in VP2 are constituted by a total of 6979 streams, 857 lakes and 119 coastal waters.
+=======
+This project follows the selection and demarcation given by **VP2** *([Vandområdeplan 2 - Danish](https://mst.dk/natur-vand/vandmiljoe/vandomraadeplaner/vandomraadeplaner-2015-2021/))* which is the Danish water body plan for 2015-2021 that implements phase two of the **EU-WFD** ([the European Union's Water Framework Directive - *English*](https://ec.europa.eu/environment/water/water-framework/)). The water bodies in VP2 are constituted by a total of 6979 streams, 857 lakes and 119 coastal waters.
+>>>>>>> 7d18f16d751cccf1759b8090edaeefc40776747b
 
 ### Assigning monitoring stations to water bodies
 
-Geographically, streams are identified as vectors while the monitoring stations are recorded as point observations. Official linkage tables link water bodies and stations that were used in the basis analysis for VP2. That is, stations that were monitored at some point during 2008-2012 for streams or during 2007-2012 for lakes and coastal waters. [MiljøGIS](http://miljoegis.mim.dk/spatialmap?profile=vandrammedirektiv2-bek-2019) interactively shows the demarcation and the result of the basis analysis which also encompassed several new indicators in a very thorough assessment of both ecological and chemical status.
+Geographically, streams are identified as vectors while the monitoring stations are recorded as point observations. Official linkage tables link water bodies and stations that were used in the basis analysis for VP2. That is, stations that were monitored at some point during 2008-2012 for streams or during 2007-2012 for lakes and coastal waters. [MiljøGIS (Danish)](http://miljoegis.mim.dk/spatialmap?profile=vandrammedirektiv2-bek-2019) interactively shows the demarcation and the result of the basis analysis which also encompassed several new indicators in a very thorough assessment of both ecological and chemical status.
 
 For **streams**, 9640 stations were matched to a waterbody by the official linkage table (covering stations used in the basis analysis for VP2). Besides, I matched 836 stations within 15 meters of a waterbody carrying the name of the station's location. The radius of 15 meters was chosen to allow for imprecision and potential changes in a streambed over time.
 
@@ -250,7 +254,7 @@ Thus, the statistics shown in the table should be taken with a grain of salt but
   </tbody>
 </table>
 
-The map book below shows the ecological status of streams for each year from 1992-2019. As stands out, initially the DVFI index was merely used in the two [counties](https://en.wikipedia.org/wiki/Counties_of_Denmark) Viborg and Ringkjøbing (in mid-western Jutland).
+The map book below shows the ecological status of streams for each year from 1992-2019. As stands out, initially the DVFI index was mostly used in the two [counties](https://en.wikipedia.org/wiki/Counties_of_Denmark) Viborg and Ringkjøbing (in mid-western Jutland).
 
 If your browser does not allow you to navigate the map book, you can [download it here](https://github.com/thornoe/GNNP/raw/master/gis/output/streams.pdf) instead.
 
