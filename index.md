@@ -260,7 +260,7 @@ If your browser does not allow you to navigate the map book, you can [download i
 
 ## Assessing the ecological status of waterbodies
 
-The ecological conditions in waterbodies can be quantified directly in form of the concentration of chlorophyll *a* (for lakes and coastal waters) found in algae or indirectly using biological indicators that are responsive to eutrophication.
+The ecological conditions in waterbodies can be quantified directly in form of the concentration of chlorophyll *a* which are the green pigments found in algae (for lakes and coastal waters) or indirectly using biological indicators that are responsive to eutrophication.
 
 For **streams**, the most long-lasting biological indicator for nutrient pollution in Danish streams is the **DVFI index** *(Dansk Vandløbsfaunaindeks)* which measures the occurrence and composition of benthic macroinvertebrates (small bottom-living animals without backbone). The index is one of many modified versions of the Trent Biotic Index (TBI) that was developed in 1964 for the River Trent watershed in England ([Andersen et al, 1984 - *English*](https://www.sciencedirect.com/science/article/abs/pii/0043135484900629)). In 1998 the Danish index was improved as observations before that were less consistent ([Danish Environmental Protection Agency, 1998 - *Danish*](https://www2.mst.dk/udgiv/Publikationer/1998/87-7810-995-7/pdf/87-7810-995-7.PDF)).
 
