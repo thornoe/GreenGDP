@@ -4,7 +4,7 @@ The first part of this project is to construct longitudinal datasets with a time
 
 The second part will consist of estimating time trends and use valuation studies to be able to estimate the development in the Green Net National Product for Denmark since 1990 and help answer the overall research question, whether economic growth can be considered to have been "green" or at the cost of the environment?
 
-Ecological status is observed through biological indicators of eutrophication, which is the process of nutrient over-enrichment of waterbodies due to organic pollution from agriculture and point sources. Such pollution can lead to high algae growth and thus oxygen depletion which leads to worse ecological conditions and loss of ecosystem services.
+Ecological status is observed through biological indicators of eutrophication, which is the process of nutrient over-enrichment of waterbodies due to organic pollution from agriculture and point sources. Such pollution can lead to high growth of phytoplankton and thus oxygen depletion which leads to worse ecological conditions and loss of ecosystem services.
 
 ## Identification of waterbodies
 
@@ -260,7 +260,7 @@ If your browser does not allow you to navigate the map book, you can [download i
 
 ## Assessing the ecological status of waterbodies
 
-The ecological conditions in waterbodies can be quantified directly in form of the concentration of chlorophyll *a* which are the green pigments found in algae (for lakes and coastal waters) or indirectly using biological indicators that are responsive to eutrophication.
+The ecological conditions in waterbodies can be quantified directly in form of the concentration of chlorophyll *a* which are the green pigments found in phytoplankton (for lakes and coastal waters) or indirectly using biological indicators that are responsive to eutrophication.
 
 For **streams**, the most long-lasting biological indicator for nutrient pollution in Danish streams is the **DVFI index** *(Dansk Vandløbsfaunaindeks)* which measures the occurrence and composition of benthic macroinvertebrates (small bottom-living animals without backbone). The index is one of many modified versions of the Trent Biotic Index (TBI) that was developed in 1964 for the River Trent watershed in England ([Andersen et al, 1984 - *English*](https://www.sciencedirect.com/science/article/abs/pii/0043135484900629)). In 1998 the Danish index was improved as observations before that were less consistent ([Danish Environmental Protection Agency, 1998 - *Danish*](https://www2.mst.dk/udgiv/Publikationer/1998/87-7810-995-7/pdf/87-7810-995-7.PDF)).
 
