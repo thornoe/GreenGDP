@@ -272,4 +272,4 @@ Finally, the seven fauna classes are converted to the five EU-WFD categories of 
 
 ### Data and reproducible code
 
-See [github.com/ThorNoe/GNNP](https://github.com/ThorNoe/GNNP) for data, code and instructions on how to reproduce or update the data and maps.
+See [GitHub.com/ThorNoe/GNNP](https://github.com/ThorNoe/GNNP) for data, code and instructions on how to reproduce or update the data and maps.
