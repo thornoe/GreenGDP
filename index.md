@@ -12,7 +12,7 @@ This project follows the selection and demarcation given by **VP2** *([Vandområ
 
 ### Assigning monitoring stations to waterbodies
 
-Geographically, streams are identified as vectors while the monitoring stations are recorded as point observations. Official linkage tables link waterbodies and stations that were used in the basis analysis for VP2. That is, stations that were monitored at some point during 2008-2012 for streams or during 2007-2012 for lakes and coastal waters. [MiljøGIS (Danish)](http://miljoegis.mim.dk/spatialmap?profile=vandrammedirektiv2-bek-2019) interactively shows the demarcation and the result of the basis analysis which also encompassed several new indicators in a very thorough assessment of both ecological and chemical status.
+Geographically, streams are identified as vectors while the monitoring stations are recorded as point observations. Official linkage tables link waterbodies and stations that were used in the basis analysis for VP2. That is, stations that were monitored at some point during 2008-2012 for streams or during 2007-2013 for lakes and coastal waters. [MiljøGIS (Danish)](http://miljoegis.mim.dk/spatialmap?profile=vandrammedirektiv2-bek-2019) interactively shows the demarcation and the result of the basis analysis which also encompassed several new indicators in a very thorough assessment of both ecological and chemical status.
 
 For **streams**, 9640 stations were matched to a waterbody by the official linkage table (covering stations used in the basis analysis for VP2). Besides, I matched 836 stations within 15 meters of a waterbody carrying the name of the station's location. The radius of 15 meters was chosen to allow for imprecision and potential changes in a streambed over time.
 
