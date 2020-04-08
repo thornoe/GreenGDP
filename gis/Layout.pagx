@@ -78,7 +78,8 @@
       "name" : "Map",
       "uRI" : "CIMPATH=map/map.xml",
       "sourceModifiedTime" : {
-        "type" : "TimeInstant"
+        "type" : "TimeInstant",
+        "start" : 978307200000
       },
       "metadataURI" : "CIMPATH=Metadata/2e4fdd70e9bf40c47bf5003202e8ebad.xml",
       "useSourceMetadata" : true,
@@ -100,6 +101,23 @@
       ],
       "defaultViewingMode" : "Map",
       "mapType" : "Map",
+      "locators" : [
+        {
+          "type" : "CIMLocator",
+          "locatorType" : "Locator",
+          "name" : "XY provider",
+          "locatorURI" : "XY provider",
+          "enabled" : true
+        },
+        {
+          "type" : "CIMLocator",
+          "locatorType" : "Locator",
+          "name" : "ArcGIS World Geocoding Service",
+          "locatorURI" : "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/ArcGIS World Geocoding Service",
+          "suggestionsEnabled" : true,
+          "enabled" : true
+        }
+      ],
       "datumTransforms" : [
         {
           "type" : "CIMDatumTransform",
@@ -131,10 +149,10 @@
         }
       ],
       "defaultExtent" : {
-        "xmin" : 420885.173504999606,
-        "ymin" : 6037754.28160499875,
-        "xmax" : 914428.588595000328,
-        "ymax" : 6408825.81309500057,
+        "xmin" : 407682.963126748218,
+        "ymin" : 6043975.57383999787,
+        "xmax" : 931021.374673251645,
+        "ymax" : 6393596.22456,
         "spatialReference" : {
           "wkid" : 25832,
           "latestWkid" : 25832
@@ -210,6 +228,13 @@
       },
       "colorModel" : "RGB",
       "scaleDisplayFormat" : "Value",
+      "groundToGridCorrection" : {
+        "type" : "CIMGroundToGridCorrection",
+        "useDirection" : true,
+        "useScale" : true,
+        "scaleType" : "ConstantFactor",
+        "constantScaleFactor" : 1
+      },
       "clippingMode" : "None",
       "nearPlaneClipDistanceMode" : "Automatic",
       "rGBColorProfile" : "sRGB IEC61966-2-1 noBPC",
@@ -228,12 +253,12 @@
     "elements" : [
       {
         "type" : "CIMMapFrame",
-        "anchor" : "TopRightCorner",
+        "anchor" : "BottomMidPoint",
         "name" : "Map Frame",
         "visible" : true,
         "rotationCenter" : {
-          "x" : 218.496402921060849,
-          "y" : 259.941681509015439
+          "x" : 105,
+          "y" : 0
         },
         "customProperties" : [
           {
@@ -246,24 +271,24 @@
           "rings" : [
             [
               [
-                8.49640292106084871,
-                -37.0583184909846182
+                0,
+                0
               ],
               [
-                8.49640292106084871,
-                259.941681509015439
+                0,
+                296.999999999999943
               ],
               [
-                218.496402921060849,
-                259.941681509015439
+                210,
+                296.999999999999943
               ],
               [
-                218.496402921060849,
-                -37.0583184909846182
+                210,
+                0
               ],
               [
-                8.49640292106084871,
-                -37.0583184909846182
+                0,
+                0
               ]
             ]
           ]
@@ -348,31 +373,31 @@
         "name" : "Legend",
         "visible" : true,
         "rotationCenter" : {
-          "x" : 209.999999999999943,
-          "y" : 297.372731067454879
+          "x" : 200,
+          "y" : 287
         },
         "frame" : {
           "rings" : [
             [
               [
-                142.333626403392628,
-                200.978884498331723
+                140,
+                202
               ],
               [
-                142.333626403392628,
-                297.372731067454879
+                140,
+                287
               ],
               [
-                209.999999999999943,
-                297.372731067454879
+                200,
+                287
               ],
               [
-                209.999999999999943,
-                200.978884498331723
+                200,
+                202
               ],
               [
-                142.333626403392628,
-                200.978884498331723
+                140,
+                202
               ]
             ]
           ]
@@ -446,7 +471,7 @@
         "headingGap" : 5,
         "horizontalItemGap" : 5,
         "horizontalPatchGap" : 5,
-        "minFontSize" : 16,
+        "minFontSize" : 24,
         "scaleSymbols" : true,
         "showTitle" : false,
         "textGap" : 5,

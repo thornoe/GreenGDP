@@ -8,7 +8,7 @@ Summary:    ThorNoe.github.io/GNNP/ explains the approach and methodology.
 Rqmts:      ArcGIS Pro must be installed on the system and be up to date.
 
 Usage:      This module supports script.py and WaterbodiesScriptTool in gis.tbx.
-            See github.com/ThorNoe/GNNP for instructions to run or update it all.
+            See GitHub.com/ThorNoe/GNNP for instructions to run or update it all.
 
 Function:   The class in this module contains 8 functions of which some are nested:
             - ecological_status() calls:
@@ -33,12 +33,14 @@ class Water_Quality:
     """ Class for all data processing and mapping functions
     """
     def __init__(self, dataFilenames, linkageFilenames, WFS_featureClassNames,
-                 WFS_fieldNamesWaterbodyID, WFS_fieldNamesWaterbodySize):
+                 WFS_fieldNamesWaterbodyID, WFS_fieldNamesWaterbodySize,
+                 keepGeodatabase):
         self.data = dataFilenames
         self.linkage = linkageFilenames
         self.wfs_fc = WFS_featureClassNames
         self.wfs_vpID = WFS_fieldNamesWaterbodyID
         self.wfs_size = WFS_fieldNamesWaterbodySize
+        self.keep_gdb = keepGeodatabase
         self.path = os.getcwd()
         self.arcPath = self.path + '\\gis.gdb'
         arcpy.env.workspace = self.arcPath  # Set the ArcPy workspace
@@ -48,6 +50,11 @@ class Water_Quality:
         """ Function to check that the folders and their files exist.
             Otherwise creates the folder and downloads the files from GitHub.
         """
+        arcpy.AddMessage(self.keep_gdb)
+        arcpy.AddMessage(type(self.keep_gdb))
+        if self.keep_gdb!='true':
+            arcpy.AddMessage('Not true')    
+        arcpy.AddMessage('empty?')
         try:
             # Dictionary for all data and linkage files
             allFiles = {'data': [b for a in list(self.data.values()) for b in a],
@@ -611,11 +618,13 @@ class Water_Quality:
                     arcpy.ApplySymbologyFromLayer_management(layerYear,
                                      self.path + '\\' + fc + '_symbology.lyrx')
 
-                    # Save temporary layer file
+                    # Save layer file
+                    if arcpy.Exists(layerYear + '.lyrx'):
+                        arcpy.Delete_management(layerYear + '.lyrx')
                     arcpy.SaveToLayerFile_management(layerYear,
                                                      layerYear + '.lyrx')
 
-                    # Reference the temporary layer file
+                    # Reference the layer file
                     lyrFile = arcpy.mp.LayerFile(layerYear + '.lyrx')
 
                     # Reference the ArcGIS Pro project, its map, and the layout to export
@@ -648,10 +657,10 @@ class Water_Quality:
 
                 finally:
                     # Clean up after each iteration of loop
-                    if arcpy.Exists(fcYear):
-                        arcpy.Delete_management(fcYear)
-                    if arcpy.Exists(layerYear + '.lyrx'):
-                        arcpy.Delete_management(layerYear + '.lyrx')
+                    if self.keep_gdb!='true':
+                        # Delete layer file
+                        if arcpy.Exists(layerYear + '.lyrx'):
+                            arcpy.Delete_management(layerYear + '.lyrx')
                     del fcYear, layerYear, lyrFile, aprx, m, lyt
 
             # Commit changes and save the map book
@@ -673,8 +682,11 @@ class Water_Quality:
 
         finally:
             # Clean up
-            if arcpy.Exists(fc + 'Template'):
-                arcpy.Delete_management(fc + 'Template')
             if os.path.exists('temp.pdf'):
                 os.remove('temp.pdf')
             del book
+            if self.keep_gdb!='true':
+                # Delete the entire geodatabase
+                if arcpy.Exists(self.arcPath):
+                    arcpy.Delete_management(self.arcPath)
+

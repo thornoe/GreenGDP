@@ -8,7 +8,7 @@ Summary:    ThorNoe.github.io/GNNP/ explains the approach and methodology.
 Rqmts:      ArcGIS Pro must be installed on the system and be up to date.
 
 Usage:      This script supports WaterbodiesScriptTool in the gis.tbx toolbox.
-            See github.com/ThorNoe/GNNP for instructions to run or update it all.
+            See GitHub.com/ThorNoe/GNNP for instructions to run or update it all.
 
 Created:    25/03/2020
 Author:     Thor Donsby Noe
@@ -26,6 +26,18 @@ import arcpy
 ###############################################################################
 # Specify the parent folder as the working directory of the operating system
 os.chdir(arcpy.GetParameterAsText(0))
+
+# Specify whether to keep the geodatabase when the script finishes
+keep_gdb = arcpy.GetParameterAsText(1)
+
+
+arcpy.AddMessage(keep_gdb)
+arcpy.AddMessage(type(keep_gdb))
+if keep_gdb!='true':
+    arcpy.AddMessage('Not true')    
+arcpy.AddMessage('worked outside of module...')
+
+
 
 
 ###############################################################################
@@ -57,7 +69,7 @@ wfs_size = {'streams':'g_len'}
 import script_module
 
 # Initialize the class for all data processing and mapping functions
-c = script_module.Water_Quality(data, linkage, wfs_fc, wfs_vpID, wfs_size)
+c = script_module.Water_Quality(data, linkage, wfs_fc, wfs_vpID, wfs_size, keep_gdb)
 
 # Check that the folders with data and linkage files exist or create them
 c.get_data()
