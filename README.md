@@ -5,7 +5,7 @@ This subproject is a part of a larger research project on [UCPH](https://www.ku.
 For more information and preliminary results for streams, see: [ThorNoe.GitHub.io/GNNP](https://thornoe.github.io/GNNP/). Similar work for lakes and coastal waters is forthcoming.
 
 
-### How to run the script tool in ArcGIS Pro
+## How to run the script tool in ArcGIS Pro
 
 [ArcGIS Pro](https://www.esri.com/en-us/arcgis/products/arcgis-pro/overview) must be installed and up to date.
 
@@ -14,14 +14,14 @@ For more information and preliminary results for streams, see: [ThorNoe.GitHub.i
 3. In the `Catalog Pane`, open `Toolboxes` > `gis.tbx` > `WaterbodiesScriptTool`. Select the `gis` folder and `Run` the script.
 
 
-### Output
+## Output
 
 Besides the [map book](https://github.com/thornoe/GNNP/raw/master/gis/output/streams.pdf) with a map for each year, the script tool creates two longitudinal datasets for further statistical work:
 - [streams_DVFI_longitudinal.csv](https://github.com/thornoe/GNNP/raw/master/gis/output/streams_DVFI_longitudinal.csv) contains the DVFI values of all streams
 - [streams_ecological_status.csv](https://github.com/thornoe/GNNP/raw/master/gis/output/streams_ecological_status.csv) is for the ecological status of all streams
 
 
-### Update with the most recent data
+## Update with the most recent data
 
 The most recent data on indicators can be downloaded from the Danish surface water database by opening [odaforalle.au.dk](https://odaforalle.au.dk/) in Internet Explorer. To access the data, it is required that you supply your e-mail address.
 
@@ -35,8 +35,35 @@ For streams:
 Run the script tool as described above to update the longitudinal datasets and recreate the map book with the most recent data.
 
 
-### Update with new identification of water bodies in 2022
+## Update with new identification of water bodies in 2022
 
 VP3, the third waterbody plan covering 2021-2027 should be passed by ultimo 2021. Thereafter, an updated [MiljøGIS](https://mst.dk/service/miljoegis/) will be published and the Danish Environmental Protection Agency will produce updated linkage tables to report the new identification of water bodies to the EU EPA.
 
 If interested in updating the script for VP3 by then, update the specifications in `script.py` with names of the new linkage tables as well as the specifications for the updated MiljøGIS map (first, open it with the ArcGIS Pro Geoprocessing tool `WFS To Feature Class`). In `script_module.py`, edit the function `ecological_status()` where it specifies the parameters for calling `self.stations_to_streams()`. If there is no boolean variable in the new linkage table, modify the function `stations_to_streams()` accordingly.
+
+
+## License
+
+This project is released under the MIT License, that is, you can basically do anything with my code as long as you give appropriate credit and don’t hold me liable.
+
+### MIT License
+
+Copyright (c) 2020 Thor Donsby Noe
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

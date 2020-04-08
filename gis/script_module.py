@@ -570,12 +570,12 @@ class Water_Quality:
             book = arcpy.mp.PDFDocumentCreate(bookPath)
 
             ##### Make a feature class, layer and pdf map for each year
-            for i in yearsList:
+            for i in [1992,1993]:
                 try:
                     # Copy feature class from template
                     fcYear = fc + str(i) + 'fc'
-                    if arcpy.Exists(fcYear):
-                        arcpy.Delete_management(fcYear)
+#                    if arcpy.Exists(fcYear):
+#                        arcpy.Delete_management(fcYear)
                     arcpy.CopyFeatures_management(fcTemplate, fcYear)
 
                     # Create update cursor for feature layer
@@ -614,8 +614,8 @@ class Water_Quality:
                                      self.path + '\\' + fc + '_symbology.lyrx')
 
                     # Save layer file
-                    if arcpy.Exists(layerYear + '.lyrx'):
-                        arcpy.Delete_management(layerYear + '.lyrx')
+#                    if arcpy.Exists(layerYear + '.lyrx'):
+#                        arcpy.Delete_management(layerYear + '.lyrx')
                     arcpy.SaveToLayerFile_management(layerYear,
                                                      layerYear + '.lyrx')
 
@@ -653,7 +653,9 @@ class Water_Quality:
                 finally:
                     # Clean up after each iteration of loop
                     if self.keep_gdb!='true':
-                        # Delete layer file
+                        # Delete feature class and layer file
+                        if arcpy.Exists(fcYear):
+                            arcpy.Delete_management(fcYear)
                         if arcpy.Exists(layerYear + '.lyrx'):
                             arcpy.Delete_management(layerYear + '.lyrx')
                     del fcYear, layerYear, lyrFile, aprx, m, lyt
@@ -679,6 +681,8 @@ class Water_Quality:
             # Clean up
             if os.path.exists('temp.pdf'):
                 os.remove('temp.pdf')
+            if arcpy.Exists(fcTemplate):
+                arcpy.Delete_management(fcTemplate)
             del book
             if self.keep_gdb!='true':
                 # Delete the entire geodatabase
