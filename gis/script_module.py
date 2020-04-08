@@ -50,11 +50,6 @@ class Water_Quality:
         """ Function to check that the folders and their files exist.
             Otherwise creates the folder and downloads the files from GitHub.
         """
-        arcpy.AddMessage(self.keep_gdb)
-        arcpy.AddMessage(type(self.keep_gdb))
-        if self.keep_gdb!='true':
-            arcpy.AddMessage('Not true')    
-        arcpy.AddMessage('empty?')
         try:
             # Dictionary for all data and linkage files
             allFiles = {'data': [b for a in list(self.data.values()) for b in a],

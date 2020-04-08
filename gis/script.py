@@ -31,15 +31,6 @@ os.chdir(arcpy.GetParameterAsText(0))
 keep_gdb = arcpy.GetParameterAsText(1)
 
 
-arcpy.AddMessage(keep_gdb)
-arcpy.AddMessage(type(keep_gdb))
-if keep_gdb!='true':
-    arcpy.AddMessage('Not true')    
-arcpy.AddMessage('worked outside of module...')
-
-
-
-
 ###############################################################################
 #   2. Specifications (update for VP3 in primo 2022)                          #
 ###############################################################################
