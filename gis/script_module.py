@@ -127,6 +127,8 @@ class Water_Quality:
 
             # Make a template as a copy of the input to preserve the original
             fcTemplate = fc + 'Template'
+            if arcpy.Exists(fcTemplate):
+                arcpy.Delete_management(fcTemplate)
             arcpy.CopyFeatures_management(fc, fcTemplate)
 
             # Create a list of unnecessary fields
@@ -570,12 +572,12 @@ class Water_Quality:
             book = arcpy.mp.PDFDocumentCreate(bookPath)
 
             ##### Make a feature class, layer and pdf map for each year
-            for i in [1992,1993]:
+            for i in [1992, 1993]:
                 try:
                     # Copy feature class from template
                     fcYear = fc + str(i) + 'fc'
-#                    if arcpy.Exists(fcYear):
-#                        arcpy.Delete_management(fcYear)
+                    if arcpy.Exists(fcYear):
+                        arcpy.Delete_management(fcYear)
                     arcpy.CopyFeatures_management(fcTemplate, fcYear)
 
                     # Create update cursor for feature layer
@@ -684,8 +686,8 @@ class Water_Quality:
             if arcpy.Exists(fcTemplate):
                 arcpy.Delete_management(fcTemplate)
             del book
-            if self.keep_gdb!='true':
-                # Delete the entire geodatabase
-                if arcpy.Exists(self.arcPath):
-                    arcpy.Delete_management(self.arcPath)
+#            if self.keep_gdb!='true':
+#                # Delete the entire geodatabase
+#                if arcpy.Exists(self.arcPath):
+#                    arcpy.Delete_management(self.arcPath)
 

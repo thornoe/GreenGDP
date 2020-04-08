@@ -5,6 +5,13 @@ This subproject is a part of a larger research project on [UCPH](https://www.ku.
 For more information and preliminary results for streams, see: [ThorNoe.GitHub.io/GNNP](https://thornoe.github.io/GNNP/). Similar work for lakes and coastal waters is forthcoming.
 
 
+## Output
+
+Besides the [map book](https://github.com/thornoe/GNNP/raw/master/gis/output/streams.pdf) with a map for each year, the script tool creates two longitudinal datasets for further statistical work:
+- [streams_DVFI_longitudinal.csv](https://github.com/thornoe/GNNP/raw/master/gis/output/streams_DVFI_longitudinal.csv) contains the DVFI values of all streams
+- [streams_ecological_status.csv](https://github.com/thornoe/GNNP/raw/master/gis/output/streams_ecological_status.csv) is for the ecological status of all streams
+
+
 ## How to run the script tool in ArcGIS Pro
 
 [ArcGIS Pro](https://www.esri.com/en-us/arcgis/products/arcgis-pro/overview) must be installed and up to date.
@@ -13,15 +20,7 @@ For more information and preliminary results for streams, see: [ThorNoe.GitHub.i
 2. Within the downloaded `gnnp` folder, go to the `gis` folder and open the ArcGIS Project File `gis.aprx` with ArcGIS Pro.
 3. In the `Catalog Pane`, open `Toolboxes` > `gis.tbx` > `WaterbodiesScriptTool`. Select the `gis` folder and `Run` the script.
 
-
-## Output
-
-Besides the [map book](https://github.com/thornoe/GNNP/raw/master/gis/output/streams.pdf) with a map for each year, the script tool creates two longitudinal datasets for further statistical work:
-- [streams_DVFI_longitudinal.csv](https://github.com/thornoe/GNNP/raw/master/gis/output/streams_DVFI_longitudinal.csv) contains the DVFI values of all streams
-- [streams_ecological_status.csv](https://github.com/thornoe/GNNP/raw/master/gis/output/streams_ecological_status.csv) is for the ecological status of all streams
-
-
-## Update with the most recent data
+### Update with the most recent data
 
 The most recent data on indicators can be downloaded from the Danish surface water database by opening [odaforalle.au.dk](https://odaforalle.au.dk/) in Internet Explorer. To access the data, it is required that you supply your e-mail address.
 
@@ -35,7 +34,7 @@ For streams:
 Run the script tool as described above to update the longitudinal datasets and recreate the map book with the most recent data.
 
 
-## Update with new identification of water bodies in 2022
+### Update with new identification of water bodies in 2022
 
 VP3, the third waterbody plan covering 2021-2027 should be passed by ultimo 2021. Thereafter, an updated [MiljøGIS](https://mst.dk/service/miljoegis/) will be published and the Danish Environmental Protection Agency will produce updated linkage tables to report the new identification of water bodies to the EU EPA.
 
