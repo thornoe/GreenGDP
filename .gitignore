@@ -1,0 +1,7 @@
+gis/ImportLog/
+gis/Index/
+gis/__pycache__/
+gis/gis.gdb/
+gis/.pyhistory
+gis/streams19*
+gis/streams20*
