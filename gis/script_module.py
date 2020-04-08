@@ -687,7 +687,7 @@ class Water_Quality:
                 arcpy.Delete_management(fcTemplate)
             del book
             if self.keep_gdb!='true':
-                # Delete the entire geodatabase
+                # Delete the entire geodatabase (all FCs must be deleted first)
                 if arcpy.Exists(self.arcPath):
                     arcpy.Delete_management(self.arcPath)
 
