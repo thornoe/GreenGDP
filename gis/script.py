@@ -17,7 +17,7 @@ Author:     Thor Donsby Noe
 ###############################################################################
 #   0. Imports                                                                #
 ###############################################################################
-# Import Operation System (os) package
+# Import Operation System (os) and ArcPy package (requires ArcGIS Pro installed)
 import os
 import arcpy
 
