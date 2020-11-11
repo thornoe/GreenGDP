@@ -41,6 +41,16 @@ VP3, the third waterbody plan covering 2021-2027 should be passed by ultimo 2021
 If interested in updating the script for VP3 by then, update the specifications in `script.py` with names of the new linkage tables as well as the specifications for the updated MiljøGIS map (first, open it with the ArcGIS Pro Geoprocessing tool `WFS To Feature Class`). In `script_module.py`, edit the function `ecological_status()` where it specifies the parameters for calling `self.stations_to_streams()`. If there is no boolean variable in the new linkage table, modify the function `stations_to_streams()` accordingly.
 
 
+### Run ArcPy commands in the Anaconda Spyder environment
+For a mayor revision of the script tool, one will want to be able to run ArcPy commands within the [Spyder](https://www.spyder-ide.org/) editor. 
+The version of Python used in ArcGIS Pro is usually older than the most recent one which is installed in the [Anaconda platform](https://www.anaconda.com/distribution/), making Spyder incompatible with the ArcPy package which depends on the ArcGIS Pro installation. To get around this:
+1. Click the **Start** icon.
+2. Navigate to the **ArcGIS** folder.
+3. Click **Python Command Prompt** within which you
+   - Add Spyder by typing `conda install spyder`
+   - Open Spyder by typing `spyder`. You need to open Spyder this way whenever you are to use ArcPy commands.
+4. Now you can `import arcpy` within Spyder.
+
 ## License
 
 This project is released under the MIT License, that is, you can basically do anything with my code as long as you give appropriate credit and don’t hold me liable.
