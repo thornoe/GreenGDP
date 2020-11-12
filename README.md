@@ -52,8 +52,6 @@ The version of Python used in ArcGIS Pro is systematically older than the most r
 
 1. For Windows, open the **Start menu**.
 2. Navigate to the **ArcGIS** folder.
-1. For Windows, open the **Start menu**.
-2. Navigate to the **ArcGIS** folder.
 3. Open the **Python Command Prompt** within which you
    - [Clone the Python environment](https://support.esri.com/en/technical-article/000020560) and make it the default for the ArcGIS Python Command Prompt: `proswap <new enviroment name>`.
    - Install Python and Spyder based on the [version of Python used in ArcGIS Pro](https://support.esri.com/en/technical-article/000013224): `conda install python=<version> spyder`.
