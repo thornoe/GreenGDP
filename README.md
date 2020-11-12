@@ -5,11 +5,13 @@ This subproject is a part of a larger research project on [UCPH](https://www.ku.
 For more information and preliminary results for streams, see: [ThorNoe.GitHub.io/GNNP](https://thornoe.github.io/GNNP/). Similar work for lakes and coastal waters is forthcoming.
 
 
+
 ## Output
 
 Besides the [map book](https://github.com/thornoe/GNNP/raw/master/gis/output/streams.pdf) with a map for each year, the script tool creates two longitudinal datasets for further statistical work:
 - [streams_DVFI_longitudinal.csv](https://github.com/thornoe/GNNP/raw/master/gis/output/streams_DVFI_longitudinal.csv) contains the DVFI values of all streams
 - [streams_ecological_status.csv](https://github.com/thornoe/GNNP/raw/master/gis/output/streams_ecological_status.csv) is for the ecological status of all streams
+
 
 
 ## How to run the script tool in ArcGIS Pro
@@ -19,6 +21,7 @@ Besides the [map book](https://github.com/thornoe/GNNP/raw/master/gis/output/str
 1. Click the green `Clone or download` button at the top right corner of this GitHub page ^^
 2. Within the downloaded `gnnp` folder, go to the `gis` folder and open the ArcGIS Project File `gis.aprx` with ArcGIS Pro.
 3. In the `Catalog Pane`, open `Toolboxes` > `gis.tbx` > `WaterbodiesScriptTool`. Select the `gis` folder and `Run` the script.
+
 
 ### Update with the most recent data
 
@@ -42,37 +45,40 @@ If interested in updating the script for VP3 by then, update the specifications 
 
 
 ### Run ArcPy commands in the Anaconda Spyder environment
-For a mayor revision of the script tool, one will want to be able to run ArcPy commands within the [Spyder](https://www.spyder-ide.org/) editor. 
-The version of Python used in ArcGIS Pro is usually older than the most recent one which is installed in the [Anaconda platform](https://www.anaconda.com/distribution/), making Spyder incompatible with the ArcPy package which depends on the ArcGIS Pro installation. To get around this:
-1. Click the **Start** icon.
+
+For a mayor revision of the script tool, one will want to be able to run ArcPy commands within the [Spyder](https://www.spyder-ide.org/) editor.
+
+The version of Python used in ArcGIS Pro is systematically older than the most recent one which is installed in the [Anaconda platform](https://www.anaconda.com/distribution/), making Spyder incompatible with the ArcPy package which depends on the ArcGIS Pro installation. To get around this:
+
+1. For Windows, open the **Start menu**.
 2. Navigate to the **ArcGIS** folder.
-3. Click **Python Command Prompt** within which you
-   - Add Spyder by typing `conda install spyder`
-   - Open Spyder by typing `spyder`. You need to open Spyder this way whenever you are to use ArcPy commands.
-4. Now you can `import arcpy` within Spyder.
+1. For Windows, open the **Start menu**.
+2. Navigate to the **ArcGIS** folder.
+3. Open the **Python Command Prompt** within which you
+   - [Clone the Python environment](https://support.esri.com/en/technical-article/000020560) and make it the default for the ArcGIS Python Command Prompt: `proswap <new enviroment name>`.
+   - Install Python and Spyder based on the [version of Python used in ArcGIS Pro](https://support.esri.com/en/technical-article/000013224): `conda install python=<version> spyder`.
+      - *E.g. for ArcGIS Pro 2.6.3: `conda install python=3.6.10 spyder`.*
+   - Open **Spyder** by typing `spyder`.
+      - *You need to open Spyder through the ArcGIS **Python Command Prompt** whenever you are to use ArcPy commands.*
+4. Within **Spyder**, `import arcpy` to utilize the wide range of [ArcPy options](https://pro.arcgis.com/en/pro-app/arcpy/main/arcgis-pro-arcpy-reference.htm).
+
+
 
 ## License
 
 This project is released under the MIT License, that is, you can basically do anything with my code as long as you give appropriate credit and don’t hold me liable.
 
+
 ### MIT License
 
 Copyright (c) 2020 Thor Donsby Noe
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
