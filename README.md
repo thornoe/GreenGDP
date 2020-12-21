@@ -25,7 +25,7 @@ Besides the [map book](https://github.com/thornoe/GNNP/raw/master/gis/output/str
 
 ### Update with the most recent data
 
-The most recent data on indicators can be downloaded from the Danish surface water database by opening [odaforalle.au.dk](https://odaforalle.au.dk/) in Internet Explorer. To access the data, it is required that you supply your e-mail address.
+The most recent data on indicators can be downloaded from the Danish surface water database by opening [odaforalle.au.dk](https://odaforalle.au.dk/) in Microsoft Edge. To access the data, it is required that you supply your e-mail address.
 
 For streams:
 
