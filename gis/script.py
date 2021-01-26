@@ -41,7 +41,7 @@ data = {'streams':['streams_DVFI_1992-2018.xlsx','streams_DVFI_2019-.xlsx']}
 linkage = {'streams':'streams_stations_VP2.xlsx'}
 
 # WFS service for the current water body plan (VP2 is for 2015-2021)
-wfs_service = 'http://wfs2-miljoegis.mim.dk/vp2_2016/ows?version=1.1.0&request=GetCapabilities&service=wfs'
+wfs_service = 'http://wfs2-miljoegis.mim.dk/vp2_2016/ows?service=wfs&version=1.1.0&request=GetCapabilities'
 
 # Specify the names of the feature class (fc) for each type of water body
 wfs_fc = {'streams':'vp2bek_2019_vandlob'}
