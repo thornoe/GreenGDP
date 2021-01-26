@@ -1,6 +1,6 @@
 # The Green Net National Product: *Subproject regarding pollution of the water environment*
 
-This subproject is a part of a larger research project on [UCPH](https://www.ku.dk/english/) that aims to estimate the Green Net National Product (GNNP) for Denmark since 1990. The first stage of this subproject constructs longitudinal datasets and maps the ecological status of Danish water bodies.
+This subproject is a part of a larger research project at [UCPH](https://www.ku.dk/english/) that aims to estimate the Green Net National Product (GNNP) for Denmark since 1990. The first stage of this subproject constructs longitudinal datasets and maps the ecological status of Danish water bodies.
 
 For more information and preliminary results for streams, see: [ThorNoe.GitHub.io/GNNP](https://thornoe.github.io/GNNP/). Similar work for lakes and coastal waters is forthcoming.
 
@@ -19,13 +19,13 @@ Besides the [map book](https://github.com/thornoe/GNNP/raw/master/gis/output/str
 [ArcGIS Pro](https://www.esri.com/en-us/arcgis/products/arcgis-pro/overview) must be installed and up to date.
 
 1. Click the green `Clone or download` button at the top right corner of this GitHub page ^^
-2. Within the downloaded `gnnp` folder, go to the `gis` folder and open the ArcGIS Project File `gis.aprx` with ArcGIS Pro.
-3. In the `Catalog Pane`, open `Toolboxes` > `gis.tbx` > `WaterbodiesScriptTool`. Select the `gis` folder and `Run` the script.
+2. Within the downloaded `gnnp` folder, go to the `gis` folder and open the ArcGIS Project File `gis.aprx` with ArcGIS Pro
+3. In the `Catalog Pane`, open `Toolboxes` > `gis.tbx` > `WaterbodiesScriptTool`. Select the `gis` folder and `Run` the script
 
 
 ### Update with the most recent data
 
-The most recent data on indicators can be downloaded from the Danish surface water database by opening [odaforalle.au.dk](https://odaforalle.au.dk/) in Internet Explorer. To access the data, it is required that you supply your e-mail address.
+The most recent data on indicators can be downloaded from the Danish surface water database by opening [odaforalle.au.dk](https://odaforalle.au.dk/) in Microsoft Edge. To access the data, it is required that you supply your e-mail address.
 
 For streams:
 
@@ -46,20 +46,17 @@ If interested in updating the script for VP3 by then, update the specifications 
 
 ### Run ArcPy commands in the Anaconda Spyder environment
 
-For a mayor revision of the script tool, one will want to be able to run ArcPy commands within the [Spyder](https://www.spyder-ide.org/) editor.
+For a mayor revision of the script tool, one will want to be able to run ArcPy commands within an IDE or text editor.
 
-The version of Python used in ArcGIS Pro is systematically older than the most recent one which is installed in the [Anaconda platform](https://www.anaconda.com/distribution/), making Spyder incompatible with the ArcPy package which depends on the ArcGIS Pro installation. To get around this:
+The version of Python used in ArcGIS Pro is systematically older than the most recent version. Therefore, your preferred IDE is probably incompatible with the ArcPy package as it draws on the ArcGIS Pro installation. To be able to run ArcPy commands, the simplest solution is to set up the Spyder editor as follows:
 
-1. For Windows, open the **Start menu**.
-2. Navigate to the **ArcGIS** folder.
-3. Open the **Python Command Prompt** within which you
-   - [Clone the Python environment](https://support.esri.com/en/technical-article/000020560) and make it the default for the ArcGIS Python Command Prompt: `proswap <new enviroment name>`.
-   - Install Python and Spyder based on the [version of Python used in ArcGIS Pro](https://support.esri.com/en/technical-article/000013224): `conda install python=<version> spyder`.
-      - *E.g. for ArcGIS Pro 2.6.3: `conda install python=3.6.10 spyder`.*
-   - Open **Spyder** by typing `spyder`.
-      - *You need to open Spyder through the ArcGIS **Python Command Prompt** whenever you are to use ArcPy commands.*
-4. Within **Spyder**, `import arcpy` to utilize the wide range of [ArcPy options](https://pro.arcgis.com/en/pro-app/arcpy/main/arcgis-pro-arcpy-reference.htm).
-
+1. Clone the Python environment and install Spyder within ArcGIS Pro as explained [here](https://www.e-education.psu.edu/geog485/node/213)
+2. Open the **Start menu**, navigate to the **ArcGIS** folder, and open the **Python Command Prompt** within which you
+   - Make the new environment the default for the ArcGIS Python Command Prompt: type `proswap arcgispro-py3-clone`
+   - While you're here, install [scikit-learn](https://scikit-learn.org/stable/index.html) for data analysis: type `pip install -U scikit-learn`
+   - Open **Spyder** by typing `spyder`
+      - *Whenever you are to use ArcPy commands, you need to open Spyder through the ArcGIS **Python Command Prompt** or create a shortcut as explained in the first link.*
+3. Within **Spyder**, `import arcpy` to utilize the wide range of [ArcPy options](https://pro.arcgis.com/en/pro-app/arcpy/main/arcgis-pro-arcpy-reference.htm)
 
 
 ## License
