@@ -21,12 +21,12 @@ Function:   The class in this module contains 8 functions of which some are nest
 Created:    25/03/2020
 Author:     Thor Donsby Noe
 """
-
 import numpy as np
 import pandas as pd
 import arcpy, sys, traceback, os, urllib
+from sklearn.experimental import enable_iterative_imputer
+from sklearn.impute import IterativeImputer
 arcpy.env.overwriteOutput = True    # set overwrite option
-
 
 
 class Water_Quality:
@@ -34,16 +34,23 @@ class Water_Quality:
     """
     def __init__(self, dataFilenames, linkageFilenames, WFS_featureClassNames,
                  WFS_fieldNamesWaterbodyID, WFS_fieldNamesWaterbodySize,
-                 keepGeodatabase):
+                 WFS_fieldNamesWaterbodyTypology, keepGeodatabase):
         self.data = dataFilenames
         self.linkage = linkageFilenames
         self.wfs_fc = WFS_featureClassNames
         self.wfs_vpID = WFS_fieldNamesWaterbodyID
         self.wfs_size = WFS_fieldNamesWaterbodySize
+        self.wfs_typo = WFS_fieldNamesWaterbodyTypology
         self.keep_gdb = keepGeodatabase
         self.path = os.getcwd()
         self.arcPath = self.path + '\\gis.gdb'
-        arcpy.env.workspace = self.arcPath  # Set the ArcPy workspace
+
+        # Set the ArcPy workspace
+        arcpy.env.workspace = self.arcPath
+
+        # Create the output folder if it doesn't exist already
+        os.makedirs(self.path + '\\output', exist_ok=True)
+
 
 
     def get_data(self):
@@ -390,11 +397,8 @@ class Water_Quality:
             allVP = dfLength.merge(waterBodies, how="outer", left_on=vpID,
                                    right_index=True).set_index(vpID)
 
-            # Save to CSV for later statistical work
-            allVP.to_csv('output\\streams_DVFI_longitudinal.csv')
-
             # Report the number of stations matched by linkage table and ArcPy
-            msg = "{0} stations were matched to a water body by the official linkage table. Besides, {1} were located within 15 meters of a water body carrying the name of the station's location."\
+            msg = "Streams:\n{0} stations were matched to a water body by the official linkage table. Besides, {1} were located within 15 meters of a water body carrying the name of the station's location."\
                   .format(len(match), len(jMatches))
             print(msg)            # print number of stations in Python
             arcpy.AddMessage(msg) # return number of stations in ArcGIS
@@ -420,6 +424,36 @@ class Water_Quality:
             for fc in [waterbodyType, fcStations, joinedFC]:
                 if arcpy.Exists(fc):
                     arcpy.Delete_management(fc)
+
+
+
+    def observations(self, waterbodyType):
+        """ Based on the type of water body, set up a longitudinal dataframe
+            with the observed indicators for all water bodies.
+        """
+        try:
+            # Create an output folder if it doesn't exist
+            os.makedirs(self.path + '\\output', exist_ok=True)
+
+            if waterbodyType == 'streams':
+                # Create longitudinal df and use linkage table to assign stations to water bodies
+                df, years = self.stations_to_streams(waterbodyType,
+                                                     stationID='DCE_stationsnr',
+                                                     waterbodyID='VP2_g_del_cd',
+                                                     waterbodyName='Navn',
+                                                     booleanVar='VP2_gældende')
+
+            return df, years
+
+        except:
+            # Report severe error messages
+            tb = sys.exc_info()[2]  # get traceback object for Python errors
+            tbinfo = traceback.format_tb(tb)[0]
+            msg = 'Could not create df with observations for {0}:\nTraceback info:\n{1}Error Info:\n{2}'\
+                  .format(waterbodyType, tbinfo, str(sys.exc_info()[1]))
+            print(msg)            # print error message in Python
+            arcpy.AddError(msg)   # return error message in ArcGIS
+            sys.exit(1)
 
 
 
@@ -450,32 +484,19 @@ class Water_Quality:
 
 
 
-    def ecological_status(self, waterbodyType):
-        """ Based on the type of water body, set up a longitudinal dataframe
-            and convert it to the EU index of ecological status, i.e. from 1-5
-            for bad, poor, moderate, good, and high water quality respectively.
+    def observed_ecological_status(self, waterbodyType, dfIndicator, years):
+        """ Based on the type of water body, convert the longitudinal dataframe
+            to the EU index of ecological status, i.e. from 1-5 for bad, poor, 
+            moderate, good, and high water quality respectively.
 
             Create a table of statistics and export it as an html table.
 
             Print the size and share of water bodies observed at least once.
         """
         try:
-            # Create an output folder if it doesn't exist
-            os.makedirs(self.path + '\\output', exist_ok=True)
-
             if waterbodyType == 'streams':
-                # Create longitudinal df and use linkage table to assign stations to water bodies
-                allVP, years = self.stations_to_streams(waterbodyType,
-                                                        stationID='DCE_stationsnr',
-                                                        waterbodyID='VP2_g_del_cd',
-                                                        waterbodyName='Navn',
-                                                        booleanVar='VP2_gældende')
-
                 # Convert DVFI fauna index for streams to index of ecological status
-                df = self.DVFI_to_status(allVP, years)
-
-            # Save to CSV for later statistical work
-            df.to_csv('output\\' + waterbodyType + '_ecological_status.csv')
+                df = self.DVFI_to_status(dfIndicator, years)
 
             # Specify name of size-variable
             size = self.wfs_size[waterbodyType]
@@ -527,7 +548,7 @@ class Water_Quality:
                 unit = 'sq. km'
 
             # Report size and share of water bodies observed at least once.
-            msg = 'The current water body plan covers {0} {1} of {2}, of which {2} representing {3} {1} ({4}%) have been assessed at least once. On average {2} representing {5} {1} ({6}%) are assessed each year.'\
+            msg = 'The current water body plan covers {0} {1} of {2}, of which {2} representing {3} {1} ({4}%) have been assessed at least once. On average, {2} representing {5} {1} ({6}%) are assessed each year.\n'\
                   .format(int(totalSize), unit, waterbodyType,
                           int(observed[size].sum()),
                           int(100*observed[size].sum()/totalSize),
@@ -536,13 +557,13 @@ class Water_Quality:
             print(msg)            # print statistics in Python
             arcpy.AddMessage(msg) # return statistics in ArcGIS
 
-            return df, years
+            return df
 
         except:
             # Report severe error messages
             tb = sys.exc_info()[2]  # get traceback object for Python errors
             tbinfo = traceback.format_tb(tb)[0]
-            msg = 'Could not create df with ecological status for {0}:\nTraceback info:\n{1}Error Info:\n{2}'\
+            msg = 'Could not create df with observed ecological status for {0}:\nTraceback info:\n{1}Error Info:\n{2}'\
                   .format(waterbodyType, tbinfo, str(sys.exc_info()[1]))
             print(msg)            # print error message in Python
             arcpy.AddError(msg)   # return error message in ArcGIS
@@ -550,7 +571,7 @@ class Water_Quality:
 
 
 
-    def map_book(self, fc, df, yearsList):
+    def map_book(self, fc, df, years):
         """ Create a pdf map book with a page for each year
         """
         try:
@@ -572,7 +593,7 @@ class Water_Quality:
             book = arcpy.mp.PDFDocumentCreate(bookPath)
 
             ##### Make a feature class, layer and pdf map for each year
-            for i in yearsList:
+            for i in years:
                 try:
                     # Copy feature class from template
                     fcYear = fc + str(i) + 'fc'
