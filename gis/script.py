@@ -66,6 +66,9 @@ wfs_size = {'streams':'g_len'}
 wfs_typology = {'streams':'f_vl_typo'}
 
 
+
+
+
 ###############################################################################
 #   3. Import module and run the functions                                    #
 ###############################################################################
@@ -103,5 +106,42 @@ for waterbodyType in data:
             # Save time series to excel sheet for valuation (update)
             # df.to_csv('output\\' + waterbodyType + '_ecological_status.csv')
 
+    # Delete geodatabase
+
+
+
+
 # df_ind.describe()
+
+
+# Import ArcPy package (requires ArcGIS Pro installed) and set workspace
+import arcpy
+path = r'C:\Users\jwz766\Documents\GitHub\gnnp\gis'
+arcpy.env.workspace = path
+arcpy.env.overwriteOutput = True    # set overwrite option
+
+# WFS service
+WFS_Service = 'http://wfs2-miljoegis.mim.dk/vp2_2016/ows?service=wfs&version=1.1.0&request=GetCapabilities'
+
+# Name of the input layer to extract
+WFS_FeatureType = 'vp2bek_2019_vandlob'
+
+# Path of the geodatabase (must preexist)
+arcPath = path + '\\gis.gdb'
+
+# Name of the output feature class
+fc = 'streams'
+
+if not arcpy.Exists(fc):
+    # Execute the WFSToFeatureClass tool to download the feature class.
+    arcpy.conversion.WFSToFeatureClass(WFS_Service, WFS_FeatureType,
+                                       arcPath, fc, max_features=15000)
+
+# Set local variables
+WFS_Service = "http://sampleserver6.arcgisonline.com/arcgis/services/SampleWorldCities/MapServer/WFSServer?request=GetCapabilities&service=WFS"
+WFS_FeatureType = "Cities"
+fc = "SampleWorldCities"
+
+# Execute the WFSToFeatureClass tool
+arcpy.WFSToFeatureClass_conversion(WFS_Service, WFS_FeatureType, Out_Location, Out_Name)
 

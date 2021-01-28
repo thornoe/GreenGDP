@@ -48,9 +48,11 @@ class Water_Quality:
         # Set the ArcPy workspace
         arcpy.env.workspace = self.arcPath
 
+        # Create an empty geodatabase
+        
+
         # Create the output folder if it doesn't exist already
         os.makedirs(self.path + '\\output', exist_ok=True)
-
 
 
     def get_data(self):
@@ -129,7 +131,7 @@ class Water_Quality:
 
             if not arcpy.Exists(fc):
                 # Execute the WFSToFeatureClass tool to download the feature class.
-                arcpy.WFSToFeatureClass_conversion(WFS_Service, WFS_FeatureType,
+                arcpy.conversion.WFSToFeatureClass(WFS_Service, WFS_FeatureType,
                                                    self.arcPath, fc, max_features=15000)
 
             # Make a template as a copy of the input to preserve the original
