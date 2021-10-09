@@ -1,0 +1,54 @@
+\section{Code examples}
+
+\begin{frame}{vSpace, Graphics, and Notes}
+  \begin{itemize}
+    \item See graphic
+  \end{itemize}
+  \vfill\null\vspace{10pt}
+  \includegraphics[width=\textwidth]{figures/wind_mills}
+  \note{What is on the image?}
+\end{frame}
+
+\begin{frame}{Code examples}
+  \begin{multicols}{2}
+    % Game tree: % In general, I recommend drawing game trees in the hand as it is the fastest and resembles the exam situation. If you write your assignments on the computer, you can take a picture or leave space to draw the figures after printing. For the slides, I draw the game trees in Inkscape, which is a great piece of free software – when you have gotten used to it… Editing an existing game tree can be a quite straightforward start, but exporting the illustration to a LaTeX document can again be a bit cumbersome. If you’re persistent, you can find “7b_extensive_form.svg” in the figures folder of the zip-file and edit it with Inkscape. As you see, you can use LaTeX code such as $x_1$. Then you save it as type: “Portable Document Format (*.pdf)” and choose “Omit text in PDF and create LaTeX file” and “Use exported object’s size”, which creates two new files (*.pdf and *.pdf_tex). Both must be uploaded to Overleaf to even see how the figures looks, as the files make no sense on their own. To add them to your document, search for “svg” in the main.tex file and re-use my code.
+    %   \begin{figure}[!h]
+    %     \center
+    %     \def\svgwidth{.8\columnwidth}
+    %     \import{figures/}{long_.pdf_tex}
+    %   \end{figure}
+    % \vfill\null \columnbreak
+    Matrix, no player names:
+    \vspace{-10pt}
+    \begin{table} % as opposed to matrices with player names, each line does not start with "&" as there's no empty column for the name-box. Otherwise, see the explanations below.
+      \begin{tabular}{l|c|c|}
+        \multicolumn{1}{c}{} & \multicolumn{1}{c}{L (q)} & \multicolumn{1}{c}{R (1-q)} \\\cline{2-3}
+        T (p)   &  &  \\\cline{2-3}
+        B (1-p) &  &  \\\cline{2-3}
+      \end{tabular}
+    \end{table}
+    Matrix, no colors:
+    \vspace{-10pt}
+    \begin{table}
+      \begin{tabular}{cl|c|c|} % the number of total columns and which have vertical lines between them (left-align or center text).
+        & \multicolumn{1}{c}{} & \multicolumn{2}{c}{Player 2}\\ % "2" is the number of columns in the matrix that the 2nd player name spans over
+        \parbox[t]{1mm}{\multirow{3}{*}{\rotatebox[origin=r]{90}{Player 1}}} % "3" is the number of rows the 1st player name spans over (including the one with the column names)
+        & \multicolumn{1}{c}{} & \multicolumn{1}{c}{L (q)} & \multicolumn{1}{c}{R (1-q)} \\\cline{3-4} % column names use the "\multicolumn" command to not draw vertical lines between them.
+        & T (p)   &  &  \\\cline{3-4} % a horizontal line is drawn after the line break using "\cline{x-y}" where x and y are the column numbers of the cells to be underlined.
+        & B (1-p) &  &  \\\cline{3-4}
+      \end{tabular}
+    \end{table}
+    Matrix, with colors:
+    \vspace{-10pt}
+    \begin{table}
+      \begin{tabular}{cl|c|c|}
+        & \multicolumn{1}{c}{} & \multicolumn{2}{c}{\color{blue}Player 2}\\
+        \parbox[t]{1mm}{\multirow{3}{*}{\rotatebox[origin=r]{90}{\color{red}Player 1}}}
+        & \multicolumn{1}{c}{} & \multicolumn{1}{c}{L (q)} & \multicolumn{1}{c}{R (1-q)} \\\cline{3-4}
+        & T (p)   & \textcolor{red}{1}, \textcolor{blue}{1} &   \\\cline{3-4}
+        & B (1-p) &  &  \\\cline{3-4}
+      \end{tabular}
+    \end{table}
+  \vfill\null
+  \end{multicols}
+\end{frame}

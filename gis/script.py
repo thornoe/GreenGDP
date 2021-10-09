@@ -31,7 +31,8 @@ arcpy.env.overwriteOutput = True    # set overwrite option
 ###############################################################################
 # Specify the parent folder as the working directory of the operating system
 # os.chdir(arcpy.GetParameterAsText(0))
-path = r'C:\Users\jwz766\Documents\GitHub\gnnp\gis'
+root = r'C:\Users\au687527\GitHub\GNNP'
+path = root + '\\gis'
 arcpy.env.workspace = path
 os.chdir(path)
 
@@ -64,9 +65,6 @@ wfs_size = {'streams':'g_len'}
 
 # Specify the field (column) names in the fc that contain the water body type
 wfs_typology = {'streams':'f_vl_typo'}
-
-
-
 
 
 ###############################################################################
