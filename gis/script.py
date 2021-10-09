@@ -36,7 +36,6 @@ path = root + '\\gis'
 arcpy.env.workspace = path
 os.chdir(path)
 
-
 # Specify whether to keep the geodatabase when the script finishes
 # keep_gdb = arcpy.GetParameterAsText(1)
 keep_gdb = 0
