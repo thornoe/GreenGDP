@@ -1,6 +1,6 @@
-PWD c:\Users\au687527\GitHub\GNNP\presentation
+PWD c:\Users\au687527\GitHub\GNNP\præsentation
 INPUT C:\Users\au687527\AppData\Local\MiKTeX\miktex\data\le\pdftex\pdflatex.fmt
-INPUT c:\Users\au687527\GitHub\GNNP\presentation\main.tex
+INPUT c:\Users\au687527\GitHub\GNNP\præsentation\main.tex
 OUTPUT main.log
 INPUT .\sections\preample.tex
 INPUT sections\preample.tex
@@ -1321,6 +1321,12 @@ INPUT .\figures\DVFI.png
 INPUT .\figures\DVFI.png
 INPUT .\figures\DVFI.png
 INPUT .\figures\DVFI.png
+INPUT .\figures\chlorophyll_lakes.png
+INPUT figures\chlorophyll_lakes.png
+INPUT .\figures\chlorophyll_lakes.png
+INPUT .\figures\chlorophyll_lakes.png
+INPUT .\figures\chlorophyll_lakes.png
+INPUT .\figures\chlorophyll_lakes.png
 INPUT C:\Users\au687527\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\rm-lmss10.tfm
 INPUT C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex\latex\lm\omllmm.fd
 INPUT C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex\latex\lm\omllmm.fd
@@ -1372,12 +1378,6 @@ INPUT C:\Users\au687527\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\lmbsy1
 INPUT C:\Users\au687527\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\lmbsy10.tfm
 INPUT C:\Users\au687527\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\rm-lmssbo10.tfm
 INPUT C:\Users\au687527\AppData\Local\Programs\MiKTeX\fonts\tfm\public\lm\rm-lmssbo10.tfm
-INPUT .\figures\chlorophyll_lakes.png
-INPUT figures\chlorophyll_lakes.png
-INPUT .\figures\chlorophyll_lakes.png
-INPUT .\figures\chlorophyll_lakes.png
-INPUT .\figures\chlorophyll_lakes.png
-INPUT .\figures\chlorophyll_lakes.png
 INPUT .\figures\chlorophyll_fjords_coastal.png
 INPUT figures\chlorophyll_fjords_coastal.png
 INPUT .\figures\chlorophyll_fjords_coastal.png

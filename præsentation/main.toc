@@ -1,0 +1,5 @@
+\beamer@sectionintoc {1}{Rammer for vandmiljøet}{3}{0}{1}
+\beamer@sectionintoc {2}{Overfladevand}{5}{0}{2}
+\beamer@sectionintoc {3}{Imputering og ekstrapolering}{6}{0}{3}
+\beamer@sectionintoc {4}{Grundvand}{11}{0}{4}
+\beamer@sectionintoc {5}{Værdisætning}{15}{0}{5}

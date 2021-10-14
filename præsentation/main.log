@@ -1,7 +1,7 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (MiKTeX 21.3) (preloaded format=pdflatex 2021.5.17)  12 OCT 2021 23:45
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (MiKTeX 21.3) (preloaded format=pdflatex 2021.5.17)  14 OCT 2021 15:33
 entering extended mode
-**c:/Users/au687527/GitHub/GNNP/presentation/main.tex
-(c:/Users/au687527/GitHub/GNNP/presentation/main.tex
+**c:/Users/au687527/GitHub/GNNP/præsentation/main.tex
+(c:/Users/au687527/GitHub/GNNP/præsentation/main.tex
 LaTeX2e <2020-10-01> patch level 4
 L3 programming layer <2021-05-07> (sections/preample.tex (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/beamer\beamer.cls
 Document Class: beamer 2021/03/19 v3.62 A class for typesetting presentations
@@ -809,105 +809,89 @@ Dictionary: translator-theorem-dictionary, Language: English
 
 ] (sections/01_intro.tex
 LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <12> not available
-(Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 9.
+(Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 16.
  [3
-
-] [4
 
 ]
 LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <12> not available
-(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 25.
- [5
-
-]
+(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 44.
 LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <10.95> not available
 (Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 44.
- [6
+ [4
 
-]) (sections/02_surface.tex [7
+]) (sections/02_surface.tex [5
 
-] [8
-
-]) (sections/03_imputation.tex [9
-
-] [10
-
-] [11
-
-] [12
+]) (sections/03_imputation.tex [6
 
 ]
-<figures/DVFI.png, id=384, 742.775pt x 384.43625pt>
+<figures/DVFI.png, id=227, 742.775pt x 384.43625pt>
 File: figures/DVFI.png Graphic file (type png)
 <use figures/DVFI.png>
 Package pdftex.def Info: figures/DVFI.png  used on input line 57.
 (pdftex.def)             Requested size: 340.6956pt x 176.33833pt.
- [13
+ [7
 
  <./figures/DVFI.png>]
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 65.
- (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/lm\omllmm.fd
-File: omllmm.fd 2009/10/30 v1.6 Font defs for Latin Modern
-)
-LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 65.
- (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/lm\omslmsy.fd
-File: omslmsy.fd 2009/10/30 v1.6 Font defs for Latin Modern
-)
-LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 65.
- (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/lm\omxlmex.fd
-File: omxlmex.fd 2009/10/30 v1.6 Font defs for Latin Modern
-)
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <17.28> on input line 65.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 65.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 65.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 65.
- (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
-File: umsa.fd 2013/01/14 v3.01 AMS symbols A
-)
-LaTeX Font Info:    Trying to load font information for U+msb on input line 65.
- (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
-File: umsb.fd 2013/01/14 v3.01 AMS symbols B
-)
-LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <17.28> not available
-(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 65.
-LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <10> not available
-(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 65.
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 65.
- (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmr.fd
-File: ot1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
-)
-LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <17.28> not available
-(Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 65.
-LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <10> not available
-(Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 65.
- [14
-
-]
-<figures/chlorophyll_lakes.png, id=442, 1147.28625pt x 510.40688pt>
+<figures/chlorophyll_lakes.png, id=257, 1147.28625pt x 510.40688pt>
 File: figures/chlorophyll_lakes.png Graphic file (type png)
 <use figures/chlorophyll_lakes.png>
 Package pdftex.def Info: figures/chlorophyll_lakes.png  used on input line 73.
 (pdftex.def)             Requested size: 340.6956pt x 151.5656pt.
- [15
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 73.
+ (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/lm\omllmm.fd
+File: omllmm.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 73.
+ (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/lm\omslmsy.fd
+File: omslmsy.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 73.
+ (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/lm\omxlmex.fd
+File: omxlmex.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <17.28> on input line 73.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <12> on input line 73.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <10> on input line 73.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 73.
+ (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 73.
+ (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)
+LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <17.28> not available
+(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 73.
+LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <10> not available
+(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 73.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 73.
+ (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmr.fd
+File: ot1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
+)
+LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <17.28> not available
+(Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 73.
+LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <10> not available
+(Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 73.
+ [8
 
  <./figures/chlorophyll_lakes.png>]
-<figures/chlorophyll_fjords_coastal.png, id=469, 693.34032pt x 360.59718pt>
+<figures/chlorophyll_fjords_coastal.png, id=286, 693.34032pt x 360.59718pt>
 File: figures/chlorophyll_fjords_coastal.png Graphic file (type png)
 <use figures/chlorophyll_fjords_coastal.png>
 Package pdftex.def Info: figures/chlorophyll_fjords_coastal.png  used on input line 80.
 (pdftex.def)             Requested size: 340.6956pt x 177.19487pt.
- [16
+ [9
 
  <./figures/chlorophyll_fjords_coastal.png>]
-<figures/eelgrass.png, id=495, 1215.79219pt x 633.86812pt>
+<figures/eelgrass.png, id=312, 1215.79219pt x 633.86812pt>
 File: figures/eelgrass.png Graphic file (type png)
 <use figures/eelgrass.png>
 Package pdftex.def Info: figures/eelgrass.png  used on input line 87.
 (pdftex.def)             Requested size: 340.6956pt x 177.62694pt.
- [17
+ [10
 
  <./figures/eelgrass.png>]) (sections/04_groundwater.tex
 LaTeX Font Info:    External font `lmex10' loaded for size
@@ -926,10 +910,10 @@ LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <8> not available
 (Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 13.
 LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <6> not available
 (Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 13.
- [18
+ [11
 
 ]
-<figures/nitrate.png, id=549, 598.235pt x 495.8525pt>
+<figures/nitrate.png, id=366, 598.235pt x 495.8525pt>
 File: figures/nitrate.png Graphic file (type png)
 <use figures/nitrate.png>
 Package pdftex.def Info: figures/nitrate.png  used on input line 18.
@@ -938,27 +922,27 @@ Package pdftex.def Info: figures/nitrate.png  used on input line 18.
 Overfull \vbox (4.1671pt too high) detected at line 18
  []
 
-[19
+[12
 
- <./figures/nitrate.png>] [20
+ <./figures/nitrate.png>] [13
 
 ]
-<figures/pesticides.png, id=603, 478.78876pt x 407.27156pt>
+<figures/pesticides.png, id=420, 478.78876pt x 407.27156pt>
 File: figures/pesticides.png Graphic file (type png)
 <use figures/pesticides.png>
 Package pdftex.def Info: figures/pesticides.png  used on input line 32.
 (pdftex.def)             Requested size: 255.5217pt x 217.35678pt.
- [21
+ [14
 
- <./figures/pesticides.png>]) (sections/05_valuation.tex [22
+ <./figures/pesticides.png>]) (sections/05_valuation.tex [15
 
 ]
-<figures/WTP.png, id=654, 385.44pt x 204.765pt>
+<figures/WTP.png, id=471, 385.44pt x 204.765pt>
 File: figures/WTP.png Graphic file (type png)
 <use figures/WTP.png>
 Package pdftex.def Info: figures/WTP.png  used on input line 14.
 (pdftex.def)             Requested size: 340.6956pt x 180.99359pt.
- [23
+ [16
 
  <./figures/WTP.png>])
 \tf@nav=\write6
@@ -975,17 +959,17 @@ Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: 3375E36BAB58A764490D9569AAD8E074;656.
  ) 
 Here is how much of TeX's memory you used:
- 21341 strings out of 479173
- 405063 string characters out of 2852736
- 676814 words of memory out of 3000000
- 38370 multiletter control sequences out of 15000+600000
+ 21313 strings out of 479173
+ 404836 string characters out of 2852736
+ 676729 words of memory out of 3000000
+ 38356 multiletter control sequences out of 15000+600000
  487136 words of font info for 92 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 133i,15n,129p,535b,602s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 133i,15n,129p,536b,602s stack positions out of 5000i,500n,10000p,200000b,80000s
 {C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}{C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}{C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc}<C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi12.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss12.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss17.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss8.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmssbo10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmssbx10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsso10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsso12.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsso17.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb>
-Output written on main.pdf (23 pages, 3349303 bytes).
+Output written on main.pdf (16 pages, 3308275 bytes).
 PDF statistics:
- 733 PDF objects out of 1000 (max. 8388607)
- 52 named destinations out of 1000 (max. 500000)
+ 548 PDF objects out of 1000 (max. 8388607)
+ 38 named destinations out of 1000 (max. 500000)
  172 words of extra memory for PDF output out of 10000 (max. 10000000)
 
