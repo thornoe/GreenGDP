@@ -1,3 +1,4 @@
 \beamer@sectionintoc {1}{Motivation and framework}{3}{0}{1}
 \beamer@sectionintoc {2}{Contributions}{6}{0}{2}
-\beamer@sectionintoc {3}{Preliminary results and discussion}{7}{0}{3}
+\beamer@sectionintoc {3}{Examples of stated preferences}{7}{0}{3}
+\beamer@sectionintoc {4}{Preliminary results and discussion}{9}{0}{4}
