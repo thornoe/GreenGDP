@@ -1,0 +1,36 @@
+\section{Project overview}
+
+\begin{frame}{Part 1: Panels of ecological status}
+  Construct complete panels of ecological status for 1990-2020 comprising every Danish waterbody.\\\bigskip
+  Data generating proces:
+  \begin{enumerate}
+    \item Biologists' field observations with GPS coordinates.
+    \item Assign point observations to matching water bodies.
+    \item Impute missing observations
+    \begin{itemize}
+      \item Estimated by \textit{multivariate imputation by chained equations (MICE)} where a \textit{fully conditional specification (FCS)} is constituted by a conditional density for each year.
+      \item Physical characteristics are included in a \textit{Bayesian ridge regression} using \textit{iteratively-reweighted regularized least-squares}.
+    \end{itemize}
+    \item Extrapolation of ecological status of streams for 1990 and 1991.
+  \end{enumerate}
+  \note{\textit{Our contributions are twofold.}\\\bigskip
+    \textbf{CONTRIBUTION 1}\\
+    \textbf{(...)} i.e. for all streams, lakes, fjords, coastal waters and groundwater bodies. DGP:
+    \begin{enumerate}
+      \item ... apply the conservative approach of using the observation that indicates the worst quality.
+      \item ... included in the latest Danish waterbody plan.
+      \item ... the reason is that data isn't representative but has a systematic overrepresentation of larger waterbodies and those of special concern for the ecological quality.
+      \item ... by estimating a linear trend and using it to predict.
+    \end{enumerate}
+  }
+\end{frame}
+\begin{frame}{Contribution 2: Apply valuation studies}
+  Shadow prices measured by the marginal current benefits of improving the quality of the Danish water environment on a national level.\\\bigskip
+  I.e. the marginal willingness to pay using stated preference studies:
+  \begin{itemize}
+    \item \textbf{Surface waters}: Meta regressions analysis of 32 nordic studies (Zandersen et al, \textit{pending}, DCE Technical Note).
+    \item \textbf{Ground water:} \textit{Choice experiment} with only 383 respondents around Limfjorden with overrepresentation of women and higher educated (Larsen et al, 2020, IFRO Working Paper).
+  \end{itemize}
+  \note{\textbf{CONTRIBUTION 2}\\
+  }
+\end{frame}
