@@ -1,9 +1,9 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.22 (MiKTeX 21.3) (preloaded format=pdflatex 2021.5.17)  24 AUG 2022 15:05
+This is pdfTeX, Version 3.141592653-2.6-1.40.22 (MiKTeX 21.3) (preloaded format=pdflatex 2021.5.17)  6 SEP 2022 12:55
 entering extended mode
 **"c:/Users/au687527/GitHub/GNNP/presentations/2022-08 DØRS Miljøøkonomisk Konference/main.tex"
 (c:/Users/au687527/GitHub/GNNP/presentations/2022-08 DØRS Miljøøkonomisk Konference/main.tex
 LaTeX2e <2020-10-01> patch level 4
-L3 programming layer <2021-05-07> (sections/preample.tex (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/beamer\beamer.cls
+L3 programming layer <2021-05-07> (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/beamer\beamer.cls
 Document Class: beamer 2021/03/19 v3.62 A class for typesetting presentations
 (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/beamer\beamerbasemodes.sty (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/etoolbox\etoolbox.sty
 Package: etoolbox 2020/10/05 v2.5k e-TeX tools for LaTeX (JAW)
@@ -586,7 +586,7 @@ Package: amsthm 2020/05/29 v2.20.6
 ) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/beamer\beamerbasethemes.sty)) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/beamer\beamerthemedefault.sty (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/beamer\beamerfontthemedefault.sty) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/beamer\beamercolorthemedefault.sty) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/beamer\beamerinnerthemedefault.sty
 \beamer@dima=\dimen282
 \beamer@dimb=\dimen283
-) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/beamer\beamerouterthemedefault.sty))) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/base\inputenc.sty
+) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/beamer\beamerouterthemedefault.sty))) (sections/preample.tex (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/base\inputenc.sty
 Package: inputenc 2020/08/01 v1.3d Input encoding file
 \inpenc@prehook=\toks44
 \inpenc@posthook=\toks45
@@ -629,7 +629,7 @@ Package: textcomp 2020/02/02 v2.0n Standard LaTeX package
 )
 \sympureletters=\mathgroup6
 LaTeX Font Info:    Overwriting symbol font `pureletters' in version `bold'
-(Font)                  OT1/mathkerncmss/m/sl --> OT1/mathkerncmss/bx/sl on input line 10.
+(Font)                  OT1/mathkerncmss/m/sl --> OT1/mathkerncmss/bx/sl on input line 9.
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/latex-tools\bm.sty
 Package: bm 2019/07/24 v1.2d Bold Symbol Support (DPC/FMi)
 \symboldoperators=\mathgroup7
@@ -649,99 +649,185 @@ Package: nextpage 2009/09/03 v1.1a additional page commands
 \afterepigraphskip=\skip65
 \epigraphwidth=\skip66
 \epigraphrule=\skip67
+) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/latex-tools\multicol.sty
+Package: multicol 2019/12/09 v1.8y multicolumn formatting (FMi)
+\c@tracingmulticols=\count322
+\mult@box=\box72
+\multicol@leftmargin=\dimen284
+\c@unbalance=\count323
+\c@collectmore=\count324
+\doublecol@number=\count325
+\multicoltolerance=\count326
+\multicolpretolerance=\count327
+\full@width=\dimen285
+\page@free=\dimen286
+\premulticols=\dimen287
+\postmulticols=\dimen288
+\multicolsep=\skip68
+\multicolbaselineskip=\skip69
+\partial@page=\box73
+\last@line=\box74
+\maxbalancingoverflow=\dimen289
+\mult@rightbox=\box75
+\mult@grightbox=\box76
+\mult@gfirstbox=\box77
+\mult@firstbox=\box78
+\@tempa=\box79
+\@tempa=\box80
+\@tempa=\box81
+\@tempa=\box82
+\@tempa=\box83
+\@tempa=\box84
+\@tempa=\box85
+\@tempa=\box86
+\@tempa=\box87
+\@tempa=\box88
+\@tempa=\box89
+\@tempa=\box90
+\@tempa=\box91
+\@tempa=\box92
+\@tempa=\box93
+\@tempa=\box94
+\@tempa=\box95
+\@tempa=\box96
+\@tempa=\box97
+\@tempa=\box98
+\@tempa=\box99
+\@tempa=\box100
+\@tempa=\box101
+\@tempa=\box102
+\@tempa=\box103
+\@tempa=\box104
+\@tempa=\box105
+\@tempa=\box106
+\@tempa=\box107
+\@tempa=\box108
+\@tempa=\box109
+\@tempa=\box110
+\@tempa=\box111
+\@tempa=\box112
+\@tempa=\box113
+\@tempa=\box114
+\@tempa=\box115
+\c@minrows=\count328
+\c@columnbadness=\count329
+\c@finalcolumnbadness=\count330
+\last@try=\dimen290
+\multicolovershoot=\dimen291
+\multicolundershoot=\dimen292
+\mult@nat@firstbox=\box116
+\colbreak@box=\box117
+\mc@col@check@num=\count331
+) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/multirow\multirow.sty
+Package: multirow 2021/03/15 v2.8 Span multiple rows of a table
+\multirow@colwidth=\skip70
+\multirow@cntb=\count332
+\multirow@dima=\skip71
+\bigstrutjot=\dimen293
+) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/latex-tools\array.sty
+Package: array 2020/10/01 v2.5c Tabular extension package (FMi)
+\col@sep=\dimen294
+\ar@mcellbox=\box118
+\extrarowheight=\dimen295
+\NC@list=\toks46
+\extratabsurround=\skip72
+\backup@length=\skip73
+\ar@cellbox=\box119
+) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/generic/genmisc\nth.sty
+Package: nth 2002/02/27
 ) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/tcolorbox\tcolorbox.sty
 Package: tcolorbox 2020/10/09 version 4.42 text color boxes
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgf.sty
 Package: pgf 2020/12/27 v3.1.8b (3.1.8b)
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmoduleshapes.code.tex
 File: pgfmoduleshapes.code.tex 2020/12/27 v3.1.8b (3.1.8b)
-\pgfnodeparttextbox=\box72
+\pgfnodeparttextbox=\box120
 ) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmoduleplot.code.tex
 File: pgfmoduleplot.code.tex 2020/12/27 v3.1.8b (3.1.8b)
 ) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgfcomp-version-0-65.sty
 Package: pgfcomp-version-0-65 2020/12/27 v3.1.8b (3.1.8b)
-\pgf@nodesepstart=\dimen284
-\pgf@nodesepend=\dimen285
+\pgf@nodesepstart=\dimen296
+\pgf@nodesepend=\dimen297
 ) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgfcomp-version-1-18.sty
 Package: pgfcomp-version-1-18 2020/12/27 v3.1.8b (3.1.8b)
 )) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/latex-tools\verbatim.sty
 Package: verbatim 2020-07-07 v1.5u LaTeX2e package for verbatim enhancements
-\every@verbatim=\toks46
-\verbatim@line=\toks47
+\every@verbatim=\toks47
+\verbatim@line=\toks48
 \verbatim@in@stream=\read3
 ) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/environ\environ.sty
 Package: environ 2014/05/04 v0.3 A new way to define environments
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/trimspaces\trimspaces.sty
 Package: trimspaces 2009/09/17 v1.1 Trim spaces around a token list
 ))
-\tcb@titlebox=\box73
-\tcb@upperbox=\box74
-\tcb@lowerbox=\box75
-\tcb@phantombox=\box76
-\c@tcbbreakpart=\count322
-\c@tcblayer=\count323
-\c@tcolorbox@number=\count324
-\tcb@temp=\box77
-\tcb@temp=\box78
-\tcb@temp=\box79
-\tcb@temp=\box80
+\tcb@titlebox=\box121
+\tcb@upperbox=\box122
+\tcb@lowerbox=\box123
+\tcb@phantombox=\box124
+\c@tcbbreakpart=\count333
+\c@tcblayer=\count334
+\c@tcolorbox@number=\count335
+\tcb@temp=\box125
+\tcb@temp=\box126
+\tcb@temp=\box127
+\tcb@temp=\box128
 \tcb@out=\write5
 \tcb@record@out=\write6
 ) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/beamer\beamerthemeMadrid.sty (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/beamer\beamercolorthemewhale.sty) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/beamer\beamercolorthemeorchid.sty) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/beamer\beamerinnerthemerounded.sty) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/beamer\beamerouterthemeinfolines.sty))) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfpages.sty
 Package: pgfpages 2011/01/05 ver 0.02
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/latex-tools\calc.sty
 Package: calc 2017/05/25 v4.3 Infix arithmetic (KKT,FJ)
-\calc@Acount=\count325
-\calc@Bcount=\count326
-\calc@Adimen=\dimen286
-\calc@Bdimen=\dimen287
-\calc@Askip=\skip68
-\calc@Bskip=\skip69
+\calc@Acount=\count336
+\calc@Bcount=\count337
+\calc@Adimen=\dimen298
+\calc@Bdimen=\dimen299
+\calc@Askip=\skip74
+\calc@Bskip=\skip75
 LaTeX Info: Redefining \setlength on input line 80.
 LaTeX Info: Redefining \addtolength on input line 81.
-\calc@Ccount=\count327
-\calc@Cskip=\skip70
+\calc@Ccount=\count338
+\calc@Cskip=\skip76
 )
-\pgf@logicalpages=\count328
-\pgf@firstshipout=\count329
-\pgf@lastshipout=\count330
-\pgf@currentshipout=\count331
-\pgf@cpn=\count332
-\pgf@shipoutnextto=\count333
-\pgfphysicalheight=\dimen288
-\pgfphysicalwidth=\dimen289
-\pgfpages@shipoutbox=\box81
+\pgf@logicalpages=\count339
+\pgf@firstshipout=\count340
+\pgf@lastshipout=\count341
+\pgf@currentshipout=\count342
+\pgf@cpn=\count343
+\pgf@shipoutnextto=\count344
+\pgfphysicalheight=\dimen300
+\pgfphysicalwidth=\dimen301
+\pgfpages@shipoutbox=\box129
 )
-\pgfpages@box@1=\box82
-\pgfpages@box@2=\box83
-LaTeX Font Info:    Trying to load font information for OT1+lmss on input line 14.
+\pgfpages@box@1=\box130
+\pgfpages@box@2=\box131
+LaTeX Font Info:    Trying to load font information for OT1+lmss on input line 16.
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmss.fd
 File: ot1lmss.fd 2009/10/30 v1.6 Font defs for Latin Modern
 ) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-pdftex.def
 File: l3backend-pdftex.def 2021-05-07 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count334
-\l__pdf_internal_box=\box84
+\l__color_backend_stack_int=\count345
+\l__pdf_internal_box=\box132
 ) (main.aux)
 \openout1 = `main.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 14.
-LaTeX Font Info:    ... okay on input line 14.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 14.
-LaTeX Font Info:    ... okay on input line 14.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 14.
-LaTeX Font Info:    ... okay on input line 14.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 14.
-LaTeX Font Info:    ... okay on input line 14.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 14.
-LaTeX Font Info:    ... okay on input line 14.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 14.
-LaTeX Font Info:    ... okay on input line 14.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 14.
-LaTeX Font Info:    ... okay on input line 14.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 14.
-LaTeX Font Info:    ... okay on input line 14.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 14.
-LaTeX Font Info:    ... okay on input line 14.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 16.
+LaTeX Font Info:    ... okay on input line 16.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -779,24 +865,24 @@ LaTeX Font Info:    ... okay on input line 14.
 
 (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count335
-\scratchdimen=\dimen290
-\scratchbox=\box85
-\nofMPsegments=\count336
-\nofMParguments=\count337
-\everyMPshowfont=\toks48
-\MPscratchCnt=\count338
-\MPscratchDim=\dimen291
-\MPnumerator=\count339
-\makeMPintoPDFobject=\count340
-\everyMPtoPDFconversion=\toks49
+\scratchcounter=\count346
+\scratchdimen=\dimen302
+\scratchbox=\box133
+\nofMPsegments=\count347
+\nofMParguments=\count348
+\everyMPshowfont=\toks49
+\MPscratchCnt=\count349
+\MPscratchDim=\dimen303
+\MPnumerator=\count350
+\makeMPintoPDFobject=\count351
+\everyMPtoPDFconversion=\toks50
 ) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
 Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 485.
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/00miktex\epstopdf-sys.cfg
 File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
 ))
-Package hyperref Info: Link coloring OFF on input line 14.
+Package hyperref Info: Link coloring OFF on input line 16.
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\nameref.sty
 Package: nameref 2021-04-02 v2.47 Cross-referencing by name of section
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/refcount\refcount.sty
@@ -804,66 +890,66 @@ Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
 ) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/generic/gettitlestring\gettitlestring.sty
 Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
 )
-\c@section@level=\count341
+\c@section@level=\count352
 )
-LaTeX Info: Redefining \ref on input line 14.
-LaTeX Info: Redefining \pageref on input line 14.
-LaTeX Info: Redefining \nameref on input line 14.
+LaTeX Info: Redefining \ref on input line 16.
+LaTeX Info: Redefining \pageref on input line 16.
+LaTeX Info: Redefining \nameref on input line 16.
  (main.out) (main.out)
 \@outlinefile=\write7
 \openout7 = `main.out'.
 
 LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
-(Font)                  OT1/lmr/m/n --> OT1/cmss/m/n on input line 14.
+(Font)                  OT1/lmr/m/n --> OT1/cmss/m/n on input line 16.
 LaTeX Font Info:    Overwriting symbol font `operators' in version `bold'
-(Font)                  OT1/lmr/bx/n --> OT1/cmss/b/n on input line 14.
+(Font)                  OT1/lmr/bx/n --> OT1/cmss/b/n on input line 16.
 LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
-(Font)                  OT1/cmss/m/n --> OT1/lmss/m/n on input line 14.
+(Font)                  OT1/cmss/m/n --> OT1/lmss/m/n on input line 16.
 LaTeX Font Info:    Overwriting symbol font `operators' in version `bold'
-(Font)                  OT1/cmss/b/n --> OT1/lmss/b/n on input line 14.
+(Font)                  OT1/cmss/b/n --> OT1/lmss/b/n on input line 16.
 \symnumbers=\mathgroup11
-LaTeX Font Info:    Redeclaring symbol font `pureletters' on input line 14.
+LaTeX Font Info:    Redeclaring symbol font `pureletters' on input line 16.
 LaTeX Font Info:    Overwriting symbol font `pureletters' in version `normal'
-(Font)                  OT1/mathkerncmss/m/sl --> OT1/lmss/m/it on input line 14.
+(Font)                  OT1/mathkerncmss/m/sl --> OT1/lmss/m/it on input line 16.
 LaTeX Font Info:    Overwriting symbol font `pureletters' in version `bold'
-(Font)                  OT1/mathkerncmss/bx/sl --> OT1/lmss/m/it on input line 14.
+(Font)                  OT1/mathkerncmss/bx/sl --> OT1/lmss/m/it on input line 16.
 LaTeX Font Info:    Overwriting math alphabet `\mathrm' in version `normal'
-(Font)                  OT1/lmss/m/n --> OT1/lmr/m/n on input line 14.
-LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 14.
-LaTeX Font Info:    Redeclaring math alphabet \mathsf on input line 14.
+(Font)                  OT1/lmss/m/n --> OT1/lmr/m/n on input line 16.
+LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 16.
+LaTeX Font Info:    Redeclaring math alphabet \mathsf on input line 16.
 LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `normal'
-(Font)                  OT1/lmss/m/n --> OT1/lmss/m/n on input line 14.
+(Font)                  OT1/lmss/m/n --> OT1/lmss/m/n on input line 16.
 LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `bold'
-(Font)                  OT1/lmss/bx/n --> OT1/lmss/m/n on input line 14.
-LaTeX Font Info:    Redeclaring math alphabet \mathit on input line 14.
+(Font)                  OT1/lmss/bx/n --> OT1/lmss/m/n on input line 16.
+LaTeX Font Info:    Redeclaring math alphabet \mathit on input line 16.
 LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `normal'
-(Font)                  OT1/lmr/m/it --> OT1/lmss/m/it on input line 14.
+(Font)                  OT1/lmr/m/it --> OT1/lmss/m/it on input line 16.
 LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
-(Font)                  OT1/lmr/bx/it --> OT1/lmss/m/it on input line 14.
-LaTeX Font Info:    Redeclaring math alphabet \mathtt on input line 14.
+(Font)                  OT1/lmr/bx/it --> OT1/lmss/m/it on input line 16.
+LaTeX Font Info:    Redeclaring math alphabet \mathtt on input line 16.
 LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `normal'
-(Font)                  OT1/lmtt/m/n --> OT1/lmtt/m/n on input line 14.
+(Font)                  OT1/lmtt/m/n --> OT1/lmtt/m/n on input line 16.
 LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
-(Font)                  OT1/lmtt/m/n --> OT1/lmtt/m/n on input line 14.
+(Font)                  OT1/lmtt/m/n --> OT1/lmtt/m/n on input line 16.
 LaTeX Font Info:    Overwriting symbol font `numbers' in version `bold'
-(Font)                  OT1/lmss/m/n --> OT1/lmss/b/n on input line 14.
+(Font)                  OT1/lmss/m/n --> OT1/lmss/b/n on input line 16.
 LaTeX Font Info:    Overwriting symbol font `pureletters' in version `bold'
-(Font)                  OT1/lmss/m/it --> OT1/lmss/b/it on input line 14.
+(Font)                  OT1/lmss/m/it --> OT1/lmss/b/it on input line 16.
 LaTeX Font Info:    Overwriting math alphabet `\mathrm' in version `bold'
-(Font)                  OT1/lmss/b/n --> OT1/lmr/b/n on input line 14.
+(Font)                  OT1/lmss/b/n --> OT1/lmr/b/n on input line 16.
 LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `bold'
-(Font)                  OT1/lmss/b/n --> OT1/lmss/b/n on input line 14.
+(Font)                  OT1/lmss/b/n --> OT1/lmss/b/n on input line 16.
 LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `bold'
-(Font)                  OT1/lmss/m/n --> OT1/lmss/b/n on input line 14.
+(Font)                  OT1/lmss/m/n --> OT1/lmss/b/n on input line 16.
 LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
-(Font)                  OT1/lmss/m/it --> OT1/lmss/b/it on input line 14.
+(Font)                  OT1/lmss/m/it --> OT1/lmss/b/it on input line 16.
 LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
-(Font)                  OT1/lmtt/m/n --> OT1/lmtt/b/n on input line 14.
-LaTeX Font Info:    Redeclaring symbol font `boldpureletters' on input line 14.
+(Font)                  OT1/lmtt/m/n --> OT1/lmtt/b/n on input line 16.
+LaTeX Font Info:    Redeclaring symbol font `boldpureletters' on input line 16.
 LaTeX Font Info:    Overwriting symbol font `boldpureletters' in version `normal'
-(Font)                  OT1/mathkerncmss/bx/sl --> OT1/lmss/bx/it on input line 14.
+(Font)                  OT1/mathkerncmss/bx/sl --> OT1/lmss/bx/it on input line 16.
 LaTeX Font Info:    Overwriting symbol font `boldpureletters' in version `bold'
-(Font)                  OT1/mathkerncmss/bx/sl --> OT1/lmss/bx/it on input line 14.
+(Font)                  OT1/mathkerncmss/bx/sl --> OT1/lmss/bx/it on input line 16.
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/translator\translator-basic-dictionary-English.dict
 Dictionary: translator-basic-dictionary, Language: English 
 ) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/translator\translator-bibliography-dictionary-English.dict
@@ -877,68 +963,68 @@ Dictionary: translator-numbers-dictionary, Language: English
 ) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/translator\translator-theorem-dictionary-English.dict
 Dictionary: translator-theorem-dictionary, Language: English 
 ) (main.nav)
-LaTeX Font Info:    Trying to load font information for OML+lmm on input line 20.
+LaTeX Font Info:    Trying to load font information for OML+lmm on input line 22.
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/lm\omllmm.fd
 File: omllmm.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 20.
+LaTeX Font Info:    Trying to load font information for OMS+lmsy on input line 22.
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/lm\omslmsy.fd
 File: omslmsy.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
-LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 20.
+LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 22.
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/lm\omxlmex.fd
 File: omxlmex.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 20.
+(Font)              <12> on input line 22.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <8> on input line 20.
+(Font)              <8> on input line 22.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <6> on input line 20.
-LaTeX Font Info:    Trying to load font information for U+msa on input line 20.
+(Font)              <6> on input line 22.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 22.
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 20.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 22.
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
 LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <12> not available
-(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 20.
+(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 22.
 LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <8> not available
-(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 20.
+(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 22.
 LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <6> not available
-(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 20.
-LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 20.
+(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 22.
+LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 22.
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmr.fd
 File: ot1lmr.fd 2009/10/30 v1.6 Font defs for Latin Modern
 )
 LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <12> not available
-(Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 20.
+(Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 22.
 LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <8> not available
-(Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 20.
+(Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 22.
 LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <6> not available
-(Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 20.
+(Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 22.
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <5> on input line 20.
+(Font)              <5> on input line 22.
 LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <5> not available
-(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 20.
+(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 22.
 LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <5> not available
-(Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 20.
+(Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 22.
 LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <10> not available
-(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 20.
+(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 22.
  (main.toc) [2
 
 {C:/Users/au687527/AppData/Local/MiKTeX/pdftex/config/pdftex.map}pdfTeX warning (ext4): destination with the same identifier (name{Navigation1}) has been already used, duplicate ignored
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.28 \end{frame}
+l.30 \end{frame}
                 pdfTeX warning (ext4): destination with the same identifier (name{page.1}) has been already used, duplicate ignored
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.28 \end{frame}
+l.30 \end{frame}
                 
 
 ] (sections/01_intro.tex
@@ -1042,12 +1128,12 @@ pdfTeX warning (ext4): destination with the same identifier (name{Navigation8}) 
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.95 \end{frame}
+l.96 \end{frame}
                 pdfTeX warning (ext4): destination with the same identifier (name{page.8}) has been already used, duplicate ignored
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.95 \end{frame}
+l.96 \end{frame}
                 
 
 ] [10
@@ -1056,118 +1142,384 @@ pdfTeX warning (ext4): destination with the same identifier (name{Navigation9}) 
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.95 \end{frame}
+l.96 \end{frame}
                 pdfTeX warning (ext4): destination with the same identifier (name{page.9}) has been already used, duplicate ignored
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.95 \end{frame}
+l.96 \end{frame}
                 
 
-]) (sections/02_overview.tex [11
+]
+<figures/algae.jpg, id=162, 2409.0pt x 1606.0pt>
+File: figures/algae.jpg Graphic file (type jpg)
+<use figures/algae.jpg>
+Package pdftex.def Info: figures/algae.jpg  used on input line 142.
+(pdftex.def)             Requested size: 374.76723pt x 249.83414pt.
+
+Overfull \hbox (13.92041pt too wide) in paragraph at lines 142--142
+  [] 
+ []
+
+
+Overfull \vbox (127.2516pt too high) detected at line 142
+ []
+
+[11
 
 pdfTeX warning (ext4): destination with the same identifier (name{Navigation10}) has been already used, duplicate ignored
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.26 \end{frame}
-                pdfTeX warning (ext4): destination with the same identifier (name{page.10}) has been already used, duplicate ignored
+l.142 \end{frame}
+                 pdfTeX warning (ext4): destination with the same identifier (name{page.10}) has been already used, duplicate ignored
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.26 \end{frame}
-                
+l.142 \end{frame}
+                 
 
-] [12
+]
+File: figures/algae.jpg Graphic file (type jpg)
+<use figures/algae.jpg>
+Package pdftex.def Info: figures/algae.jpg  used on input line 142.
+(pdftex.def)             Requested size: 374.76723pt x 249.83414pt.
+
+Overfull \hbox (13.92041pt too wide) in paragraph at lines 142--142
+  [] 
+ []
+
+
+Overfull \vbox (127.2516pt too high) detected at line 142
+ []
+
+[12
 
 pdfTeX warning (ext4): destination with the same identifier (name{Navigation11}) has been already used, duplicate ignored
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.36 \end{frame}
-                pdfTeX warning (ext4): destination with the same identifier (name{page.11}) has been already used, duplicate ignored
+l.142 \end{frame}
+                 pdfTeX warning (ext4): destination with the same identifier (name{page.11}) has been already used, duplicate ignored
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.36 \end{frame}
-                
+l.142 \end{frame}
+                 
 
-]) (sections/03_examples.tex
-<figures/IFRO_WP_characteristic_groundwater.png, id=168, 899.7615pt x 461.3235pt>
-File: figures/IFRO_WP_characteristic_groundwater.png Graphic file (type png)
-<use figures/IFRO_WP_characteristic_groundwater.png>
-Package pdftex.def Info: figures/IFRO_WP_characteristic_groundwater.png  used on input line 9.
-(pdftex.def)             Requested size: 340.6956pt x 174.67825pt.
- [13
+ <./figures/algae.jpg>]
+File: figures/algae.jpg Graphic file (type jpg)
+<use figures/algae.jpg>
+Package pdftex.def Info: figures/algae.jpg  used on input line 142.
+(pdftex.def)             Requested size: 374.76723pt x 249.83414pt.
+
+Overfull \hbox (13.92041pt too wide) in paragraph at lines 142--142
+  [] 
+ []
+
+
+Overfull \vbox (127.2516pt too high) detected at line 142
+ []
+
+[13
 
 pdfTeX warning (ext4): destination with the same identifier (name{Navigation12}) has been already used, duplicate ignored
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.9 \end{frame}
-               pdfTeX warning (ext4): destination with the same identifier (name{page.12}) has been already used, duplicate ignored
+l.142 \end{frame}
+                 pdfTeX warning (ext4): destination with the same identifier (name{page.12}) has been already used, duplicate ignored
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.9 \end{frame}
-               
+l.142 \end{frame}
+                 
 
 ]
-Overfull \vbox (1.32172pt too high) detected at line 9
+File: figures/algae.jpg Graphic file (type jpg)
+<use figures/algae.jpg>
+Package pdftex.def Info: figures/algae.jpg  used on input line 142.
+(pdftex.def)             Requested size: 374.76723pt x 249.83414pt.
+
+Overfull \hbox (13.92041pt too wide) in paragraph at lines 142--142
+  [] 
  []
 
-<figures/IFRO_WP_choice_groundwater.png, id=180, 885.3075pt x 525.46312pt>
-File: figures/IFRO_WP_choice_groundwater.png Graphic file (type png)
-<use figures/IFRO_WP_choice_groundwater.png>
-Package pdftex.def Info: figures/IFRO_WP_choice_groundwater.png  used on input line 17.
-(pdftex.def)             Requested size: 340.6956pt x 202.21974pt.
+
+Overfull \vbox (127.2516pt too high) detected at line 142
+ []
+
 [14
 
 pdfTeX warning (ext4): destination with the same identifier (name{Navigation13}) has been already used, duplicate ignored
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.17 \end{frame}
-                pdfTeX warning (ext4): destination with the same identifier (name{page.13}) has been already used, duplicate ignored
+l.142 \end{frame}
+                 pdfTeX warning (ext4): destination with the same identifier (name{page.13}) has been already used, duplicate ignored
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.17 \end{frame}
-                
+l.142 \end{frame}
+                 
 
- <./figures/IFRO_WP_characteristic_groundwater.png>]
-Overfull \vbox (1.32172pt too high) detected at line 17
- []
-
-) (sections/04_results.tex [15
+]) (sections/02_status.tex [15
 
 pdfTeX warning (ext4): destination with the same identifier (name{Navigation14}) has been already used, duplicate ignored
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.15 \end{frame}
+l.45 \end{frame}
                 pdfTeX warning (ext4): destination with the same identifier (name{page.14}) has been already used, duplicate ignored
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.15 \end{frame}
+l.45 \end{frame}
                 
 
- <./figures/IFRO_WP_choice_groundwater.png>] [16
+] [16
 
 pdfTeX warning (ext4): destination with the same identifier (name{Navigation15}) has been already used, duplicate ignored
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.27 \end{frame}
+l.45 \end{frame}
                 pdfTeX warning (ext4): destination with the same identifier (name{page.15}) has been already used, duplicate ignored
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.27 \end{frame}
+l.45 \end{frame}
                 
 
-])
+] [17
+
+pdfTeX warning (ext4): destination with the same identifier (name{Navigation16}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.45 \end{frame}
+                pdfTeX warning (ext4): destination with the same identifier (name{page.16}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.45 \end{frame}
+                
+
+] [18
+
+pdfTeX warning (ext4): destination with the same identifier (name{Navigation17}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.45 \end{frame}
+                pdfTeX warning (ext4): destination with the same identifier (name{page.17}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.45 \end{frame}
+                
+
+] [19
+
+pdfTeX warning (ext4): destination with the same identifier (name{Navigation18}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.45 \end{frame}
+                pdfTeX warning (ext4): destination with the same identifier (name{page.18}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.45 \end{frame}
+                
+
+]
+<C:/Users/au687527/GitHub/GNNP/gis/output/missing_streams.png, id=245, 859.21pt x 526.96875pt>
+File: C:/Users/au687527/GitHub/GNNP/gis/output/missing_streams.png Graphic file (type png)
+<use C:/Users/au687527/GitHub/GNNP/gis/output/missing_streams.png>
+Package pdftex.def Info: C:/Users/au687527/GitHub/GNNP/gis/output/missing_streams.png  used on input line 64.
+(pdftex.def)             Requested size: 340.6956pt x 208.95848pt.
+
+Overfull \vbox (1.7097pt too high) detected at line 64
+ []
+
+[20
+
+pdfTeX warning (ext4): destination with the same identifier (name{Navigation19}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.64 \end{frame}
+                pdfTeX warning (ext4): destination with the same identifier (name{page.19}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.64 \end{frame}
+                
+
+]
+Overfull \vbox (0.31508pt too high) detected at line 64
+ []
+
+<C:/Users/au687527/GitHub/GNNP/gis/output/streams2019.pdf, id=257, 597.5067pt x 845.04514pt>
+File: C:/Users/au687527/GitHub/GNNP/gis/output/streams2019.pdf Graphic file (type pdf)
+<use C:/Users/au687527/GitHub/GNNP/gis/output/streams2019.pdf>
+Package pdftex.def Info: C:/Users/au687527/GitHub/GNNP/gis/output/streams2019.pdf  used on input line 74.
+(pdftex.def)             Requested size: 238.48587pt x 337.28998pt.
+
+Overfull \vbox (41.97615pt too high) detected at line 74
+ []
+
+[21
+
+pdfTeX warning (ext4): destination with the same identifier (name{Navigation20}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.74 \end{frame}
+                pdfTeX warning (ext4): destination with the same identifier (name{page.20}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.74 \end{frame}
+                
+
+ <C:/Users/au687527/GitHub/GNNP/gis/output/missing_streams.png>]) (sections/03_valuation.tex [22
+
+pdfTeX warning (ext4): destination with the same identifier (name{Navigation21}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.29 \end{frame}
+                pdfTeX warning (ext4): destination with the same identifier (name{page.21}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.29 \end{frame}
+                
+
+ <C:/Users/au687527/GitHub/GNNP/gis/output/streams2019.pdf>] [23
+
+pdfTeX warning (ext4): destination with the same identifier (name{Navigation22}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.29 \end{frame}
+                pdfTeX warning (ext4): destination with the same identifier (name{page.22}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.29 \end{frame}
+                
+
+] [24
+
+pdfTeX warning (ext4): destination with the same identifier (name{Navigation23}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.29 \end{frame}
+                pdfTeX warning (ext4): destination with the same identifier (name{page.23}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.29 \end{frame}
+                
+
+] [25
+
+pdfTeX warning (ext4): destination with the same identifier (name{Navigation24}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.29 \end{frame}
+                pdfTeX warning (ext4): destination with the same identifier (name{page.24}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.29 \end{frame}
+                
+
+]) (sections/04_decomposition.tex [26
+
+pdfTeX warning (ext4): destination with the same identifier (name{Navigation25}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.18 \end{frame}
+                pdfTeX warning (ext4): destination with the same identifier (name{page.25}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.18 \end{frame}
+                
+
+]) (sections/05_conclusion.tex [27
+
+pdfTeX warning (ext4): destination with the same identifier (name{Navigation26}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.31 \end{frame}
+                pdfTeX warning (ext4): destination with the same identifier (name{page.26}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.31 \end{frame}
+                
+
+]) (sections/A_appendix.tex
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\translate ' on input line 1.
+
+<figures/IFRO_WP_characteristic_groundwater.png, id=374, 899.7615pt x 461.3235pt>
+File: figures/IFRO_WP_characteristic_groundwater.png Graphic file (type png)
+<use figures/IFRO_WP_characteristic_groundwater.png>
+Package pdftex.def Info: figures/IFRO_WP_characteristic_groundwater.png  used on input line 11.
+(pdftex.def)             Requested size: 340.6956pt x 174.67825pt.
+[28
+
+pdfTeX warning (ext4): destination with the same identifier (name{Navigation27}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.11 \end{frame}
+                pdfTeX warning (ext4): destination with the same identifier (name{page.27}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.11 \end{frame}
+                
+
+]
+Overfull \vbox (1.32172pt too high) detected at line 11
+ []
+
+<figures/IFRO_WP_choice_groundwater.png, id=385, 885.3075pt x 525.46312pt>
+File: figures/IFRO_WP_choice_groundwater.png Graphic file (type png)
+<use figures/IFRO_WP_choice_groundwater.png>
+Package pdftex.def Info: figures/IFRO_WP_choice_groundwater.png  used on input line 20.
+(pdftex.def)             Requested size: 340.6956pt x 202.21974pt.
+[29
+
+pdfTeX warning (ext4): destination with the same identifier (name{Navigation28}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.20 \end{frame}
+                pdfTeX warning (ext4): destination with the same identifier (name{page.28}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.20 \end{frame}
+                
+
+ <./figures/IFRO_WP_characteristic_groundwater.png>]
+Overfull \vbox (1.32172pt too high) detected at line 20
+ []
+
+)
 \tf@nav=\write8
 \openout8 = `main.nav'.
 
@@ -1177,36 +1529,36 @@ l.27 \end{frame}
 \tf@snm=\write10
 \openout10 = `main.snm'.
 
- [17
+ [30
 
-pdfTeX warning (ext4): destination with the same identifier (name{Navigation16}) has been already used, duplicate ignored
-
-\pgfpages@shipoutshipoutbox ...physicalpagesizes }
-                                                  \endgroup 
-l.35 \end{document}
-                   pdfTeX warning (ext4): destination with the same identifier (name{page.16}) has been already used, duplicate ignored
+pdfTeX warning (ext4): destination with the same identifier (name{Navigation29}) has been already used, duplicate ignored
 
 \pgfpages@shipoutshipoutbox ...physicalpagesizes }
                                                   \endgroup 
-l.35 \end{document}
+l.39 \end{document}
+                   pdfTeX warning (ext4): destination with the same identifier (name{page.29}) has been already used, duplicate ignored
+
+\pgfpages@shipoutshipoutbox ...physicalpagesizes }
+                                                  \endgroup 
+l.39 \end{document}
                    
 
-] (main.aux)
+ <./figures/IFRO_WP_choice_groundwater.png>] (main.aux)
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: D90DE14DE035E8900DE434A9BEC4BC12;719.
+(rerunfilecheck)             Checksum: 159B9C353FC4ADE273D73BB94E70883E;1194.
  ) 
 Here is how much of TeX's memory you used:
- 23901 strings out of 479173
- 471023 string characters out of 2852736
- 764491 words of memory out of 3000000
- 40895 multiletter control sequences out of 15000+600000
+ 24282 strings out of 479173
+ 478012 string characters out of 2852736
+ 778732 words of memory out of 3000000
+ 41221 multiletter control sequences out of 15000+600000
  490921 words of font info for 89 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 133i,15n,129p,580b,657s stack positions out of 5000i,500n,10000p,200000b,80000s
-{C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc}{C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}{C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}{C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc}<C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi12.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss12.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss17.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss8.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmssbo10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmssbx10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsso10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsso12.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb>
-Output written on main.pdf (16 pages, 399059 bytes).
+ 128i,15n,126p,558b,657s stack positions out of 5000i,500n,10000p,200000b,80000s
+{C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}{C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc}{C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}{C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-ts1.enc}<C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss12.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss17.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss8.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmssbo10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmssbx10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsso10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsso12.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb>
+Output written on main.pdf (29 pages, 3905813 bytes).
 PDF statistics:
- 266 PDF objects out of 1000 (max. 8388607)
- 37 named destinations out of 1000 (max. 500000)
- 139 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 457 PDF objects out of 1000 (max. 8388607)
+ 68 named destinations out of 1000 (max. 500000)
+ 178 words of extra memory for PDF output out of 10000 (max. 10000000)
 
