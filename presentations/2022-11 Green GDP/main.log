@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (MiKTeX 22.8.28) (preloaded format=pdflatex 2022.9.14)  15 NOV 2022 13:36
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (MiKTeX 22.8.28) (preloaded format=pdflatex 2022.9.14)  2 DEC 2022 11:42
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -126,8 +126,8 @@ Package: pgfrcs 2021/05/15 v3.1.9a (3.1.9a)
 \pgfmath@stack@operation=\toks24
 ) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.code.tex (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.basic.code.tex) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.trigonometric.code.tex) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.random.code.tex) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.comparison.code.tex) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.base.code.tex) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.round.code.tex) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.misc.code.tex) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunctions.integerarithmetics.code.tex))) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfloat.code.tex
 \c@pgfmathroundto@lastzeros=\count285
-))) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/base\size12.clo
-File: size12.clo 2021/10/04 v1.4n Standard LaTeX file (size option)
+))) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/base\size11.clo
+File: size11.clo 2021/10/04 v1.4n Standard LaTeX file (size option)
 ) (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgfcore.sty (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphicx.sty
 Package: graphicx 2021/09/16 v1.2d Enhanced LaTeX Graphics (DPC,SPQR)
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphics.sty
@@ -776,23 +776,23 @@ LaTeX Font Info:    ... okay on input line 16.
 * layout: <same size as paper>
 * layoutoffset:(h,v)=(0.0pt,0.0pt)
 * modes: includehead includefoot 
-* h-part:(L,W,R)=(11.74988pt, 340.6956pt, 11.74988pt)
+* h-part:(L,W,R)=(10.95003pt, 342.2953pt, 10.95003pt)
 * v-part:(T,H,B)=(0.0pt, 273.14662pt, 0.0pt)
 * \paperwidth=364.19536pt
 * \paperheight=273.14662pt
-* \textwidth=340.6956pt
+* \textwidth=342.2953pt
 * \textheight=244.6939pt
-* \oddsidemargin=-60.52011pt
-* \evensidemargin=-60.52011pt
+* \oddsidemargin=-61.31996pt
+* \evensidemargin=-61.31996pt
 * \topmargin=-72.26999pt
 * \headheight=14.22636pt
 * \headsep=0.0pt
-* \topskip=12.0pt
+* \topskip=11.0pt
 * \footskip=14.22636pt
 * \marginparwidth=4.0pt
 * \marginparsep=10.0pt
 * \columnsep=10.0pt
-* \skip\footins=10.8pt plus 4.0pt minus 2.0pt
+* \skip\footins=10.0pt plus 4.0pt minus 2.0pt
 * \hoffset=0.0pt
 * \voffset=0.0pt
 * \mag=1000
@@ -903,7 +903,7 @@ LaTeX Font Info:    Trying to load font information for OMX+lmex on input line 2
 File: omxlmex.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <12> on input line 22.
+(Font)              <10.95> on input line 22.
 LaTeX Font Info:    External font `lmex10' loaded for size
 (Font)              <8> on input line 22.
 LaTeX Font Info:    External font `lmex10' loaded for size
@@ -916,7 +916,7 @@ LaTeX Font Info:    Trying to load font information for U+msb on input line 22.
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 )
-LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <12> not available
+LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <10.95> not available
 (Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 22.
 LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <8> not available
 (Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 22.
@@ -926,7 +926,7 @@ LaTeX Font Info:    Trying to load font information for OT1+lmr on input line 22
  (C:\Users\au687527\AppData\Local\Programs\MiKTeX\tex/latex/lm\ot1lmr.fd
 File: ot1lmr.fd 2015/05/01 v1.6.1 Font defs for Latin Modern
 )
-LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <12> not available
+LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <10.95> not available
 (Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 22.
 LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <8> not available
 (Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 22.
@@ -938,7 +938,7 @@ LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <5> not available
 (Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 22.
 LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <5> not available
 (Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 22.
-LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <10> not available
+LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <9> not available
 (Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 22.
  [1
 
@@ -946,122 +946,97 @@ LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <10> not available
 
 ] (sections/02_status.tex [3
 
-] [4
-
-] [5
-
-] [6
-
-] [7
-
 ]
-<C:/Users/au687527/GitHub/GNNP/gis/output/missing_streams.png, id=116, 859.21pt x 526.96875pt>
+<C:/Users/au687527/GitHub/GNNP/gis/output/missing_streams.png, id=90, 859.21pt x 526.96875pt>
 File: C:/Users/au687527/GitHub/GNNP/gis/output/missing_streams.png Graphic file (type png)
 <use C:/Users/au687527/GitHub/GNNP/gis/output/missing_streams.png>
 Package pdftex.def Info: C:/Users/au687527/GitHub/GNNP/gis/output/missing_streams.png  used on input line 67.
-(pdftex.def)             Requested size: 340.6956pt x 208.95848pt.
-
-Overfull \vbox (1.7097pt too high) detected at line 67
- []
-
-[8
+(pdftex.def)             Requested size: 342.2953pt x 209.93947pt.
+ [4
 
  <C:/Users/au687527/GitHub/GNNP/gis/output/missing_streams.png>]
-<C:/Users/au687527/GitHub/GNNP/gis/output/streams2019.pdf, id=125, 597.5067pt x 845.04514pt>
+<C:/Users/au687527/GitHub/GNNP/gis/output/streams2019.pdf, id=99, 597.5067pt x 845.04514pt>
 File: C:/Users/au687527/GitHub/GNNP/gis/output/streams2019.pdf Graphic file (type pdf)
 <use C:/Users/au687527/GitHub/GNNP/gis/output/streams2019.pdf>
 Package pdftex.def Info: C:/Users/au687527/GitHub/GNNP/gis/output/streams2019.pdf  used on input line 77.
-(pdftex.def)             Requested size: 238.48587pt x 337.28998pt.
+(pdftex.def)             Requested size: 239.60567pt x 338.86308pt.
 
-Overfull \vbox (41.97615pt too high) detected at line 77
+Overfull \vbox (43.54926pt too high) detected at line 77
  []
 
-[9
+[5
 
- <C:/Users/au687527/GitHub/GNNP/gis/output/streams2019.pdf>]) (sections/03_valuation.tex [10
-
-] [11
-
-] [12
-
-] [13
-
-] [14
+ <C:/Users/au687527/GitHub/GNNP/gis/output/streams2019.pdf>]) (sections/03_valuation.tex [6
 
 ]
 LaTeX Font Info:    Font shape `U/DSSerif/m/n' will be
-(Font)              scaled to size 12.0pt on input line 67.
+(Font)              scaled to size 10.95pt on input line 67.
 LaTeX Font Info:    Font shape `U/DSSerif/m/n' will be
 (Font)              scaled to size 8.0pt on input line 67.
 LaTeX Font Info:    Font shape `U/DSSerif/m/n' will be
 (Font)              scaled to size 6.0pt on input line 67.
- [15
+
+Overfull \hbox (11.21469pt too wide) detected at line 67
+[]
+ []
+
+[7
 
 ]
 LaTeX Font Info:    Font shape `U/DSSerif/m/n' will be
 (Font)              scaled to size 5.0pt on input line 81.
- [16
+ [8
 
 ]) (sections/04_decomposition.tex
 
 LaTeX Font Warning: Command \footnotesize invalid in math mode on input line 18.
 
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10> on input line 18.
-LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <7> on input line 18.
-LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <7> not available
-(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 18.
-LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <10> not available
-(Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 18.
-LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <7> not available
+(Font)              <9> on input line 18.
+LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <9> not available
 (Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 18.
 LaTeX Font Info:    Font shape `U/DSSerif/m/n' will be
-(Font)              scaled to size 10.0pt on input line 18.
-LaTeX Font Info:    Font shape `U/DSSerif/m/n' will be
-(Font)              scaled to size 7.0pt on input line 18.
-[17
-
-]
-
-LaTeX Font Warning: Command \footnotesize invalid in math mode on input line 18.
-
-[18
+(Font)              scaled to size 9.0pt on input line 18.
+[9
 
 ]) (sections/05_conclusion.tex
 LaTeX Font Info:    External font `lmex10' loaded for size
-(Font)              <10.95> on input line 35.
-LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <10.95> not available
+(Font)              <10> on input line 35.
+LaTeX Font Info:    External font `lmex10' loaded for size
+(Font)              <7> on input line 35.
+LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <10> not available
 (Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 35.
-LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <10.95> not available
+LaTeX Font Info:    Font shape `OT1/lmss/m/it' in size <7> not available
+(Font)              Font shape `OT1/lmss/m/sl' tried instead on input line 35.
+LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <10> not available
+(Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 35.
+LaTeX Font Info:    Font shape `OT1/lmss/bx/it' in size <7> not available
 (Font)              Font shape `OT1/lmss/bx/sl' tried instead on input line 35.
 LaTeX Font Info:    Font shape `U/DSSerif/m/n' will be
-(Font)              scaled to size 10.95pt on input line 35.
- [19
-
-] [20
-
-] [21
+(Font)              scaled to size 10.0pt on input line 35.
+LaTeX Font Info:    Font shape `U/DSSerif/m/n' will be
+(Font)              scaled to size 7.0pt on input line 35.
+ [10
 
 ]) (sections/A_appendix.tex
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
 (hyperref)                removing `\translate ' on input line 1.
 
-<figures/IFRO_WP_characteristic_groundwater.png, id=256, 899.7615pt x 461.3235pt>
+<figures/IFRO_WP_characteristic_groundwater.png, id=184, 899.7615pt x 461.3235pt>
 File: figures/IFRO_WP_characteristic_groundwater.png Graphic file (type png)
 <use figures/IFRO_WP_characteristic_groundwater.png>
 Package pdftex.def Info: figures/IFRO_WP_characteristic_groundwater.png  used on input line 11.
-(pdftex.def)             Requested size: 340.6956pt x 174.67825pt.
-[22
+(pdftex.def)             Requested size: 342.2953pt x 175.50185pt.
+[11
 
  <./figures/IFRO_WP_characteristic_groundwater.png>]
-<figures/IFRO_WP_choice_groundwater.png, id=264, 885.3075pt x 525.46312pt>
+<figures/IFRO_WP_choice_groundwater.png, id=192, 885.3075pt x 525.46312pt>
 File: figures/IFRO_WP_choice_groundwater.png Graphic file (type png)
 <use figures/IFRO_WP_choice_groundwater.png>
 Package pdftex.def Info: figures/IFRO_WP_choice_groundwater.png  used on input line 20.
-(pdftex.def)             Requested size: 340.6956pt x 202.21974pt.
- [23
+(pdftex.def)             Requested size: 342.2953pt x 203.16585pt.
+ [12
 
  <./figures/IFRO_WP_choice_groundwater.png>])
 \tf@nav=\write6
@@ -1078,17 +1053,17 @@ Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: 3953B9DFA735AFE685C48B4034DD3E7F;1025.
  ) 
 Here is how much of TeX's memory you used:
- 25894 strings out of 475389
- 532968 string characters out of 2775584
- 814447 words of memory out of 3000000
+ 25872 strings out of 475389
+ 532739 string characters out of 2775584
+ 815491 words of memory out of 3000000
  46595 multiletter control sequences out of 15000+600000
- 570525 words of font info for 111 fonts, out of 8000000 for 9000
+ 570511 words of font info for 111 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 128i,15n,122p,533b,650s stack positions out of 10000i,1000n,20000p,200000b,80000s
-{C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc}{C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex.enc}{C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}{C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}<C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/dsserif/DSSerif.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmex10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi12.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi6.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi8.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss12.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss17.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss8.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmssbx10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsso10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsso12.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsso8.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy8.pfb>
-Output written on main.pdf (23 pages, 2449064 bytes).
+ 128i,15n,122p,533b,646s stack positions out of 10000i,1000n,20000p,200000b,80000s
+{C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathex.enc}{C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathit.enc}{C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-mathsy.enc}{C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/lm/lm-rm.enc}<C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/dsserif/DSSerif.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmex10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi6.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmmi8.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss12.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss8.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmss9.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmssbx10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsso10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsso8.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsso9.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy10.pfb><C:/Users/au687527/AppData/Local/Programs/MiKTeX/fonts/type1/public/lm/lmsy8.pfb>
+Output written on main.pdf (12 pages, 2413972 bytes).
 PDF statistics:
- 357 PDF objects out of 1000 (max. 8388607)
- 55 named destinations out of 1000 (max. 500000)
+ 275 PDF objects out of 1000 (max. 8388607)
+ 33 named destinations out of 1000 (max. 500000)
  165 words of extra memory for PDF output out of 10000 (max. 10000000)
 

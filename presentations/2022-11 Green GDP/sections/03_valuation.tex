@@ -35,35 +35,35 @@
   \only<1>{
     Meta analysis function for benefit transfer of the marginal WTP per year for average water quality of the waterbodies of category $j$ (streams, lakes, or coastal waters) in catchment area $v$ in year $t$:
     \begin{align*}
-      \ln \mu_{u,v,t}^{w,j}=&\beta_0+.55\ln \bar{Q}_{j,v,t}-.38D_{j}^{lake}-.01SL_{j,v}\\
-        &+.12\ln PSL_{j,v}-.07\ln PAL_v+1.45\ln y_{v,t}+.5D_{v,t}^{age}
+      \ln \mu_{u,v,t}^{w,j}=&\beta_0+.55\overline{\ln Q}_{j,v,t}-.38D_{j}^{lake}-.01SL_{j,v}+.12\ln PSL_{j,v}-.07\ln PAL_v\\
+      &+1.45\ln y_{v,t}+.5D_{v,t}^{age},\quad\overline{\ln Q}_{j,v,t}=\frac{1}{\mathcal{I}_{j,v}}\sum_i^{\mathcal{I}_{j,v}}\mathbb{1}_{\mathbb{N}^+}(Q_{i,j,v,t})\ln Q_{i,j,v,t}
     \end{align*}
     \begin{itemize}
-      \item[$\bar{Q}_{j,v,t}$] mean water quality of category $j$ in $v$ (deviation from “Bad”)
+      \item[$\overline{Q}_{jvt}$] mean water quality of category $j$ in $v$ at year $t$ (deviation from “Bad”)
       \item[$D_{j}^{lake}$] dummy for category $j$ being lakes
-      \item[$SL_{j,v}$] shore length of category $j$ in catchment area $q$ (in 1,000 km)
-      \item[$PSL_{j,v}$] shore length of category $j$ relative to total shore length in $q$
-      \item[$PAL_{v}$] proportion of agricultural land in catchment area $q$
-      \item[$\ln y_{v,t}$] average household income in catchment area $q$
-      \item[$D_{v,t}^{age}$] dummy for mean age of inhabitants in q $\geq$ 45 years
+      \item[$SL_{jv}$] shore length of category $j$ (in 1,000 km) in catchment area $v$
+      \item[$PSL_{jv}$] shore length of category $j$ relative to total shore length in area $v$
+      \item[$PAL_{v}$] proportion of agricultural land in catchment area $v$
+      \item[$y_{vt}$] average household income in catchment area $v$ at year $t$
+      \item[$D_{vt}^{age}$] dummy for mean age of inhabitants $\geq$ 45 years in $v$ at year $t$
     \end{itemize}
   }
-  \only<2>{
-    Meta analysis function for benefit transfer of the marginal WTP per year for average water quality of the $\mathcal{I}$ waterbodies of category $j$ (streams, lakes, or coastal waters) in catchment area $v$ in year $t$:
-    \begin{align*}
-      \ln \mu_{u,v,t}^{w,j}=&\beta_0+.55\frac{1}{\mathcal{I}_{j,v}}\sum_i^{\mathcal{I}_{j,v}}\mathbb{1}_{\mathbb{N}^+}(Q_{i,j,v,t})\ln Q_{i,j,v,t}-.38D_{j}^{lake}-.01SL_{j,v}\\
-        &+.12\ln PSL_{j,v}-.07\ln PAL_v+1.45\ln y_{v,t}+.5D_{v,t}^{age}
-    \end{align*}
-    \begin{itemize}
-      \item[$Q_{i,j,v,t}$] quality of waterbody $i$ of category $j$ in $v$ (deviation from “Bad”)
-      \item[$D_{j}^{lake}$] dummy for category $j$ being lakes
-      \item[$SL_{j,v}$] shore length of category $j$ in catchment area $q$ (in 1,000 km)
-      \item[$PSL_{j,v}$] shore length of category $j$ relative to total shore length in $q$
-      \item[$PAL_{v}$] proportion of agricultural land in catchment area $q$
-      \item[$\ln y_{v,t}$] average household income in catchment area $q$
-      \item[$D_{v,t}^{age}$] dummy for mean age of inhabitants in q $\geq$ 45 years
-    \end{itemize}
-  }
+  % \only<2>{
+  %   Meta analysis function for benefit transfer of the marginal WTP per year for average water quality of the $\mathcal{I}$ waterbodies of category $j$ (streams, lakes, or coastal waters) in catchment area $v$ in year $t$:
+  %   \begin{align*}
+  %     \ln \mu_{u,v,t}^{w,j}=&\beta_0+.55\frac{1}{\mathcal{I}_{j,v}}\sum_i^{\mathcal{I}_{j,v}}\mathbb{1}_{\mathbb{N}^+}(Q_{i,j,v,t})\ln Q_{i,j,v,t}-.38D_{j}^{lake}-.01SL_{j,v}\\
+  %       &+.12\ln PSL_{j,v}-.07\ln PAL_v+1.45\ln y_{v,t}+.5D_{v,t}^{age}
+  %   \end{align*}
+  %   \begin{itemize}
+  %     \item[$Q_{i,j,v,t}$] quality of waterbody $i$ of category $j$ in $v$ (deviation from “Bad”)
+  %     \item[$D_{j}^{lake}$] dummy for category $j$ being lakes
+  %     \item[$SL_{j,v}$] shore length of category $j$ in catchment area $q$ (in 1,000 km)
+  %     \item[$PSL_{j,v}$] shore length of category $j$ relative to total shore length in $q$
+  %     \item[$PAL_{v}$] proportion of agricultural land in catchment area $q$
+  %     \item[$\ln y_{v,t}$] average household income in catchment area $q$
+  %     \item[$D_{v,t}^{age}$] dummy for mean age of inhabitants in q $\geq$ 45 years
+  %   \end{itemize}
+  % }
 \end{frame}
 
 \begin{frame}{Shadow value of groundwater}

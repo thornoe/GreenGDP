@@ -3,12 +3,12 @@ Name:       script.py
 
 Label:      Construct and map longitudinal data of ecological status of streams.
 
-Summary:    ThorNoe.github.io/GNNP/ explains the approach and methodology.
+Summary:    ThorNoe.GitHub.io/GreenGDP explains the approach and methodology.
 
 Rqmts:      ArcGIS Pro must be installed on the system and be up to date.
 
 Usage:      This script supports WaterbodiesScriptTool in the gis.tbx toolbox.
-            See GitHub.com/ThorNoe/GNNP for instructions to run or update it all.
+            See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
 
 Created:    25/03/2020
 Author:     Thor Donsby Noe
@@ -31,7 +31,7 @@ arcpy.env.overwriteOutput = True    # set overwrite option
 ###############################################################################
 # Specify the parent folder as the working directory of the operating system
 # os.chdir(arcpy.GetParameterAsText(0))
-root = r'C:\Users\au687527\GitHub\GNNP'
+root = r'C:\Users\au687527\GitHub\GreenGDP'
 path = root + '\\gis'
 arcpy.env.workspace = path
 os.chdir(path)
@@ -113,7 +113,7 @@ for waterbodyType in data:
 
 # Import ArcPy package (requires ArcGIS Pro installed) and set workspace
 import arcpy
-path = r'C:\Users\jwz766\Documents\GitHub\gnnp\gis'
+path = root + r'\gis'
 arcpy.env.workspace = path
 arcpy.env.overwriteOutput = True    # set overwrite option
 

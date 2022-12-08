@@ -3,12 +3,12 @@ Name:       script_module.py
 
 Label:      Construct and map longitudinal data of ecological status of streams.
 
-Summary:    ThorNoe.github.io/GNNP/ explains the approach and methodology.
+Summary:    ThorNoe.GitHub.io/GreenGDP explains the approach and methodology.
 
 Rqmts:      ArcGIS Pro must be installed on the system and be up to date.
 
 Usage:      This module supports script.py and WaterbodiesScriptTool in gis.tbx.
-            See GitHub.com/ThorNoe/GNNP for instructions to run or update it all.
+            See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
 
 Function:   The class in this module contains 8 functions of which some are nested:
             - ecological_status() calls:
