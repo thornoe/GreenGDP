@@ -1,16 +1,16 @@
 # The Green Net National Product: *Subproject regarding pollution of the water environment*
 
-This subproject is a part of a larger research project at [UCPH](https://www.ku.dk/english/) that aims to estimate the Green Net National Product (GNNP) for Denmark since 1990. The first stage of this subproject constructs longitudinal datasets and maps the ecological status of Danish water bodies.
+This subproject is a part of a larger research project at [UCPH](https://www.ku.dk/english/) that aims to estimate the Green Net National Income (GNNI) for Denmark since 1990. The first stage of this subproject constructs longitudinal datasets and maps the ecological status of Danish water bodies.
 
-For more information and preliminary results for streams, see: [ThorNoe.GitHub.io/GNNP](https://thornoe.github.io/GNNP/). Similar work for lakes and coastal waters is forthcoming.
+For more information and preliminary results for streams, see: [ThorNoe.GitHub.io/GreenGDP](https://thornoe.github.io/GreenGDP/). Similar work for lakes and coastal waters is forthcoming.
 
 
 
 ## Output
 
-Besides the [map book](https://github.com/thornoe/GNNP/raw/master/gis/output/streams.pdf) with a map for each year, the script tool creates two longitudinal datasets for further statistical work:
-- [streams_DVFI_longitudinal.csv](https://github.com/thornoe/GNNP/raw/master/gis/output/streams_DVFI_longitudinal.csv) contains the DVFI values of all streams
-- [streams_ecological_status.csv](https://github.com/thornoe/GNNP/raw/master/gis/output/streams_ecological_status.csv) is for the ecological status of all streams
+Besides the [map book](https://github.com/thornoe/GreenGDP/raw/master/gis/output/streams.pdf) with a map for each year, the script tool creates two longitudinal datasets for further statistical work:
+- [streams_DVFI_longitudinal.csv](https://github.com/thornoe/GreenGDP/raw/master/gis/output/streams_DVFI_longitudinal.csv) contains the DVFI values of all streams
+- [streams_ecological_status.csv](https://github.com/thornoe/GreenGDP/raw/master/gis/output/streams_ecological_status.csv) is for the ecological status of all streams
 
 
 
@@ -19,7 +19,7 @@ Besides the [map book](https://github.com/thornoe/GNNP/raw/master/gis/output/str
 [ArcGIS Pro](https://www.esri.com/en-us/arcgis/products/arcgis-pro/overview) must be installed and up to date.
 
 1. Click the green `Clone or download` button at the top right corner of this GitHub page ^^
-2. Within the downloaded `gnnp` folder, go to the `gis` folder and open the ArcGIS Project File `gis.aprx` with ArcGIS Pro
+2. Within the downloaded `gnni` folder, go to the `gis` folder and open the ArcGIS Project File `gis.aprx` with ArcGIS Pro
 3. In the `Catalog Pane`, open `Toolboxes` > `gis.tbx` > `WaterbodiesScriptTool`. Select the `gis` folder and `Run` the script
 
 
