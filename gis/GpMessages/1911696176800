@@ -1,0 +1,5 @@
+﻿<?xml version="1.0" encoding="utf-8"?><messages><msg code="0" type="2">Start Time: 17. januar 2023 20:43:31</msg><msg code="-2147467259" type="100">Traceback (most recent call last):
+  File "C:\Users\au687527\GitHub\GreenGDP\gis\script.py", line 25, in &lt;module&gt;
+    from sklearn.experimental import enable_iterative_imputer
+ModuleNotFoundError: No module named 'sklearn'
+</msg><msg code="0" type="0">Failed script WaterbodiesScriptTool...</msg><msg code="-2147467259" type="100">Failed to execute (WaterbodiesScriptTool).</msg><msg code="0" type="3">Failed at 17. januar 2023 20:43:33 (Elapsed Time: 2,15 seconds)</msg></messages>

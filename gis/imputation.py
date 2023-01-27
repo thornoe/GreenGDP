@@ -28,7 +28,7 @@ import os
 ###############################################################################
 #   1. Setup                                                                  #
 ###############################################################################
-os.chdir(r'C:\Users\jwz766\Documents\GitHub\gnnp\gis')
+os.chdir(r'C:\Users\au687527\GitHub\GreenGDP\gis')
 
 # Read wide format for ecological status of waterbodies
 w = pd.read_csv('output/streams_ecological_status.csv').drop('g_len', axis=1)
