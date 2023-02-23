@@ -22,6 +22,8 @@ import os
 import arcpy
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
 arcpy.env.overwriteOutput = True # set overwrite option
@@ -118,7 +120,13 @@ for waterbodyType in data:
     # Clean up all feature classes
     for fc in arcpy.ListFeatureClasses():
         arcpy.Delete_management(fc)
-    
+
+df_ind_obs.describe() # equals df? I.e. changes to df_eco_obs after the next line is run?
+
+df_eco_obs.describe()
+observed = df_eco_obs[['length']].merge(df_eco_obs.drop(columns=['length']).dropna(how="all"),
+                                how="inner", left_index=True, right_index=True)
+observed.shape
 
 # List feature classes and their respective fields
 for fc in arcpy.ListFeatureClasses():
@@ -126,6 +134,32 @@ for fc in arcpy.ListFeatureClasses():
     print(arcpy.GetCount_management(fc))
     for field in arcpy.ListFields(fc):
         print(field.name)
+
+years = list(range(year_first, year_last+1))
+
+# Sort by number of missing values
+df = df_eco_obs.copy()
+df['nan'] = df.shape[1] - df.count(axis=1)
+df = df.sort_values(['nan'], ascending=False)[years]
+
+def mvg(frame, waterbodyType, suffix):
+    df = frame.copy()
+    df.fillna(0, inplace=True)
+    cm = sns.xkcd_palette(['grey', 'red', 'orange', 'yellow', 'green', 'blue'])
+    plt.figure(figsize=(12, 7.4))
+    ax = sns.heatmap(df, cmap=cm, cbar=False,
+                     cbar_kws={'ticks': [0, 1, 2, 3, 4, 5, 6]})
+    ax.set(yticklabels=[])
+    plt.ylabel(waterbodyType+ " (N=" + str(len(df)) + ")", fontsize=14)
+    plt.xlabel("")
+    plt.title(('Ecological status of ' + waterbodyType + ':' + '\nmissing value (grey), bad (red), poor (orange), moderate (yellow), good (green), high (blue)'),
+              fontsize=14)
+    plt.tight_layout()
+    plt.savefig('output/'+waterbodyType+'_eco_'+suffix+'.png', bbox_inches='tight')
+    plt.show()
+
+mvg(df, 'streams', 'missing')
+
 
 ### GET AVERAGE OF DUMMY FOR AGE>45 BY CATHCMENT AREA
 df = pd.read_csv('data\\' + 'demographics.csv', sep=';') # 1990-2018
@@ -147,3 +181,4 @@ df.interpolate(**kw, inplace=True)
 
 # Save to CSV
 df.to_csv('output\\'+'D_age.csv')
+

@@ -17,9 +17,9 @@ For **streams**, 11,289 stations were matched to a waterbody by the official lin
 
 
 ## Ecological status of streams by year
-The waterbody plan VP2 covers a total stream length of 17,933 kmm which is constituted by 6,979 different streams that have all been assessed at least once during 1990-2020. On average, streams with a total length of 4,461 km (24% of total length) are assessed each year. The composition as well as the extent of stations being monitored within a year is ever-changing, peaking at 46% in 2002 as seen in the first row of the table below.
+35,867 km is the he total shore length of streams included in VP2, of which 76% of streams representing 31,204 km (87% of total shore length) have been assessed at least once. On average, 15% of streams representing 8,923 km (24% of total shore length) are assessed each year. The composition as well as the extent of stations being monitored within a year is ever-changing, peaking at 46% of total shore length in 2002 as seen in the first row of the table below.
 
-While the monitoring of water quality in Danish streams does cover the range of different pollution sources and physical conditions, it must be underlined that there is an overrepresentation of larger streams which generally have higher water quality. Moreover, a moderate to bad ecological status can in some cases be caused by influence of ochre or poor physical conditions due to stream straightening or intensive dredging and cutting of water weeds ([DCE, 2019 - *Danish*](https://dce.au.dk/udgivelser/vr/nr-451-500/abstracts/no-473-streams-2020)).
+While the monitoring of water quality in Danish streams does cover the range of different pollution sources and physical conditions, it must be underlined that there is an overrepresentation of larger streams which generally have higher water quality. Moreover, a moderate to bad ecological status can in some cases be caused by influence of ochre or poor physical conditions due to stream straightening or intensive dredging and cutting of water weeds ([DCE, 2021 - *Danish*](https://dce.au.dk/udgivelser/vr/nr-451-500/abstracts/no-473-streams-2020)).
 
 Thus, the statistics shown in the table should be taken with a grain of salt but shows the same positive trend that can be identified for many individual streams in the map book below.
 

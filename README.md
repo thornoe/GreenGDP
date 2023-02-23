@@ -49,7 +49,7 @@ For a mayor revision of the script tool, one will want to be able to run ArcPy c
 The version of Python used in ArcGIS Pro is systematically older than the most recent version. Therefore, your preferred IDE is probably incompatible with the ArcPy package as it draws on the ArcGIS Pro installation. To be able to run ArcPy commands, the simplest solution is to set up the Spyder editor as follows:
 
 1. *Clone* the **Python environment** and *install* Spyder within ArcGIS Pro as explained [here](https://www.e-education.psu.edu/geog485/node/213).
-2. Likewise, *install* [scikit-learn](https://scikit-learn.org/stable/index.html) within ArcGIS Pro for Python data analysis.
+2. Likewise, *install* [scikit-learn](https://scikit-learn.org/stable/index.html) and [seaborn](https://seaborn.pydata.org/) within ArcGIS Pro for Python data analysis and visualization respectively.
 3. Open the **Start menu**, navigate to the **ArcGIS** folder, and open the **Python Command Prompt** within which you
    - Open **Spyder** by typing `spyder`.
       - *Whenever you are to use ArcPy commands, you need to open Spyder through the ArcGIS Python Command Prompt.*

@@ -18,6 +18,7 @@ Functions:  The class in this module contains 8 functions of which some are nest
                         - frame()
             - observed_ecological_status() calls:
               - DVFI_to_status()
+              - missing_values_graph()
             Descriptions can be seen under each function.
 
 Licence:    MIT Copyright (c) 2020-2023
@@ -25,6 +26,8 @@ Author:     Thor Donsby Noe
 """
 import numpy as np
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
 import arcpy, sys, traceback, os, urllib.request
 from sklearn.experimental import enable_iterative_imputer
 from sklearn.impute import IterativeImputer
@@ -363,7 +366,7 @@ class Water_Quality:
             #                            search_radius=radius,
             #                            distance_field_name='Distance')
 
-            # # Set the names of the fields for ID, catchment area, and typology of water bodies
+            # # Set the names of the fields for ID, length, catchment area, and typology of water bodies
             vpID = self.wfs_vpID[waterbodyType]
             # catchID = self.wfs_vpID['catch']
             typo = self.wfs_typo[waterbodyType]
@@ -409,7 +412,10 @@ class Water_Quality:
             # Use SearchCursor to create df with characteristics of all water bodies
             dataCharacteristics = [row for row in arcpy.da.SearchCursor(waterbodyType, fields)]
             dfCharacteristics = pd.DataFrame(dataCharacteristics, columns=[vpID, #'catch', 
-                                                                           'length', typo])
+                                                                           'length', 'typo'])
+
+            # Shore length is counted on both sides of the stream
+            dfCharacteristics[['length']] = dfCharacteristics[['length']]*2
 
             # Merge characteristics-df with df for water bodies in the current water body plan (VP2)
             allVP = dfCharacteristics.merge(waterBodies, how="outer", left_on=vpID,
@@ -565,15 +571,21 @@ class Water_Quality:
             df.to_csv('output\\'+waterbodyType+'_eco_obs.csv')
             stats.to_csv('output\\'+waterbodyType+'_eco_obs_stats.csv')
 
+            # Create missing values graph (heatmap):
+            self.missing_values_graph(df, waterbodyType, 'missing')
+
             # Calculate water bodies that are observed at least once
-            observed = df[['length']].merge(df.drop(columns=['length']).dropna(how="all"),
-                                            how="inner", left_index=True, right_index=True)
+            observed = df[['length', 'typo']]\
+                         .merge(df[self.years].dropna(how="all"),
+                                how="inner", left_index=True, right_index=True)
 
             # Report length and share of water bodies observed at least once.
-            msg = '{0} km is the he total shore length of {1} included in VP2, of which {1} representing {2} km ({3}%) have been assessed at least once. On average, {1} representing {4} km ({5}%) are assessed each year.\n'\
+            msg = '{0} km is the he total shore length of {1} included in VP2, of which {2}% of {1} representing {3} km ({4}% of total shore length) have been assessed at least once. On average, {5}% of {1} representing {6} km ({7}% of total shore length) are assessed each year.\n'\
                   .format(int(totalLength)*10**(-3), waterbodyType,
+                          int(100*len(observed)/len(df)),
                           int(observed['length'].sum())*10**(-3),
                           int(100*observed['length'].sum()/totalLength),
+                          int(100*np.mean(df[self.years].count()/len(df))),
                           int(stats['known'].mean()*totalLength/100)*10**(-3),
                           int(stats['known'].mean()))
             print(msg)            # print statistics in Python
@@ -731,3 +743,42 @@ class Water_Quality:
                 # Delete the entire geodatabase (all FCs must be deleted first)
                 if arcpy.Exists(self.arcPath):
                     arcpy.Delete_management(self.arcPath)
+
+
+
+    def missing_values_graph(self, frame, waterbodyType, suffix):
+        """ Heatmap visualizing observations of ecological status as either
+            missing or using the EU index of ecological status, i.e. from 1-5
+            for bad, poor, moderate, good, and high water quality respectively.
+
+            Saves a figure of the heatmap.
+        """
+        try:
+            # Sort by number of missing values
+            df = frame.copy()
+            df['nan'] = df.shape[1] - df.count(axis=1)
+            df = df.sort_values(['nan'], ascending=False)[self.years]
+
+            # Plot heatmap
+            df.fillna(0, inplace=True)
+            cm = sns.xkcd_palette(['grey', 'red', 'orange', 'yellow', 'green', 'blue'])
+            plt.figure(figsize=(12, 7.4))
+            ax = sns.heatmap(df, cmap=cm, cbar=False,
+                             cbar_kws={'ticks': [0, 1, 2, 3, 4, 5, 6]})
+            ax.set(yticklabels=[])
+            plt.ylabel(waterbodyType+" (N="+str(len(df))+")", fontsize=14)
+            plt.xlabel("")
+            plt.title(('Ecological status of '+waterbodyType+':'+'\nmissing value (grey), bad (red), poor (orange), moderate (yellow), good (green), high (blue)'),
+                      fontsize=14)
+            plt.tight_layout()
+            plt.savefig('output\\'+waterbodyType+'_eco_'+suffix+'.png', bbox_inches='tight')
+
+        except:
+            # Report severe error messages
+            tb = sys.exc_info()[2]  # get traceback object for Python errors
+            tbinfo = traceback.format_tb(tb)[0]
+            msg = 'Could not create missing values graph (heatmap) for ecological status of {1}:\nTraceback info:\n{2}Error Info:\n{2}'\
+                  .format(waterbodyType, tbinfo, str(sys.exc_info()[1]))
+            print(msg)            # print error message in Python
+            arcpy.AddError(msg)   # return error message in ArcGIS
+            sys.exit(1)
