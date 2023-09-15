@@ -46,14 +46,25 @@ If interested in updating the script for VP3 by then, update the specifications 
 
 For a mayor revision of the script tool, one will want to be able to run ArcPy commands within an IDE or text editor.
 
-The version of Python used in ArcGIS Pro is systematically older than the most recent version. Therefore, your preferred IDE is probably incompatible with the ArcPy package as it draws on the ArcGIS Pro installation. To be able to run ArcPy commands, the simplest solution is to set up the Spyder editor as follows:
+The version of Python used in ArcGIS Pro is systematically older than the most recent version, which causes several incompatibility issues for Python scripts. The following steps outline how I set up my preferred IDE, [Visual Studio Code](https://code.visualstudio.com/) (VS Code) to be able to run ArcPy commands (however, the simplest IDE solution is to set up the [PyScripter](https://github.com/pyscripter/pyscripter/wiki) editor as explained [here](https://www.e-education.psu.edu/geog485/node/213)).
+1. *Clone* the **Python environment** and *Activate* arcgispro-py3-clone as your new environment as explained [here](https://www.e-education.psu.edu/geog485/node/213).
+2. Within **VS Code**, search for `Python: Select Interpreter` in the *Command Palette*. For the relevant workspace folder, change the interpreter to the cloned environment, e.g. ` C:\Users\<user>\AppData\Local\ESRI\conda\envs\arcgispro-py3-clone\python.exe`.
 
-1. *Clone* the **Python environment** and *install* Spyder within ArcGIS Pro as explained [here](https://www.e-education.psu.edu/geog485/node/213).
-2. Likewise, *install* [scikit-learn](https://scikit-learn.org/stable/index.html) and [seaborn](https://seaborn.pydata.org/) within ArcGIS Pro for Python data analysis and visualization respectively.
-3. Open the **Start menu**, navigate to the **ArcGIS** folder, and open the **Python Command Prompt** within which you
+https://resources.esri.ca/getting-technical/how-to-configure-visual-studio-code-with-arcgis-pro-s-python-environment
+
+C:\Users\au687527\AppData\Local\ESRI\conda\envs\arcgispro-py3-clone\python.exe
+
+
+
+`C:\Users\%userprofile%\Anaconda3\python.exe`
+
+1. *Clone* the **Python environment** and *Activate* arcgispro-py3-clone as your new environment as explained [here](https://www.e-education.psu.edu/geog485/node/213).
+2. Within the ArcGIS Pro Package Manager, navigate to **Add Packages** and *install* [spyder](https://www.spyder-ide.org).
+3. Likewise, *install* [scikit-learn](https://scikit-learn.org/stable/index.html) and [seaborn](https://seaborn.pydata.org/) for Python data analysis and visualization respectively.
+4. Open the **Start menu**, navigate to the **ArcGIS** folder, and open the **Python Command Prompt** within which you
    - Open **Spyder** by typing `spyder`.
       - *Whenever you are to use ArcPy commands, you need to open Spyder through the ArcGIS Python Command Prompt.*
-4. Within **Spyder**, `import arcpy` to utilize the wide range of [ArcPy options](https://pro.arcgis.com/en/pro-app/arcpy/main/arcgis-pro-arcpy-reference.htm).
+5. Within **Spyder**, `import arcpy` to utilize the wide range of [ArcPy options](https://pro.arcgis.com/en/pro-app/arcpy/main/arcgis-pro-arcpy-reference.htm).
 
 
 ## License

@@ -1,7 +1,7 @@
 """
 Name:       script.py
 
-Label:      Impute missing values in longitudinal data of ecological status of streams.
+Label:      Impute missing values in longitudinal data of ecological status of waterbodies.
 
 Summary:    ThorNoe.GitHub.io/GreenGDP explains the approach and methodology.
 
@@ -18,20 +18,20 @@ Author:     Thor Donsby Noe
 import os
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.colors
-import seaborn as sns
+# import matplotlib.pyplot as plt
+# import matplotlib.colors
+# import seaborn as sns
 
 # To use this experimental feature, we need to explicitly ask for it:
 from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.impute import SimpleImputer
 from sklearn.impute import IterativeImputer
-from sklearn.linear_model import BayesianRidge, Ridge
-from sklearn.kernel_approximation import Nystroem
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.neighbors import KNeighborsRegressor
-from sklearn.pipeline import make_pipeline
-from sklearn.model_selection import cross_validate
+# from sklearn.impute import SimpleImputer
+# from sklearn.linear_model import BayesianRidge, Ridge
+# from sklearn.kernel_approximation import Nystroem
+# from sklearn.ensemble import RandomForestRegressor
+# from sklearn.neighbors import KNeighborsRegressor
+# from sklearn.pipeline import make_pipeline
+# from sklearn.model_selection import cross_validate
 
 
 
@@ -42,16 +42,27 @@ os.chdir(r'C:\Users\au687527\GitHub\GreenGDP\gis')
 year_first = 1989
 year_last  = 2020
 years = list(range(year_first, year_last+1))
+years
 
 # Read wide format for ecological status of waterbodies
-df = pd.read_csv('output/streams_eco_obs.csv').drop('g_del_cd', axis=1)
+df = pd.read_csv('output/streams_ind_obs.csv') #.drop('g_del_cd', axis=1)
 df.describe()
 
 ### Set seed
 s=42
 
 ###############################################################################
-#   2. k-fold cross validation                                                #
+#   2. Multivariate feature imputation                                        #
+###############################################################################
+imp = IterativeImputer(max_iter=10, random_state=s, min_value=1, max_value=7, keep_empty_features=True))
+df_imp = imp.fit_transform(np.array(df.drop('g_del_cd', axis=1)))
+df_imp.describe()
+
+
+
+
+###############################################################################
+#   2.a k-fold cross validation                                               #
 ###############################################################################
 
 ### randomize (shuffle data order)
