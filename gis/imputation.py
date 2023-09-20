@@ -26,13 +26,12 @@ import pandas as pd
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
 # from sklearn.impute import SimpleImputer
-# from sklearn.linear_model import BayesianRidge, Ridge
+# from sklearn.linear_model import BayesiagnRidge, Ridge
 # from sklearn.kernel_approximation import Nystroem
 # from sklearn.ensemble import RandomForestRegressor
 # from sklearn.neighbors import KNeighborsRegressor
 # from sklearn.pipeline import make_pipeline
 # from sklearn.model_selection import cross_validate
-
 
 ###############################################################################
 #   1. Setup                                                                  #
