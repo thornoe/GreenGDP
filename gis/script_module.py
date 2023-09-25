@@ -3,7 +3,7 @@ Name:       script_module.py
 
 Label:      Construct and map longitudinal data of ecological status of streams.
 
-Summary:    ThorNoe.GitHub.io/GreenGDP explains the approach and methodology.
+Summary:    ThorNoe.GitHub.io/GreenGDP explains the overall approach and methodology.
 
 Rqmts:      ArcGIS Pro must be installed on the system and be up to date.
 
@@ -21,7 +21,7 @@ Functions:  The class in this module contains 8 functions of which some are nest
               - missing_values_graph()
             Descriptions can be seen under each function.
 
-Licence:    MIT Copyright (c) 2020-2023
+License:    MIT Copyright (c) 2020-2023
 Author:     Thor Donsby Noe
 """
 import os

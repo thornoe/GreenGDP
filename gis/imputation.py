@@ -1,11 +1,12 @@
 """
-Name:       script.py
+Name:       imputation.py
 
 Label:      Impute missing values in longitudinal data of ecological status of waterbodies.
 
-Summary:    ThorNoe.GitHub.io/GreenGDP explains the approach and methodology.
+Summary:    ThorNoe.GitHub.io/GreenGDP explains the overall approach and methodology.
 
-Usage:      This script supports WaterbodiesScriptTool in the gis.tbx toolbox.
+Usage:      This is a sandbox to test out code blocks before joining them in script.py, 
+            which supports WaterbodiesScriptTool in the gis.tbx toolbox.
             See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
 
 Licence:    MIT Copyright (c) 2023

@@ -3,14 +3,14 @@ Name:       script.py
 
 Label:      Construct and map longitudinal data of ecological status of streams.
 
-Summary:    ThorNoe.GitHub.io/GreenGDP explains the approach and methodology.
+Summary:    ThorNoe.GitHub.io/GreenGDP explains the overall approach and methodology.
 
 Rqmts:      ArcGIS Pro must be installed on the system and be up to date.
 
 Usage:      This script supports WaterbodiesScriptTool in the gis.tbx toolbox.
             See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
 
-Licence:    MIT Copyright (c) 2020-2023
+License:    MIT Copyright (c) 2020-2023
 Author:     Thor Donsby Noe
 """
 
@@ -19,22 +19,22 @@ Author:     Thor Donsby Noe
 ###############################################################################
 # Import Operation System (os) and ArcPy package (requires ArcGIS Pro installed)
 import os
+
 import arcpy
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.experimental import enable_iterative_imputer
-from sklearn.impute import IterativeImputer
-arcpy.env.overwriteOutput = True # set overwrite option
+
+arcpy.env.overwriteOutput = True  # set overwrite option
 
 ###############################################################################
 #   1. Setup                                                                  #
 ###############################################################################
 # Specify the parent folder as the working directory of the operating system
 # os.chdir(arcpy.GetParameterAsText(0))
-root = r'C:\Users\au687527\GitHub\GreenGDP'
-path = root + '\\gis'
+root = r"C:\Users\au687527\GitHub\GreenGDP"
+path = root + "\\gis"
 arcpy.env.workspace = path
 os.chdir(path)
 
@@ -48,33 +48,35 @@ keep_gdb = 1
 ###############################################################################
 # Specify the years of interest
 year_first = 1989
-year_last  = 2020
+year_last = 2020
 
 # Specify the names of each type of water body and its data files
-data = {'streams':'streams_DVFI.xlsx'}
+data = {"streams": "streams_DVFI.xlsx"}
 
 # Specify the names of the corresponding linkage files
-linkage = {'streams':'streams_stations_VP2.xlsx'}
+linkage = {"streams": "streams_stations_VP2.xlsx"}
 
 # WFS service URL for the current water body plan (VP2 is for 2015-2021)
-wfs_service = 'http://wfs2-miljoegis.mim.dk/vp2_2016/ows?service=wfs&version=1.1.0&request=GetCapabilities'
+wfs_service = "http://wfs2-miljoegis.mim.dk/vp2_2016/ows?service=wfs&version=1.1.0&request=GetCapabilities"
 
 # Specify the name of the feature class (fc) for each type of water body
-wfs_fc = {'streams':'vp2bek_2019_vandlob',
-          'lakes'  :'theme_vp2_2016_soer',
-          'coastal':'theme_vp2_2016_kystvande',
-          'catch'  :'theme_vp2_2016nbel12_deloplande'}
+wfs_fc = {
+    "streams": "vp2bek_2019_vandlob",
+    "lakes": "theme_vp2_2016_soer",
+    "coastal": "theme_vp2_2016_kystvande",
+    "catch": "theme_vp2_2016nbel12_deloplande",
+}
 
 # Specify the name of the field (column) in fc that contains the ID of the water body
-wfs_vpID = {'streams':'g_del_cd',
-            'lakes'  :'id',
-            'coastal':'vandomrid',
-            'catch'  :'kystom_2id'}
+wfs_vpID = {
+    "streams": "g_del_cd",
+    "lakes": "id",
+    "coastal": "vandomrid",
+    "catch": "kystom_2id",
+}
 
 # Specify the name of the field (column) in fc that contains the typology of the water body
-wfs_typo = {'streams':'f_vl_typo',
-            'lakes'  :'typologi',
-            'coastal':'typologi'}
+wfs_typo = {"streams": "f_vl_typo", "lakes": "typologi", "coastal": "typologi"}
 
 
 ###############################################################################
@@ -84,12 +86,20 @@ wfs_typo = {'streams':'f_vl_typo',
 import script_module
 
 # Initialize the class for all data processing and mapping functions
-c = script_module.Water_Quality(year_first, year_last, data, linkage, 
-                                wfs_service, wfs_fc, wfs_vpID, wfs_typo, keep_gdb)
+c = script_module.Water_Quality(
+    year_first,
+    year_last,
+    data,
+    linkage,
+    wfs_service,
+    wfs_fc,
+    wfs_vpID,
+    wfs_typo,
+    keep_gdb,
+)
 
 # Loop over each type of water body (to be extended with lakes and coastal waters)
 for waterbodyType in data:
-
     # Get the feature class from the WFS service
     c.get_fc_from_WFS(waterbodyType)
 
@@ -97,7 +107,7 @@ for waterbodyType in data:
     df_ind_obs = c.observed_indicator(waterbodyType)
 
     # Report observed ecological status by year
-        # ADD HEATMAP
+    # ADD HEATMAP
     df_eco_obs, stats = c.observed_ecological_status(waterbodyType, df_ind_obs)
 
     # if waterbodyType == 'streams':
@@ -106,79 +116,95 @@ for waterbodyType in data:
 
     # Impute missing observations
 
-
-    # 
+    #
 
     # Save time series of total shares (weighted by length) of quality
-        # df.to_csv('output\\' + waterbodyType + '_ecological_status.csv')
+    # df.to_csv('output\\' + waterbodyType + '_ecological_status.csv')
 
-    # Assign 
+    # Assign
 
     # Delete geodatabase
 
-# finally: 
+    # finally:
     # Clean up all feature classes
     for fc in arcpy.ListFeatureClasses():
         arcpy.Delete_management(fc)
 
-df_ind_obs.describe() # equals df? I.e. changes to df_eco_obs after the next line is run?
+df_ind_obs.describe()  # equals df? I.e. changes to df_eco_obs after the next line is run?
 
 df_eco_obs.describe()
-observed = df_eco_obs[['length']].merge(df_eco_obs.drop(columns=['length']).dropna(how="all"),
-                                how="inner", left_index=True, right_index=True)
+observed = df_eco_obs[["length"]].merge(
+    df_eco_obs.drop(columns=["length"]).dropna(how="all"),
+    how="inner",
+    left_index=True,
+    right_index=True,
+)
 observed.shape
 
 # List feature classes and their respective fields
 for fc in arcpy.ListFeatureClasses():
-    print('\n'+fc)
+    print("\n" + fc)
     print(arcpy.GetCount_management(fc))
     for field in arcpy.ListFields(fc):
         print(field.name)
 
-years = list(range(year_first, year_last+1))
+years = list(range(year_first, year_last + 1))
 
 # Sort by number of missing values
 df = df_eco_obs.copy()
-df['nan'] = df.shape[1] - df.count(axis=1)
-df = df.sort_values(['nan'], ascending=False)[years]
+df["nan"] = df.shape[1] - df.count(axis=1)
+df = df.sort_values(["nan"], ascending=False)[years]
+
 
 def mvg(frame, waterbodyType, suffix):
     df = frame.copy()
     df.fillna(0, inplace=True)
-    cm = sns.xkcd_palette(['grey', 'red', 'orange', 'yellow', 'green', 'blue'])
+    cm = sns.xkcd_palette(["grey", "red", "orange", "yellow", "green", "blue"])
     plt.figure(figsize=(12, 7.4))
-    ax = sns.heatmap(df, cmap=cm, cbar=False,
-                     cbar_kws={'ticks': [0, 1, 2, 3, 4, 5, 6]})
+    ax = sns.heatmap(df, cmap=cm, cbar=False, cbar_kws={"ticks": [0, 1, 2, 3, 4, 5, 6]})
     ax.set(yticklabels=[])
-    plt.ylabel(waterbodyType+ " (N=" + str(len(df)) + ")", fontsize=14)
+    plt.ylabel(waterbodyType + " (N=" + str(len(df)) + ")", fontsize=14)
     plt.xlabel("")
-    plt.title(('Ecological status of ' + waterbodyType + ':' + '\nmissing value (grey), bad (red), poor (orange), moderate (yellow), good (green), high (blue)'),
-              fontsize=14)
+    plt.title(
+        (
+            "Ecological status of "
+            + waterbodyType
+            + ":"
+            + "\nmissing value (grey), bad (red), poor (orange), moderate (yellow), good (green), high (blue)"
+        ),
+        fontsize=14,
+    )
     plt.tight_layout()
-    plt.savefig('output/'+waterbodyType+'_eco_'+suffix+'.png', bbox_inches='tight')
+    plt.savefig(
+        "output/" + waterbodyType + "_eco_" + suffix + ".png", bbox_inches="tight"
+    )
     plt.show()
 
-mvg(df, 'streams', 'missing')
+
+mvg(df, "streams", "missing")
 
 
 ### GET AVERAGE OF DUMMY FOR AGE>45 BY CATHCMENT AREA
-df = pd.read_csv('data\\' + 'demographics.csv', sep=';') # 1990-2018
+df = pd.read_csv("data\\" + "demographics.csv", sep=";")  # 1990-2018
 
 # Select relevant columns
-df = df[['Kystvnd', 'aar', 'alder', 'antal_pers']]
-df['flat'] = 1
+df = df[["Kystvnd", "aar", "alder", "antal_pers"]]
+df["flat"] = 1
 
 # Dummy for mean age > 45 years for a given catchment area and year
-df['D_age'] = np.select([df['alder']>45], [1])
+df["D_age"] = np.select([df["alder"] > 45], [1])
 
 # Average share of catchment areas with mean age > 45 years weighted by no. persons
-df = pd.DataFrame(df.groupby(['aar']).apply(lambda x: np.average(x['D_age'], weights=x['antal_pers'])))
+df = pd.DataFrame(
+    df.groupby(["aar"]).apply(lambda x: np.average(x["D_age"], weights=x["antal_pers"]))
+)
 
 # Extrapolate using a linear trend
-df = df.append(pd.DataFrame([np.nan, np.nan, np.nan], index=[1989, 2019, 2020])).sort_index()
+df = df.append(
+    pd.DataFrame([np.nan, np.nan, np.nan], index=[1989, 2019, 2020])
+).sort_index()
 kw = dict(method="index", fill_value="extrapolate", limit_direction="both")
 df.interpolate(**kw, inplace=True)
 
 # Save to CSV
-df.to_csv('output\\'+'D_age.csv')
-
+df.to_csv("output\\" + "D_age.csv")
