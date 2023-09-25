@@ -34,7 +34,7 @@ If interested in updating the script for VP3 by then, update the specifications 
 For a mayor revision of the script tool, one will want to be able to run ArcPy commands within an IDE or text editor.
 
 The version of Python used in ArcGIS Pro is systematically older than the most recent version, which causes several incompatibility issues for Python scripts. The following steps outline how I set up my preferred IDE, [Visual Studio Code](https://code.visualstudio.com/) (VS Code) to be able to run ArcPy commands (however, the simplest IDE solution is to set up the [PyScripter](https://github.com/pyscripter/pyscripter/wiki) editor as explained [here](https://www.e-education.psu.edu/geog485/node/213)).
-1. *Clone* the **Python environment** and *Activate* arcgispro-py3-clone as your new environment as explained [here](https://www.e-education.psu.edu/geog485/node/213).
+1. *Clone* the **Python environment** and *Activate* arcgispro-pyg3-clone as your new environment as explained [here](https://www.e-education.psu.edu/geog485/node/213).
 2. Within the ArcGIS Pro Package Manager, navigate to **Add Packages** and *install* [scikit-learn](https://scikit-learn.org/stable/index.html) for imputation of missing observations. Under **Updates**, remember to *Update All* once in a while.g
 3. Within **VS Code**, press `CTRL`+`SHIFT`+`P` to open the *Command Palette* and search for `Python: Select Interpreter`. For the relevant workspace folder, change the interpreter to the cloned environment, e.g. `C:\Users\<user>\AppData\Local\ESRI\conda\envs\arcgispro-py3-clone\python.exe` instead of `C:\Users\<user>\Anaconda3\python.exe` as explained [here](https://resources.esri.ca/getting-technical/how-to-configure-visual-studio-code-with-arcgis-pro-s-python-environment).
 
