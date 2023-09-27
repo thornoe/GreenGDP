@@ -32,7 +32,20 @@ df = pd.read_csv("data/demographics.csv").drop("Unnamed: 0", axis=1)
 #   2. First look at the data                                                 #
 ###############################################################################
 df.describe()
+df.drop(columns=["alder", "ind", "gen_alder", "gen_ind"], inplace=True)  # personal info
 df.tail()
 df["Kystom_2ID"].nunique()  # 90 coastal catchment areas
-df["Kystom_2ID"].unique()
+
+# Households in coastal catchment areas
 df.loc[df["sum_pers"] < 5]
+df.loc[df["sum_hust"] < 20]
+df.loc[(df["sum_hust"] > 20) & (df["sum_hust"] < 100)]
+df.loc[df["Kystom_2ID"] == 18000061]  # 55 km vestkyst fra Nymindegab til Sønder Nissum
+df.loc[df["Kystom_2ID"] == 18000062]  # Kystvandopland Ringkøbing Fjord
+df.loc[df["Kystom_2ID"] == 14000062]  # 50 km vestkyst fra Sønder Nissum til Thyborøn
+df.loc[df["Kystom_2ID"] == 11000084]  # 200 km vestkyst fra Agger Tange til Grenen
+df.loc[df["Kystom_2ID"] == 114000047]  # Fyns og Langelands østkyst
+df.loc[df["Kystom_2ID"] == 113000046]  # Odense Fjord
+df.loc[df["Kystom_2ID"] == 23000074]  # Sjællands nordkyst fra Hundested til Helsingør
+df.loc[df["Kystom_2ID"] == 2300003]  # Øresund fra Helsingør til Dragør
+g
