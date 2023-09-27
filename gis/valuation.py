@@ -36,6 +36,7 @@ df.tail()
 df["Kystom_2ID"].nunique()  # 90 coastal catchment areas
 
 # Households in coastal catchment areas
+df.drop(columns=["alder", "ind", "gen_alder", "gen_ind"], inplace=True)
 df.loc[df["sum_pers"] < 5]
 df.loc[df["sum_hust"] < 20]
 df.loc[(df["sum_hust"] > 20) & (df["sum_hust"] < 100)]
@@ -47,4 +48,3 @@ df.loc[df["Kystom_2ID"] == 114000047]  # Fyns og Langelands østkyst
 df.loc[df["Kystom_2ID"] == 113000046]  # Odense Fjord
 df.loc[df["Kystom_2ID"] == 23000074]  # Sjællands nordkyst fra Hundested til Helsingør
 df.loc[df["Kystom_2ID"] == 2300003]  # Øresund fra Helsingør til Dragør
-g
