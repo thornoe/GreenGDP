@@ -32,7 +32,6 @@ df = pd.read_csv("data/demographics.csv").drop("Unnamed: 0", axis=1)
 #   2. First look at the data                                                 #
 ###############################################################################
 df.describe()
-df.drop(columns=["alder", "ind", "gen_alder", "gen_ind"], inplace=True)  # personal info
 df.tail()
 df["Kystom_2ID"].nunique()  # 90 coastal catchment areas
 
