@@ -67,6 +67,12 @@ wfs_fc = {
     "catch": "theme_vp2_2016nbel12_deloplande",
 }
 
+# Specify the name of the field (column) in fc that contains the main catchment area
+wfs_main = {"streams": "g_h_opland", "lakes": "hovedopl", "coastal": "hvopl_nr"}
+
+# Specify the name of the field (column) in fc that contains the typology of the water body
+wfs_typo = {"streams": "f_vl_typo", "lakes": "typologi", "coastal": "typologi"}
+
 # Specify the name of the field (column) in fc that contains the ID of the water body
 wfs_vpID = {
     "streams": "g_del_cd",
@@ -74,10 +80,6 @@ wfs_vpID = {
     "coastal": "vandomrid",
     "catch": "kystom_2id",
 }
-
-# Specify the name of the field (column) in fc that contains the typology of the water body
-wfs_typo = {"streams": "f_vl_typo", "lakes": "typologi", "coastal": "typologi"}
-
 
 ###############################################################################
 #   3. Import module and run the functions                                    #
@@ -93,8 +95,9 @@ c = script_module.Water_Quality(
     linkage,
     wfs_service,
     wfs_fc,
-    wfs_vpID,
+    wfs_main,
     wfs_typo,
+    wfs_vpID,
     keep_gdb,
 )
 
@@ -107,12 +110,11 @@ for waterbodyType in data:
     df_ind_obs = c.observed_indicator(waterbodyType)
 
     # Report observed ecological status by year
-    # ADD HEATMAP
-    df_eco_obs, stats = c.observed_ecological_status(waterbodyType, df_ind_obs)
+    df_eco_obs, stats = c.ecological_status(waterbodyType, df_ind_obs)
 
-    # if waterbodyType == 'streams':
+    # if waterbodyType == "streams":
     #     # Create a map book with yearly maps of observed ecological status
-    #     c.map_book(waterbodyType, df_obs, years)
+    #     c.map_book(waterbodyType, df_eco_obs)
 
     # Impute missing observations
 
@@ -130,8 +132,11 @@ for waterbodyType in data:
     for fc in arcpy.ListFeatureClasses():
         arcpy.Delete_management(fc)
 
+
+df_ind_obs.head()  # equals df? I.e. changes to df_eco_obs after the next line is run?
 df_ind_obs.describe()  # equals df? I.e. changes to df_eco_obs after the next line is run?
 
+# Drop fields not used for imputation
 df_eco_obs.describe()
 observed = df_eco_obs[["length"]].merge(
     df_eco_obs.drop(columns=["length"]).dropna(how="all"),
@@ -184,7 +189,7 @@ def mvg(frame, waterbodyType, suffix):
 mvg(df, "streams", "missing")
 
 
-### GET AVERAGE OF DUMMY FOR AGE>45 BY CATHCMENT AREA
+### DUMMY FOR AGE>45 BY CATCHMENT AREA
 df = pd.read_csv("data\\" + "demographics.csv", sep=";")  # 1990-2018
 
 # Select relevant columns
@@ -208,3 +213,13 @@ df.interpolate(**kw, inplace=True)
 
 # Save to CSV
 df.to_csv("output\\" + "D_age.csv")
+
+# Spatial Join water bodies to coastal catchment areas
+arcpy.SpatialJoin_analysis(
+    "catch",
+    waterbodyType,
+    fcJoined,
+    "JOIN_ONE_TO_MANY",
+    "KEEP_ALL",
+    match_option="INTERSECT",
+)

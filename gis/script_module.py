@@ -13,10 +13,10 @@ Usage:      This module supports script.py and WaterbodiesScriptTool in gis.tbx.
 Functions:  The class in this module contains 8 functions of which some are nested:
             - get_data() and get_fc_from_WFS() are both standalone functions.
             - observed_indicator() calls:
-                - stations_to_streams() which calls:
-                    - longitudinal() which again calls:
+                - stations_to_streams(), which calls:
+                    - longitudinal(), which again calls:
                         - frame()
-            - observed_ecological_status() calls:
+            - ecological_status() calls:
               - DVFI_to_status()
               - missing_values_graph()
             Descriptions can be seen under each function.
@@ -49,8 +49,9 @@ class Water_Quality:
         linkageFilenames,
         WFS_ServiceURL,
         WFS_featureClassNames,
-        WFS_fieldNamesWaterbodyID,
+        WFS_fieldNamesMainCatchmentArea,
         WFS_fieldNamesWaterbodyTypology,
+        WFS_fieldNamesWaterbodyID,
         keepGeodatabase,
     ):
         self.years = list(range(yearFirst, yearLast + 1))
@@ -58,8 +59,9 @@ class Water_Quality:
         self.linkage = linkageFilenames
         self.wfs_service = WFS_ServiceURL
         self.wfs_fc = WFS_featureClassNames
-        self.wfs_vpID = WFS_fieldNamesWaterbodyID
+        self.wfs_main = WFS_fieldNamesMainCatchmentArea
         self.wfs_typo = WFS_fieldNamesWaterbodyTypology
+        self.wfs_vpID = WFS_fieldNamesWaterbodyID
         self.keep_gdb = keepGeodatabase
         self.path = os.getcwd()
         self.arcPath = self.path + "\\gis.gdb"
@@ -168,10 +170,10 @@ class Water_Quality:
             else:
                 fields = [self.wfs_vpID[fc], self.wfs_typo[fc]]
 
-            # if arcpy.Exists(fc):
-            #     arcpy.Delete_management(fc)
+            if arcpy.Exists(fc):
+                arcpy.Delete_management(fc)  #  if making changes to the fc template
             if not arcpy.Exists(fc):
-                # Execute the WFSToFeatureClass tool to download the feature class.
+                # Execute the WFSToFeatureClass tool to downsload the feature class.
                 arcpy.conversion.WFSToFeatureClass(
                     self.wfs_service,
                     WFS_FeatureType,
@@ -313,17 +315,17 @@ class Water_Quality:
         waterbodyID,
         waterbodyName,
         booleanVar,
-        radius=15,
+        radius=10,
     ):
         """Streams: Assign monitoring stations to water bodies via linkage table.
 
-        For unmatched stations: Assign to stream within a radius of 15 meters
+        For unmatched stations: Assign to stream within a radius of 10 meters
         where the location names match the name of the stream.
 
         For a given year, finds DVFI for a stream with multiple stations
         by taking the median and rounding down.
 
-        Finally, extends to all streams in the current water body plan and
+        Finally, extends to all streams in the current water body plan (VP2) and
         adds the ID, catchment area, and length of each stream in km using the
         feature classes collected via get_fc_from_WFS().
         """
@@ -343,6 +345,7 @@ class Water_Quality:
             # Read the linkage table
             link = pd.read_excel("linkage\\" + self.linkage[waterbodyType])
 
+            # Merge longitudinal DataFrame with linkage table for water body IDs in VP2
             df = long.merge(
                 link[[stationID, waterbodyID, booleanVar]],
                 how="left",
@@ -357,123 +360,149 @@ class Water_Quality:
             df[["Station", "X", "Y"]] = df[["Station", "X", "Y"]].astype(int)
 
             # Stations in current water body plan (VP2)
-            match = df.dropna(subset=[stationID]).drop(columns=[stationID])
+            link = df.dropna(subset=[stationID]).drop(columns=[stationID])
 
-            # # Stations not covered by the linkage table
-            # noMatch = df[df[stationID].isna()].drop(columns=[stationID, waterbodyID])
+            # Stations not covered by the linkage table
+            noLink = df[df[stationID].isna()].drop(columns=[stationID, waterbodyID])
 
-            # # Create a spatial reference object with the same geoprachical coordinate system
-            # spatialRef = arcpy.SpatialReference("ETRS 1989 UTM Zone 32N")
+            # Create a spatial reference object with the same geoprachical coordinate system
+            spatialRef = arcpy.SpatialReference("ETRS 1989 UTM Zone 32N")
 
-            # # Create a new feature class shapefile (will overwrite if it already exists)
-            # fcStations = waterbodyType + '_stations'
-            # arcpy.CreateFeatureclass_management(self.arcPath, fcStations, "POINT",
-            #                                     spatial_reference=spatialRef)
+            # Create a new feature class shapefile (will overwrite if it already exists)
+            fcStations = waterbodyType + "_stations"
+            arcpy.CreateFeatureclass_management(
+                self.arcPath, fcStations, "POINT", spatial_reference=spatialRef
+            )
 
-            # # Create fields for 'Station' and 'Location'
-            # arcpy.AddField_management(fcStations, 'Station', "INTEGER")
-            # arcpy.AddField_management(fcStations, 'Location', "TEXT")
+            # Create fields for 'Station' and 'Location'
+            arcpy.AddField_management(fcStations, "Station", "INTEGER")
+            arcpy.AddField_management(fcStations, "Location", "TEXT")
 
-            # # Create cursor to insert stations that were not in the linkage table
-            # try:
-            #     with arcpy.da.InsertCursor(fcStations, ['SHAPE@XY', 'Station', 'Location']) as cursor:
-            #         # Loop over each station-ID in df:
-            #         for index, row in noMatch.iterrows():
-            #             try:
-            #                 # Use cursor to insert new row in feature class
-            #                 cursor.insertRow([(row['X'], row['Y']), row['Station'], row['Location']])
+            # Create cursor to insert stations that were not in the linkage table
+            try:
+                with arcpy.da.InsertCursor(
+                    fcStations, ["SHAPE@XY", "Station", "Location"]
+                ) as cursor:
+                    # Loop over each station-ID in df:
+                    for index, row in noLink.iterrows():
+                        try:
+                            # Use cursor to insert new row in feature class
+                            cursor.insertRow(
+                                [(row["X"], row["Y"]), row["Station"], row["Location"]]
+                            )
 
-            #             except:
-            #                 # Report other severe error messages from Python or ArcPy
-            #                 tb = sys.exc_info()[2]  # get traceback object for Python errors
-            #                 tbinfo = traceback.format_tb(tb)[0]
-            #                 print('Python errors while inserting station {0} in {1}:\nTraceback info:{2}\nError Info:\n{3}\n'\
-            #                       .format(str(row['Station']), fcStations, tbinfo, str(sys.exc_info()[1])))
-            #                 print('ArcPy errors while inserting station {0} in {1}:\n{2}'\
-            #                       .format(str(row['Station']), fcStations, tbinfo, str(arcpy.GetMessages(severity=2))))
-            #                 sys.exit(1)
+                        except:
+                            # Report other severe error messages from Python or ArcPy
+                            tb = sys.exc_info()[
+                                2
+                            ]  # get traceback object for Python errors
+                            tbinfo = traceback.format_tb(tb)[0]
+                            print(
+                                "Python errors while inserting station {0} in {1}:\nTraceback info:{2}\nError Info:\n{3}\n".format(
+                                    str(row["Station"]),
+                                    fcStations,
+                                    tbinfo,
+                                    str(sys.exc_info()[1]),
+                                )
+                            )
+                            print(
+                                "ArcPy errors while inserting station {0} in {1}:\n{2}".format(
+                                    str(row["Station"]),
+                                    fcStations,
+                                    tbinfo,
+                                )
+                            )
+                            sys.exit(1)
 
-            #             finally:
-            #                 # Clean up for next iteration
-            #                 del index, row
+                        finally:
+                            # Clean up for next iteration
+                            del index, row
 
-            # finally:
-            #     del cursor
+            finally:
+                del cursor
 
-            # # Specify joined feature classes (will overwrite if it already exists)
-            # fcJoinedStations = fcStations + '_joined'
-            # # fcJoined = waterbodyType + '_joined'
+            # Specify joined feature classes (will overwrite if it already exists)
+            fcJoined = fcStations + "_joined"
 
-            # # # Spatial Join water bodies to coastal catchment areas
-            # # arcpy.SpatialJoin_analysis('catch', waterbodyType, fcJoined,
-            # #                            "JOIN_ONE_TO_MANY", "KEEP_ALL",
-            # #                            match_option="INTERSECT")
+            # Spatial Join unmatched stations with streams within given radius
+            arcpy.SpatialJoin_analysis(
+                waterbodyType,
+                fcStations,
+                fcJoined,
+                "JOIN_ONE_TO_MANY",
+                "KEEP_COMMON",
+                match_option="CLOSEST",
+                search_radius=radius,
+                distance_field_name="Distance",
+            )
 
-            # # Spatial Join unmatched stations with streams within given radius
-            # arcpy.SpatialJoin_analysis(waterbodyType, fcStations, fcJoinedStations,
-            #                            "JOIN_ONE_TO_MANY", "KEEP_COMMON",
-            #                            match_option="CLOSEST",
-            #                            search_radius=radius,
-            #                            distance_field_name='Distance')
-
-            # # Set the names of the fields for ID, length, catchment area, and typology of water bodies
+            # Specify the field (column) in fc that contain the water body IDs for VP2
             vpID = self.wfs_vpID[waterbodyType]
-            # catchID = self.wfs_vpID['catch']
-            typo = self.wfs_typo[waterbodyType]
 
-            # # Fields of interest
-            # fieldsStations = ['Station', 'Distance', 'Location', # catchID
-            #                   vpID]
+            # Fields of interest
+            fieldsStations = ["Station", "Distance", "Location", vpID]
 
-            # # Use SeachCursor to read columns to pd.DataFrame
-            # data = [row for row in arcpy.da.SearchCursor(fcJoinedStations, fieldsStations)]
-            # joined = pd.DataFrame(data, columns=fieldsStations)
+            # Use SeachCursor to read columns to pd.DataFrame
+            stations = [row for row in arcpy.da.SearchCursor(fcJoined, fieldsStations)]
+            dfStations = pd.DataFrame(stations, columns=fieldsStations)
 
-            # # Add water body names from linkage table and sort by distance (ascending)
-            # j = joined.merge(link[[waterbodyName, waterbodyID]], how="inner",
-            #                  left_on=vpID, right_on=waterbodyID)\
-            #                  .drop([vpID], axis=1)\
-            #                  .sort_values('Distance')
+            # Add water body names from linkage table and sort by distance (ascending)
+            j = (
+                dfStations.merge(
+                    link[[waterbodyName, waterbodyID]],
+                    how="inner",
+                    left_on=vpID,
+                    right_on=waterbodyID,
+                )
+                .drop([vpID], axis=1)
+                .sort_values("Distance")
+            )
 
-            # # Capitalize water body names
-            # j[waterbodyName] = j[waterbodyName].str.upper()
+            # Capitalize water body names
+            j[waterbodyName] = j[waterbodyName].str.upper()
 
-            # # Indicate matching water body names
-            # j['Match'] = np.select([j['Location']==j[waterbodyName]], [True])
+            # Indicate matching water body names
+            j["Match"] = np.select([j["Location"] == j[waterbodyName]], [True])
 
-            # # Subset to unique stations with their closest matching water body
-            # jMatches = j[j['Match']==True].groupby(['Station'], as_index=False).first()
+            # Subset to unique stations with their closest matching water body
+            jClosest = (
+                j[j["Match"] == True].groupby(["Station"], as_index=False).first()
+            )
 
-            # # Inner merge of noMatch and j_matches stations with their closest matching water body
-            # jMatches = noMatch.merge(jMatches[['Station', waterbodyID]],
-            #                          how='inner', on='Station')
+            # Inner merge of noLink stations and jClosest water body with matching name
+            jMatches = noLink.merge(
+                jClosest[["Station", waterbodyID]], how="inner", on="Station"
+            )
 
-            # # Concatenate the dfs of stations that have been matched to a water body
-            # allMatches = pd.concat([match, jMatches])
+            # Concatenate the dfs of all stations that have been matched to a water body
+            allMatches = pd.concat([link, jMatches])
 
             # Group multiple stations in a water body: Take the median and round down
             waterBodies = (
-                match.groupby([waterbodyID])
+                allMatches.groupby([waterbodyID])
                 .median()
                 .apply(np.floor)
                 .drop(columns=["Station", "X", "Y"])
             )
 
-            # Field (column) names for ID, catchment area, length, and typology of water bodies
-            fields = [vpID, "Shape_Length", typo]  # catchID,
+            # Specify the fields in fc that contain the main catchment area and typology
+            main = self.wfs_main[waterbodyType]
+            typo = self.wfs_typo[waterbodyType]
+
+            # Fields (columns) for ID, length, main catchment area, and typology
+            fields = [vpID, "Shape_Length", main, typo]
 
             # Use SearchCursor to create df with characteristics of all water bodies
             dataCharacteristics = [
                 row for row in arcpy.da.SearchCursor(waterbodyType, fields)
             ]
-            dfCharacteristics = pd.DataFrame(
-                dataCharacteristics, columns=[vpID, "length", "typo"]  #'catch',
-            )
+            dfCharacteristics = pd.DataFrame(dataCharacteristics, columns=fields)
 
             # Shore length is counted on both sides of the stream
-            dfCharacteristics[["length"]] = dfCharacteristics[["length"]] * 2
+            dfCharacteristics[["length"]] = dfCharacteristics[["Shape_Length"]] * 2
+            dfCharacteristics = dfCharacteristics.drop(["Shape_Length"], axis=1)
 
-            # Merge characteristics-df with df for water bodies in the current water body plan (VP2)
+            # Merge dfCharacteristics with df for all water bodies in VP2
             allVP = dfCharacteristics.merge(
                 waterBodies, how="outer", left_on=vpID, right_index=True
             ).set_index(vpID)
@@ -483,10 +512,10 @@ class Water_Quality:
             #       '\ndfCharacteristics:', len(dfCharacteristics),
             #       '\nallVP:', len(allVP))
             # Report the number of stations matched by linkage table and ArcPy
-            msg = "Streams:\n{0} stations were matched to a water body by the official linkage table.".format(
-                len(match)
+            msg = "Streams:\n{0} stations were linked to a water body by the official linkage table. Besides, {1} were located within 10 meters of a water body carrying the name of the station's location.".format(
+                len(link), len(jClosest)
             )
-            print(msg)  # print number of stations in Python
+            # print(msg)  # print number of stations in Python
             arcpy.AddMessage(msg)  # return number of stations in ArcGIS
 
             return allVP
@@ -509,7 +538,7 @@ class Water_Quality:
 
         # finally:
         #     # Clean up
-        #     for fc in [waterbodyType, fcStations, fcJoined, fcJoinedStations]:
+        #     for fc in [waterbodyType, fcStations, fcJoined]:
         #         if arcpy.Exists(fc):
         #             arcpy.Delete_management(fc)
 
@@ -576,7 +605,7 @@ class Water_Quality:
             arcpy.AddError(msg)  # return error message in ArcGIS
             sys.exit(1)
 
-    def observed_ecological_status(self, waterbodyType, dfIndicator):
+    def ecological_status(self, waterbodyType, dfIndicator):
         """Based on the type of water body, convert the longitudinal dataframe
         to the EU index of ecological status, i.e. from 1-5 for bad, poor,
         moderate, good, and high water quality respectively.
@@ -636,7 +665,7 @@ class Water_Quality:
             df.to_csv("output\\" + waterbodyType + "_eco_obs.csv")
             stats.to_csv("output\\" + waterbodyType + "_eco_obs_stats.csv")
 
-            # Create missing values graph (heatmap):
+            # Create missing values graph (heatmap of missing observations by year):
             self.missing_values_graph(df, waterbodyType, "missing")
 
             # Calculate water bodies that are observed at least once
@@ -648,7 +677,7 @@ class Water_Quality:
             )
 
             # Report length and share of water bodies observed at least once.
-            msg = "{0} km is the he total shore length of {1} included in VP2, of which {2}% of {1} representing {3} km ({4}% of total shore length) have been assessed at least once. On average, {5}% of {1} representing {6} km ({7}% of total shore length) are assessed each year.\n".format(
+            msg = "{0} km is the total shore length of {1} included in VP2, of which {2}% of {1} representing {3} km ({4}% of total shore length) have been assessed at least once. On average, {5}% of {1} representing {6} km ({7}% of total shore length) are assessed each year.\n".format(
                 int(totalLength) * 10 ** (-3),
                 waterbodyType,
                 int(100 * len(observed) / len(df)),
@@ -658,7 +687,7 @@ class Water_Quality:
                 int(stats["known"].mean() * totalLength / 100) * 10 ** (-3),
                 int(stats["known"].mean()),
             )
-            print(msg)  # print statistics in Python
+            # print(msg)  # print statistics in Python
             arcpy.AddMessage(msg)  # return statistics in ArcGIS
 
             return df, stats
@@ -700,7 +729,7 @@ class Water_Quality:
                     fcYear = fc + str(i) + "fc"
                     if arcpy.Exists(fcYear):
                         arcpy.Delete_management(fcYear)
-                    arcpy.CopyFeatures_management(fcTemplate, fcYear)
+                    arcpy.CopyFeatures_management(fc, fcYear)
 
                     # Create update cursor for feature layer
                     with arcpy.da.UpdateCursor(fcYear, [vpID, "status"]) as cursor:
@@ -821,8 +850,6 @@ class Water_Quality:
             # Clean up
             if os.path.exists("temp.pdf"):
                 os.remove("temp.pdf")
-            if arcpy.Exists(fcTemplate):
-                arcpy.Delete_management(fcTemplate)
             del book
             if self.keep_gdb != "true":
                 # Delete the entire geodatabase (all FCs must be deleted first)

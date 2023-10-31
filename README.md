@@ -25,18 +25,22 @@ For streams:
 
 Run the script tool as described above to update the longitudinal datasets and recreate the map book with the most recent data.
 
-### Update with new identification of water bodies in 2022
+### Update with new identification of water bodies in 2024
 VP3, the third waterbody plan covering 2021-2027 should be passed by ultimo 2021. Thereafter, an updated [MiljøGIS](https://mst.dk/service/miljoegis/) will be published and the Danish Environmental Protection Agency will produce updated linkage tables to report the new identification of water bodies to the EU EPA.
 
-If interested in updating the script for VP3 by then, update the specifications in `script.py` with names of the new linkage tables as well as the specifications for the updated MiljøGIS map (first, open it with the ArcGIS Pro Geoprocessing tool `WFS To Feature Class`). In `script_module.py`, edit the function `ecological_status()` where it specifies the parameters for calling `self.stations_to_streams()`. If there is no boolean variable in the new linkage table, modify the function `stations_to_streams()` accordingly.
+If interested in updating the script for VP3 by then, update the specifications in [script.py](https://github.com/thornoe/GreenGDP/blob/master/gis/script.py) with names of the new linkage tables as well as the specifications for the updated MiljøGIS map (first, open it with the ArcGIS Pro Geoprocessing tool `WFS To Feature Class`). In [script_module.py](https://github.com/thornoe/GreenGDP/blob/master/gis/script_module.py), edit the function `ecological_status()` where it specifies the parameters for calling `self.stations_to_streams()`. If there is no boolean variable in the new linkage table, modify the function `stations_to_streams()` accordingly.
 
 ### Run ArcPy commands in the Anaconda Spyder environment
 For a mayor revision of the script tool, one will want to be able to run ArcPy commands within an IDE or text editor.
 
-The version of Python used in ArcGIS Pro is systematically older than the most recent version, which causes several incompatibility issues for Python scripts. The following steps outline how I set up my preferred IDE, [Visual Studio Code](https://code.visualstudio.com/) (VS Code) to be able to run ArcPy commands (however, the simplest IDE solution is to set up the [PyScripter](https://github.com/pyscripter/pyscripter/wiki) editor as explained [here](https://www.e-education.psu.edu/geog485/node/213)).
-1. *Clone* the **Python environment** and *Activate* arcgispro-pyg3-clone as your new environment as explained [here](https://www.e-education.psu.edu/geog485/node/213).
-2. Within the ArcGIS Pro Package Manager, navigate to **Add Packages** and *install* [scikit-learn](https://scikit-learn.org/stable/index.html) for imputation of missing observations. Under **Updates**, remember to *Update All* once in a while.g
-3. Within **VS Code**, press `CTRL`+`SHIFT`+`P` to open the *Command Palette* and search for `Python: Select Interpreter`. For the relevant workspace folder, change the interpreter to the cloned environment, e.g. `C:\Users\<user>\AppData\Local\ESRI\conda\envs\arcgispro-py3-clone\python.exe` instead of `C:\Users\<user>\Anaconda3\python.exe` as explained [here](https://resources.esri.ca/getting-technical/how-to-configure-visual-studio-code-with-arcgis-pro-s-python-environment).
+The version of Python used in ArcGIS Pro is systematically older than the most recent version, which causes several incompatibility issues for Python scripts. Thus, the simplest IDE solution is to [download](https://sourceforge.net/projects/pyscripter) and set up the [PyScripter](https://github.com/pyscripter/pyscripter/wiki) editor as explained [here](https://www.e-education.psu.edu/geog485/node/213).
+1. Within **ArcGIS Pro**, navigate to the **Package Manager**:
+   1. In the **Environment Manager**, *Clone* the default Python environment and *Activate* arcgispro-py3-clone as your new environment.
+   2. Under **Add Packages**, *Search* for and *Install* [scikit-learn](https://scikit-learn.org/stable/index.html) for imputation of missing observations.
+   3. Under **Updates**, remember to *Update All* each time you update ArcGIS Pro to a new version.
+2. Within **PyScripter**:
+   1. Under **Python Versions**, *Add* and *Activate* the cloned environment, e.g. `C:\Users\%USERNAME%\AppData\Local\ESRI\conda\envs\arcgispro-py3-clone`.
+   2. Under **Tools** > **Options** > **IDE Shortcuts**, you can *Assign* the command **Run: Execute selection** to `Shift+Enter` (or whatever you prefer) instead of `Ctrl+F7`.
 
 ## License
 This project is released under the MIT License, that is, you can basically do anything with my code as long as you give appropriate credit and don’t hold me liable.
