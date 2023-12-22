@@ -1,7 +1,7 @@
 """
 Name:       script.py
 
-Label:      Construct and map longitudinal data of ecological status of streams.
+Label:      Construct and map longitudinal data of ecological status of water bodies.
 
 Summary:    ThorNoe.GitHub.io/GreenGDP explains the overall approach and methodology.
 
@@ -10,7 +10,7 @@ Rqmts:      ArcGIS Pro must be installed on the system and be up to date.
 Usage:      This script supports WaterbodiesScriptTool in the gis.tbx toolbox.
             See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
 
-License:    MIT Copyright (c) 2020-2023
+License:    MIT Copyright (c) 2020-2024
 Author:     Thor Donsby Noe
 """
 
@@ -42,44 +42,43 @@ os.chdir(path)
 # keep_gdb = arcpy.GetParameterAsText(1)
 keep_gdb = 1
 
-
 ###############################################################################
-#   2. Specifications (update for VP3 in primo 2022)                          #
+#   2. Specifications                                                         #
 ###############################################################################
 # Specify the years of interest
-year_first = 1989
+year_first = 1987
 year_last = 2020
 
 # Specify the names of each type of water body and its data files
 data = {"streams": "streams_DVFI.xlsx"}
 
 # Specify the names of the corresponding linkage files
-linkage = {"streams": "streams_stations_VP2.xlsx"}
+linkage = {"streams": "streams_stations_VP3.xlsx"}
 
 # WFS service URL for the current water body plan (VP2 is for 2015-2021)
-wfs_service = "http://wfs2-miljoegis.mim.dk/vp2_2016/ows?service=wfs&version=1.1.0&request=GetCapabilities"
+wfs_service = "https://wfs2-miljoegis.mim.dk/vp3endelig2022/ows?service=WFS&request=Getcapabilities"
+# wfs_service = "http://wfs2-miljoegis.mim.dk/vp2_2016/ows?service=wfs&version=1.1.0&request=GetCapabilities"
 
 # Specify the name of the feature class (fc) for each type of water body
 wfs_fc = {
-    "streams": "vp2bek_2019_vandlob",
-    "lakes": "theme_vp2_2016_soer",
-    "coastal": "theme_vp2_2016_kystvande",
-    "catch": "theme_vp2_2016nbel12_deloplande",
+    "catch": "vp3e2022_kystvand_opland_afg",
+    "coastal": "vp3e2022_marin_samlet_1mil",
+    "lakes": "vp3e2022_soe_samlet",
+    "streams": "vp3e2022_vandloeb_samlet",
 }
-
-# Specify the name of the field (column) in fc that contains the main catchment area
-wfs_main = {"streams": "g_h_opland", "lakes": "hovedopl", "coastal": "hvopl_nr"}
-
-# Specify the name of the field (column) in fc that contains the typology of the water body
-wfs_typo = {"streams": "f_vl_typo", "lakes": "typologi", "coastal": "typologi"}
 
 # Specify the name of the field (column) in fc that contains the ID of the water body
-wfs_vpID = {
-    "streams": "g_del_cd",
-    "lakes": "id",
-    "coastal": "vandomrid",
-    "catch": "kystom_2id",
-}
+# wfs_vpID = {
+#     "coastal": "ov_id",
+#     "lakes": "ov_id",
+#     "streams": "ov_id",
+# }
+
+# Specify the name of the field (column) in fc that contains the main catchment area
+# wfs_main = {"catch": "op_id", "coastal": "mst_id"}
+
+# Specify the name of the field (column) in fc that contains the typology of the water body
+# wfs_typo = {"coastal": "ov_typ", "lakes": "ov_typ", "streams": "ov_typ"}
 
 ###############################################################################
 #   3. Import module and run the functions                                    #
@@ -95,9 +94,6 @@ c = script_module.Water_Quality(
     linkage,
     wfs_service,
     wfs_fc,
-    wfs_main,
-    wfs_typo,
-    wfs_vpID,
     keep_gdb,
 )
 

@@ -49,9 +49,6 @@ class Water_Quality:
         linkageFilenames,
         WFS_ServiceURL,
         WFS_featureClassNames,
-        WFS_fieldNamesMainCatchmentArea,
-        WFS_fieldNamesWaterbodyTypology,
-        WFS_fieldNamesWaterbodyID,
         keepGeodatabase,
     ):
         self.years = list(range(yearFirst, yearLast + 1))
@@ -59,9 +56,6 @@ class Water_Quality:
         self.linkage = linkageFilenames
         self.wfs_service = WFS_ServiceURL
         self.wfs_fc = WFS_featureClassNames
-        self.wfs_main = WFS_fieldNamesMainCatchmentArea
-        self.wfs_typo = WFS_fieldNamesWaterbodyTypology
-        self.wfs_vpID = WFS_fieldNamesWaterbodyID
         self.keep_gdb = keepGeodatabase
         self.path = os.getcwd()
         self.arcPath = self.path + "\\gis.gdb"
@@ -88,6 +82,7 @@ class Water_Quality:
             # Dictionary for all data and linkage files
             allFiles = {
                 "data": [a for a in list(self.data.values())],
+                "linkage": [a for a in list(self.linkage.values())],
                 "linkage": [a for a in list(self.linkage.values())],
             }
             allFiles["data"].append("demographics.csv")
@@ -166,14 +161,14 @@ class Water_Quality:
 
             # Set the names of the fields (columns) in fc that contain the ID (and typology)
             if fc == "catch":
-                fields = [self.wfs_vpID[fc]]
+                fields = ["op_id"]
             else:
-                fields = [self.wfs_vpID[fc], self.wfs_typo[fc]]
+                fields = ["ov_id", "ov_typ"]
 
             if arcpy.Exists(fc):
                 arcpy.Delete_management(fc)  #  if making changes to the fc template
             if not arcpy.Exists(fc):
-                # Execute the WFSToFeatureClass tool to downsload the feature class.
+                # Execute the WFSToFeatureClass tool to download the feature class.
                 arcpy.conversion.WFSToFeatureClass(
                     self.wfs_service,
                     WFS_FeatureType,

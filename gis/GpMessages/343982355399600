@@ -1,0 +1,2 @@
+﻿<?xml version="1.0" encoding="utf-8"?><messages><msg code="0" type="2">Start Time: Monday, November 6, 2023 13:22:02</msg><msg code="0" type="0">WFS to Feature Class...</msg><msg code="228" type="100">ERROR 000228: Can not open table.
+Decoding of the url failed. Url: s</msg><msg code="-2147467259" type="100">Failed to execute (WFSToFeatureClass).</msg><msg code="0" type="3">Failed at Monday, November 6, 2023 13:22:04 (Elapsed Time: 1.63 seconds)</msg></messages>

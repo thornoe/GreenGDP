@@ -10,9 +10,9 @@ Usage:      This is a sandbox to test out code blocks before joining them in scr
             See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
 
 Licence:    MIT Copyright (c) 2023
-Author:     Thor Donsby Noe
+Author:     Thor Donsby Noe 
 """
-
+.95*.9*.85*.85
 ###############################################################################
 #   0. Imports                                                                #
 ###############################################################################
