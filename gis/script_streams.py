@@ -82,32 +82,19 @@ wfs_fc = {
 ###############################################################################
 #   3. Run the functions line-by-line                                         #
 ###############################################################################
-fc = "catch"
-# fc = "streams"
+fc = "streams"
+WFS_FeatureType = wfs_fc[fc]
 
-# def get_fc_from_WFS(self, fc):
-"""Create a feature class from a WFS service given the type of water body.
+if arcpy.Exists(WFS_FeatureType):
+    "exists!"
+
+# def get_gdb_from_WFS(self):
+"""Create a geodatabase from a WFS service given the type of water body.
 Also create a template with only the most necessary fields.
 """
-# Set names of the feature class for the given type of water body
-WFS_FeatureType = wfs_fc[fc]
-# Set the names of the fields (columns) in fc that contain the ID (and typology)
-# if fc == "catch":
-fields = ["op_id"]
-# else:
-# fields = ["ov_id", "ov_typ"]
-if arcpy.Exists(fc):
-    "exists"
-    # arcpy.Delete_management(fc)  #  if making changes to the fc template
-if not arcpy.Exists(fc):
-    "doesn't exist"
 # Execute the WFSToFeatureClass tool to download the feature class.
 arcpy.conversion.WFSToFeatureClass(
-    wfs_service,
-    WFS_FeatureType,
-    path,
-    fc,
-    max_features=15000,
+    wfs_service, WFS_FeatureType, path, "gis", is_complex=1, max_features=15000
 )
 # Create a list of unnecessary fields
 fieldsUnnecessary = []
@@ -118,3 +105,4 @@ for field in fieldObjList:
             fieldsUnnecessary.append(field.name)
 # Remove unnecessary fields (columns) to reduce the size of the feature class
 arcpy.DeleteField_management(fc, fieldsUnnecessary)
+

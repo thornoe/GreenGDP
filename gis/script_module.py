@@ -83,7 +83,6 @@ class Water_Quality:
             allFiles = {
                 "data": [a for a in list(self.data.values())],
                 "linkage": [a for a in list(self.linkage.values())],
-                "linkage": [a for a in list(self.linkage.values())],
             }
             allFiles["data"].append("demographics.csv")
             allFiles["data"].append("SR486_VandkvalitetsBenefitTransferRedskab.xlsx")
@@ -151,7 +150,7 @@ class Water_Quality:
                 # Change the directory back to the original working folder
                 os.chdir(self.path)
 
-    def get_fc_from_WFS(self, fc):
+    def get_gdb_from_WFS(self):
         """Create a feature class from a WFS service given the type of water body.
         Also create a template with only the most necessary fields.
         """
