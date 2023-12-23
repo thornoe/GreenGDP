@@ -84,9 +84,8 @@ wfs_fc = {
 ###############################################################################
 fc = "streams"
 WFS_FeatureType = wfs_fc[fc]
-
-if arcpy.Exists(WFS_FeatureType):
-    "exists!"
+arcpy.Exists(WFS_FeatureType)
+arcpy.ListFeatureClasses()
 
 # def get_gdb_from_WFS(self):
 """Create a geodatabase from a WFS service given the type of water body.
@@ -105,4 +104,3 @@ for field in fieldObjList:
             fieldsUnnecessary.append(field.name)
 # Remove unnecessary fields (columns) to reduce the size of the feature class
 arcpy.DeleteField_management(fc, fieldsUnnecessary)
-

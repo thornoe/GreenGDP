@@ -53,7 +53,7 @@ year_last = 2020
 data = {"streams": "streams_DVFI.xlsx"}
 
 # Specify the names of the corresponding linkage files
-linkage = {"streams": "streams_stations_VP3.xlsx"}
+linkage = {"streams": "streams_stations_VP3.csv"}
 
 # WFS service URL for the current water body plan (VP2 is for 2015-2021)
 wfs_service = "https://wfs2-miljoegis.mim.dk/vp3endelig2022/ows?service=WFS&request=Getcapabilities"
@@ -100,7 +100,7 @@ c = script_module.Water_Quality(
 # Loop over each type of water body (to be extended with lakes and coastal waters)
 for waterbodyType in data:
     # Get the feature class from the WFS service
-    c.get_fc_from_WFS(waterbodyType)
+    # c.get_fc_from_WFS(waterbodyType)
 
     # Create a Pandas DataFrame with observed indicator by year
     df_ind_obs = c.observed_indicator(waterbodyType)
@@ -155,6 +155,7 @@ years = list(range(year_first, year_last + 1))
 df = df_eco_obs.copy()
 df["nan"] = df.shape[1] - df.count(axis=1)
 df = df.sort_values(["nan"], ascending=False)[years]
+arcpy.ListFeatureClasses()
 
 
 def mvg(frame, waterbodyType, suffix):

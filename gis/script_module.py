@@ -65,14 +65,11 @@ class Water_Quality:
 
         # Create an empty geodatabase
 
-        # Check that the folders with data and linkage files exist or create them
+        # Check that folders for data, output, and linkage files exist or create them
         self.get_data()
 
         # Get feature class for coastal catchment area from the WFS service
-        self.get_fc_from_WFS("catch")
-
-        # Create the output folder if it doesn't exist already
-        os.makedirs(self.path + "\\output", exist_ok=True)
+        # self.get_fc_from_WFS("catch")
 
     def get_data(self):
         """Function to check that the folders and their files exist.
@@ -83,6 +80,7 @@ class Water_Quality:
             allFiles = {
                 "data": [a for a in list(self.data.values())],
                 "linkage": [a for a in list(self.linkage.values())],
+                "output": [],
             }
             allFiles["data"].append("demographics.csv")
             allFiles["data"].append("SR486_VandkvalitetsBenefitTransferRedskab.xlsx")
@@ -150,7 +148,7 @@ class Water_Quality:
                 # Change the directory back to the original working folder
                 os.chdir(self.path)
 
-    def get_gdb_from_WFS(self):
+    def get_fc_from_WFS(self, fc):
         """Create a feature class from a WFS service given the type of water body.
         Also create a template with only the most necessary fields.
         """
@@ -541,9 +539,6 @@ class Water_Quality:
         with the observed indicators for all water bodies.
         """
         try:
-            # Create an output folder if it doesn't exist
-            os.makedirs(self.path + "\\output", exist_ok=True)
-
             if waterbodyType == "streams":
                 # Create longitudinal df and use linkage table to assign stations to water bodies
                 df = self.stations_to_streams(
