@@ -26,11 +26,12 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-arcpy.env.overwriteOutput = True  # set overwrite option
-
 ###############################################################################
 #   1. Setup                                                                  #
 ###############################################################################
+# Set overwrite option
+arcpy.env.overwriteOutput = True
+
 # Specify the parent folder as the working directory of the operating system
 # os.chdir(arcpy.GetParameterAsText(0))
 root = r"C:\Users\au687527\GitHub\GreenGDP"
@@ -57,7 +58,6 @@ linkage = {"streams": "streams_stations_VP3.csv"}
 
 # WFS service URL for the current water body plan (VP2 is for 2015-2021)
 wfs_service = "https://wfs2-miljoegis.mim.dk/vp3endelig2022/ows?service=WFS&request=Getcapabilities"
-# wfs_service = "http://wfs2-miljoegis.mim.dk/vp2_2016/ows?service=wfs&version=1.1.0&request=GetCapabilities"
 
 # Specify the name of the feature class (fc) for each type of water body
 wfs_fc = {
