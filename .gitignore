@@ -9,4 +9,16 @@ gis/.pyhistory
 gis/streams19*
 gis/streams20*
 gis/vandplan2_bek2019_ArcGIS
-.toc
+*blx.bib
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.lot
+*.nav
+*.out
+*.run.xml
+*.snm
+*.synctex.gz
+*.synctex(busy)
+*.toc
