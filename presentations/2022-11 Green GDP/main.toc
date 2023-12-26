@@ -1,5 +1,0 @@
-\beamer@sectionintoc {1}{Assess ecological status from 1990-2020}{3}{0}{1}
-\beamer@sectionintoc {2}{Apply valuation from stated preferences}{6}{0}{2}
-\beamer@sectionintoc {3}{Growth decomposition}{9}{0}{3}
-\beamer@sectionintoc {4}{Takeaways}{10}{0}{4}
-\beamer@sectionintoc {5}{Examples of stated preferences}{11}{1}{5}
