@@ -51,7 +51,10 @@ year_first = 1987
 year_last = 2020
 
 # Specify the names of each type of water body and its data files
-data = {"streams": "streams_DVFI.xlsx"}
+data = {
+    "catch": ["demographics.csv", "geographical.xlsx"],
+    "streams": "streams_DVFI.xlsx",
+}
 
 # Specify the names of the corresponding linkage files
 linkage = {"streams": "streams_stations_VP3.csv"}

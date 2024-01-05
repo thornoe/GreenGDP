@@ -65,7 +65,7 @@ class Water_Quality:
         self.get_data()
 
         # Get feature class for coastal catchment area from the WFS service
-        # self.get_fc_from_WFS("catch")
+        self.get_fc_from_WFS("catch")
 
     def get_data(self):
         """Function to check that the folders and their files exist.
@@ -77,8 +77,6 @@ class Water_Quality:
                 "linkage": [a for a in list(self.linkage.values())],
                 "output": [],
             }
-            allFiles["data"].append("demographics.csv")
-            allFiles["data"].append("SR486_VandkvalitetsBenefitTransferRedskab.xlsx")
 
         except:
             # Report severe error messages
@@ -165,7 +163,7 @@ class Water_Quality:
                     WFS_FeatureType,
                     self.arcPath,
                     fc,
-                    max_features=15000,
+                    max_features=10000,
                 )
 
                 # Create a list of unnecessary fields

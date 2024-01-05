@@ -37,15 +37,16 @@ waterbodyType = "streams"
 parameterType = "DVFI"
 parameterCol = "Indekstype"
 valueCol = "Indeks"
+fc = wfs_fc[waterbodyType] # + ".shp"
 fcStations = waterbodyType + "_stations"
-fc = wfs_fc[waterbodyType] + ".shp"
+fcJoined = fcStations + "_joined"
 radius = 10
 
 ###############################################################################
 #   3. Run the functions line-by-line                                         #
 ###############################################################################
 arcpy.ListFeatureClasses()
-arcpy.Exists(fc)
+arcpy.Exists("fc")
 arcpy.Exists(fcStations)
 for field in arcpy.ListFields(fcJoined):
     field.name, field.type
