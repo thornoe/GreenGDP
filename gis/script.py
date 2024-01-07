@@ -43,6 +43,7 @@ os.chdir(path)
 # keep_gdb = arcpy.GetParameterAsText(1)
 keep_gdb = 1
 
+
 ###############################################################################
 #   2. Specifications                                                         #
 ###############################################################################
@@ -53,7 +54,7 @@ year_last = 2020
 # Specify the names of each type of water body and its data files
 data = {
     "catch": ["demographics.csv", "geographical.xlsx"],
-    "streams": "streams_DVFI.xlsx",
+    "streams": ["streams_DVFI.xlsx"],
 }
 
 # Specify the names of the corresponding linkage files
@@ -62,26 +63,13 @@ linkage = {"streams": "streams_stations_VP3.csv"}
 # WFS service URL for the current water body plan (VP2 is for 2015-2021)
 wfs_service = "https://wfs2-miljoegis.mim.dk/vp3endelig2022/ows?service=WFS&request=Getcapabilities"
 
-# Specify the name of the feature class (fc) for each type of water body
+# For the WFS, specify the name of the feature class (fc) for each type of water body
 wfs_fc = {
     "catch": "vp3e2022_kystvand_opland_afg",
     "coastal": "vp3e2022_marin_samlet_1mil",
     "lakes": "vp3e2022_soe_samlet",
     "streams": "vp3e2022_vandloeb_samlet",
 }
-
-# Specify the name of the field (column) in fc that contains the ID of the water body
-# wfs_vpID = {
-#     "coastal": "ov_id",
-#     "lakes": "ov_id",
-#     "streams": "ov_id",
-# }
-
-# Specify the name of the field (column) in fc that contains the main catchment area
-# wfs_main = {"catch": "op_id", "coastal": "mst_id"}
-
-# Specify the name of the field (column) in fc that contains the typology of the water body
-# wfs_typo = {"coastal": "ov_typ", "lakes": "ov_typ", "streams": "ov_typ"}
 
 ###############################################################################
 #   3. Import module and run the functions                                    #
@@ -101,9 +89,9 @@ c = script_module.Water_Quality(
 )
 
 # Loop over each type of water body (to be extended with lakes and coastal waters)
-for waterbodyType in data:
+for waterbodyType in linkage:
     # Get the feature class from the WFS service
-    # c.get_fc_from_WFS(waterbodyType)
+    c.get_fc_from_WFS(waterbodyType, replace=False)
 
     # Create a Pandas DataFrame with observed indicator by year
     df_ind_obs = c.observed_indicator(waterbodyType)
@@ -117,17 +105,19 @@ for waterbodyType in data:
 
     # Impute missing observations
 
-    #
-
     # Save time series of total shares (weighted by length) of quality
     # df.to_csv('output\\' + waterbodyType + '_ecological_status.csv')
 
     # Assign
+    # Clean up after each iteration of loop
+    if keep_gdb != "true":
+        # Delete feature class
+        if arcpy.Exists(waterbodyType):
+            arcpy.Delete_management(waterbodyType)
 
-    # Delete geodatabase
-
-    # finally:
-    # Clean up all feature classes
+# Clean up geodatabase
+if keep_gdb != "true":
+    # Delete all feature classes in geodatabase
     for fc in arcpy.ListFeatureClasses():
         arcpy.Delete_management(fc)
 
