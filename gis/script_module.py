@@ -644,7 +644,7 @@ class Water_Quality:
                         (df[i] == 5) | (df[i] == 6),
                         df[i] == 7,
                     ]
-                    df[i] = np.select(conditions, [1, 2, 3, 4, 5], default=np.nan)
+                    df[i] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
 
             return df
 
@@ -673,7 +673,10 @@ class Water_Quality:
             cm = sns.xkcd_palette(["grey", "red", "orange", "yellow", "green", "blue"])
             plt.figure(figsize=(12, 7.4))
             ax = sns.heatmap(
-                df, cmap=cm, cbar=False, cbar_kws={"ticks": [0, 1, 2, 3, 4, 5, 6]}
+                df,
+                cmap=cm,
+                cbar=False,
+                cbar_kws={"ticks": [-1, 0, 1, 2, 3, 4, 5]},
             )
             ax.set(yticklabels=[])
             plt.ylabel(waterbodyType + " (N=" + str(len(df)) + ")", fontsize=14)
@@ -683,7 +686,7 @@ class Water_Quality:
                     "Ecological status of "
                     + waterbodyType
                     + ":"
-                    + "\nmissing value (grey), bad (red), poor (orange), moderate (yellow), good (green), high (blue)"
+                    + "\nMissing value (grey), Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
                 ),
                 fontsize=14,
             )
