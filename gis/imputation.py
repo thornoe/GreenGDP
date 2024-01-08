@@ -12,7 +12,7 @@ Usage:      This is a sandbox to test out code blocks before joining them in scr
 Licence:    MIT Copyright (c) 2023
 Author:     Thor Donsby Noe 
 """
-.95*.9*.85*.85
+
 ###############################################################################
 #   0. Imports                                                                #
 ###############################################################################
@@ -26,7 +26,7 @@ import pandas as pd
 # To use this experimental feature, we need to explicitly ask for it:
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
-# from sklearn.impute import SimpleImputer
+from sklearn.impute import SimpleImputer
 # from sklearn.linear_model import BayesiagnRidge, Ridge
 # from sklearn.kernel_approximation import Nystroem
 # from sklearn.ensemble import RandomForestRegressor
@@ -127,7 +127,7 @@ df['nan'] = df.shape[1] - df.count(axis=1)
 df = df.sort_values(['nan'], ascending=False)[list(map(str, years))]
 
 # missing values graph (heatmap):
-def mvg(frame, waterbodyType, suffix):
+def mvg(waterbodyType, frame, suffix):
     df = frame.copy()
     df.fillna(0, inplace=True)
     cm = sns.xkcd_palette(['grey', 'red', 'orange', 'yellow', 'green', 'blue'])

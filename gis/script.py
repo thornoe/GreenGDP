@@ -13,10 +13,9 @@ Usage:      This script supports WaterbodiesScriptTool in the gis.tbx toolbox.
 License:    MIT Copyright (c) 2020-2024
 Author:     Thor Donsby Noe
 """
-
-###############################################################################
-#   0. Imports                                                                #
-###############################################################################
+#######################################################################################
+#   0. Imports
+#######################################################################################
 # Import Operation System (os) and ArcPy package (requires ArcGIS Pro installed)
 import os
 
@@ -26,9 +25,9 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-###############################################################################
-#   1. Setup                                                                  #
-###############################################################################
+#######################################################################################
+#   1. Setup
+#######################################################################################
 # Set overwrite option
 arcpy.env.overwriteOutput = True
 
@@ -39,14 +38,17 @@ path = root + "\\gis"
 arcpy.env.workspace = path
 os.chdir(path)
 
+# Specify whether to replace existing feature classes downloaded from WFS service
+# wfs_replace = arcpy.GetParameterAsText(1)
+wfs_replace = 0
+
 # Specify whether to keep the geodatabase when the script finishes
-# keep_gdb = arcpy.GetParameterAsText(1)
+# keep_gdb = arcpy.GetParameterAsText(2)
 keep_gdb = 1
 
-
-###############################################################################
-#   2. Specifications                                                         #
-###############################################################################
+#######################################################################################
+#   2. Specifications
+#######################################################################################
 # Specify the years of interest
 year_first = 1987
 year_last = 2020
@@ -58,7 +60,11 @@ data = {
 }
 
 # Specify the names of the corresponding linkage files
-linkage = {"streams": "streams_stations_VP3.csv"}
+linkage = {
+    "coastal": "coastal_stations_VP3.csv",
+    "lakes": "lakes_stations_VP3.csv",
+    "streams": "streams_stations_VP3.csv",
+}
 
 # WFS service URL for the current water body plan (VP2 is for 2015-2021)
 wfs_service = "https://wfs2-miljoegis.mim.dk/vp3endelig2022/ows?service=WFS&request=Getcapabilities"
@@ -71,9 +77,9 @@ wfs_fc = {
     "streams": "vp3e2022_vandloeb_samlet",
 }
 
-###############################################################################
-#   3. Import module and run the functions                                    #
-###############################################################################
+#######################################################################################
+#   3. Import module and run the functions
+#######################################################################################
 # Import the module with all the homemade functions
 import script_module
 
@@ -85,19 +91,20 @@ c = script_module.Water_Quality(
     linkage,
     wfs_service,
     wfs_fc,
+    wfs_replace,
     keep_gdb,
 )
 
 # Loop over each type of water body (to be extended with lakes and coastal waters)
-for waterbodyType in linkage:
+for waterbodyType in ["streams"]:
     # Get the feature class from the WFS service
-    c.get_fc_from_WFS(waterbodyType, replace=False)
+    c.get_fc_from_WFS(waterbodyType)
 
     # Create a Pandas DataFrame with observed indicator by year
-    df_ind_obs = c.observed_indicator(waterbodyType)
+    df_ind_obs, df_VP = c.observed_indicator(waterbodyType)
 
     # Report observed ecological status by year
-    df_eco_obs, stats = c.ecological_status(waterbodyType, df_ind_obs)
+    df_eco_obs, stats = c.ecological_status(waterbodyType, df_ind_obs, df_VP, suffix="missing")
 
     # if waterbodyType == "streams":
     #     # Create a map book with yearly maps of observed ecological status
@@ -120,6 +127,10 @@ if keep_gdb != "true":
     # Delete all feature classes in geodatabase
     for fc in arcpy.ListFeatureClasses():
         arcpy.Delete_management(fc)
+
+#######################################################################################
+#   4. Sandbox
+#######################################################################################
 
 
 df_ind_obs.head()  # equals df? I.e. changes to df_eco_obs after the next line is run?
