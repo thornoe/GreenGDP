@@ -118,7 +118,7 @@ df_ind_obs.columns = df_ind_obs.columns.astype(int)
 df_VP = pd.read_csv("output\\" + waterbodyType + "_VP.csv", index_col="wb")
 
 # Report observed ecological status by year
-# df_eco_obs, stats = c.ecological_status(waterbodyType, df_ind_obs, df_VP, "missing")
+df_eco_obs, obs_stats = c.ecological_status(waterbodyType, df_ind_obs, df_VP)
 
 #######################################################################################
 #   4. Run the functions line-by-line
@@ -278,6 +278,4 @@ df_imp = pd.DataFrame(
 )
 df_imp.describe()
 
-df_eco_imp = c.indicator_to_status(waterbodyType, df_imp)
-
-df_eco_imp, stats_imp = c.ecological_status(waterbodyType, df_imp, df_VP, "imputed")
+df_eco_imp, stats_imp = c.ecological_status(waterbodyType, df_imp, df_VP, "imp")

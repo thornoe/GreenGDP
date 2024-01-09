@@ -544,7 +544,7 @@ class Water_Quality:
             arcpy.AddError(msg)  # return error message in ArcGIS
             sys.exit(1)
 
-    def ecological_status(self, waterbodyType, dfIndicator, dfVP, suffix):
+    def ecological_status(self, waterbodyType, dfIndicator, dfVP, suffix="obs"):
         """Based on the type of water body, convert the longitudinal DataFrame to the EU index of ecological status, i.e. from 0-4 for Bad, Poor, Moderate, Good, and High water quality respectively.
 
         Create a table of statistics and export it as an html table.
@@ -601,8 +601,8 @@ class Water_Quality:
             stats.columns = ["known", "high", "good", "moderate", "poor", "bad"]
 
             # Save statistics and water bodies to CSV
-            dfStatus.to_csv("output\\" + waterbodyType + "_eco_obs.csv")
-            stats.to_csv("output\\" + waterbodyType + "_eco_obs_stats.csv")
+            dfStatus.to_csv("output\\" + waterbodyType + "_eco_" + suffix + ".csv")
+            stats.to_csv("output\\" + waterbodyType + "_eco_" + suffix + "_stats.csv")
 
             # Create missing values graph (heatmap of missing observations by year):
             self.missing_values_graph(waterbodyType, df, suffix)
@@ -652,11 +652,11 @@ class Water_Quality:
                 for i in self.years:
                     # Categorical variable for ecological status: Bad, Poor, Moderate, Good, High
                     conditions = [
-                        df[i] == 1,
-                        (df[i] == 2) | (df[i] == 3),
-                        df[i] == 4,
-                        (df[i] == 5) | (df[i] == 6),
-                        df[i] == 7,
+                        df[i] < 1.5,
+                        (df[i] >= 1.5) & (df[i] < 3.5),
+                        (df[i] >= 3.5) & (df[i] < 4.5),
+                        (df[i] >= 4.5) & (df[i] < 6.5),
+                        df[i] >= 6.5,
                     ]
                     df[i] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
 

@@ -104,7 +104,7 @@ for waterbodyType in ["streams"]:
     df_ind_obs, df_VP = c.observed_indicator(waterbodyType)
 
     # Report observed ecological status by year
-    df_eco_obs, stats = c.ecological_status(waterbodyType, df_ind_obs, df_VP, suffix="missing")
+    df_eco_obs, obs_stats = c.ecological_status(waterbodyType, df_ind_obs, df_VP)
 
     # if waterbodyType == "streams":
     #     # Create a map book with yearly maps of observed ecological status
