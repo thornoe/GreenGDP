@@ -14,9 +14,9 @@ Usage:      This sandbox is line-by-line implementation of the script supporting
 License:    MIT Copyright (c) 2024
 Author:     Thor Donsby Noe
 """
-#######################################################################################
+########################################################################################
 #   0. Imports
-#######################################################################################
+########################################################################################
 # Import Operation System (os) and ArcPy package (requires ArcGIS Pro installed)
 import os
 
@@ -27,11 +27,10 @@ import pandas as pd
 # To use the experimental imputation feature, we must explicitly ask for it:
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer, SimpleImputer
-from sklearn.linear_model import BayesianRidge
 
-#######################################################################################
+########################################################################################
 #   1. Setup
-#######################################################################################
+########################################################################################
 # Set overwrite option
 arcpy.env.overwriteOutput = True
 
@@ -50,11 +49,11 @@ wfs_replace = 0
 # keep_gdb = arcpy.GetParameterAsText(1)
 keep_gdb = 1
 
-#######################################################################################
+########################################################################################
 #   2. Specifications
-#######################################################################################
+########################################################################################
 # Specify the years of interest
-year_first = 1987
+year_first = 1988
 year_last = 2020
 
 # Specify the names of each type of water body and its data files
@@ -88,11 +87,10 @@ parameterType = "DVFI"
 parameterCol = "Indekstype"
 valueCol = "Indeks"
 radius = 15
-seed = 0
 
-#######################################################################################
+########################################################################################
 #   3. Import module and run the functions
-#######################################################################################
+########################################################################################
 # Import the module with all the homemade functions
 import script_module
 
@@ -120,9 +118,9 @@ df_VP = pd.read_csv("output\\" + waterbodyType + "_VP.csv", index_col="wb")
 # Report observed ecological status by year
 df_eco_obs, obs_stats = c.ecological_status(waterbodyType, df_ind_obs, df_VP)
 
-#######################################################################################
+########################################################################################
 #   4. Run the functions line-by-line
-#######################################################################################
+########################################################################################
 arcpy.ListFeatureClasses()
 arcpy.Exists(waterbodyType)
 arcpy.Exists(fcJoined)
@@ -201,13 +199,16 @@ df = df_ind_obs
 for i in c.years:
     # Categorical variable for ecological status: Bad, Poor, Moderate, Good, High
     conditions = [
-        df[i] == 1,
-        (df[i] == 2) | (df[i] == 3),
-        df[i] == 4,
-        (df[i] == 5) | (df[i] == 6),
-        df[i] == 7,
+        df[i] < 1.5,
+        (df[i] >= 1.5) & (df[i] < 3.5),
+        (df[i] >= 3.5) & (df[i] < 4.5),
+        (df[i] >= 4.5) & (df[i] < 6.5),
+        df[i] >= 6.5,
     ]
     df[i] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
+
+df = 
+
 
 # def ecological_status(self, waterbodyType, dfIndicator, dfVP, suffix):
 """Based on the type of water body, convert the longitudinal DataFrame to the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality respectively.
@@ -252,7 +253,8 @@ for i in c.years:
     ]
 stats
 
-# def impute_missing_values(self, dfIndicator, dfVP, seed=0):
+# def impute_missing_values(self, dfIndicator, dfVP):
+"""   """
 dfIndicator = df_ind_obs
 dfVP = df_VP
 # Copy DataFrame for the biophysical indicator
@@ -260,21 +262,15 @@ df = dfIndicator.copy()
 df.describe()
 
 # Simple mean as a baseline
-imp_mean = SimpleImputer(strategy="mean", keep_empty_features=True)
-df_mean = pd.DataFrame(imp_mean.fit_transform(np.array(df)), columns=df.columns)
+imputer_mean = SimpleImputer(strategy="mean")
+df_mean = pd.DataFrame(imputer_mean.fit_transform(np.array(df)), columns=df.columns)
 df_mean.describe()
 
-# Iterative imputer based on all other features
-imp = IterativeImputer(
-    estimator=BayesianRidge(),
-    max_iter=25,
-    n_nearest_features=len(df.columns),
-    random_state=seed,
-    keep_empty_features=True,
-)
+# Iterative imputer using the BayesianRidge() estimator
+imputer = IterativeImputer()
 # Fit imputer and transform the dataset
 df_imp = pd.DataFrame(
-    imp.fit_transform(np.array(df)), index=df.index, columns=df.columns
+    imputer.fit_transform(np.array(df)), index=df.index, columns=df.columns
 )
 df_imp.describe()
 

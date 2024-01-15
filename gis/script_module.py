@@ -685,7 +685,7 @@ class Water_Quality:
             # Plot heatmap
             df.fillna(0, inplace=True)
             cm = sns.xkcd_palette(["grey", "red", "orange", "yellow", "green", "blue"])
-            plt.figure(figsize=(12, 7.4))
+            plt.figure(figsize=(12, 12))
             ax = sns.heatmap(
                 df,
                 cmap=cm,
@@ -693,7 +693,13 @@ class Water_Quality:
                 cbar_kws={"ticks": [-1, 0, 1, 2, 3, 4, 5]},
             )
             ax.set(yticklabels=[])
-            plt.ylabel(waterbodyType + " (N=" + str(len(df)) + ")", fontsize=14)
+            plt.ylabel(
+                str(len(df))
+                + " "
+                + waterbodyType
+                + " ordered by number of missing values",
+                fontsize=14,
+            )
             plt.xlabel("")
             plt.title(
                 (
@@ -706,7 +712,7 @@ class Water_Quality:
             )
             plt.tight_layout()
             plt.savefig(
-                "output\\" + waterbodyType + "_eco_" + suffix + ".png",
+                "output\\" + waterbodyType + "_eco_" + suffix + ".pdf",
                 bbox_inches="tight",
             )
 
