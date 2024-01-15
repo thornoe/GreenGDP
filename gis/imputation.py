@@ -109,7 +109,7 @@ imputer = IterativeImputer(random_state=0, tol=1e-1)
 #     axis=1,
 # )
 
-# Example data used to test the code below (takes ~1 second rather than ~ hours to run)
+# Example data used to test the code below (takes ~1 second rather than ~2 days to run)
 # dfIndicator = pd.DataFrame(
 #     {
 #         1988: [0.5, 1.0, 1.5, 2.0, np.nan],
