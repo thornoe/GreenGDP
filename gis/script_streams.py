@@ -26,7 +26,7 @@ import pandas as pd
 
 # To use the experimental imputation feature, we must explicitly ask for it:
 from sklearn.experimental import enable_iterative_imputer  # noqa
-from sklearn.impute import IterativeImputer, SimpleImputer
+from sklearn.impute import IterativeImputer
 
 ########################################################################################
 #   1. Setup
@@ -207,9 +207,6 @@ for i in c.years:
     ]
     df[i] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
 
-df = 
-
-
 # def ecological_status(self, waterbodyType, dfIndicator, dfVP, suffix):
 """Based on the type of water body, convert the longitudinal DataFrame to the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality respectively.
 Create a table of statistics and export it as an html table.
@@ -255,23 +252,43 @@ stats
 
 # def impute_missing_values(self, dfIndicator, dfVP):
 """   """
+# DataFrame for the biophysical indicator and typology
 dfIndicator = df_ind_obs
 dfVP = df_VP
-# Copy DataFrame for the biophysical indicator
-df = dfIndicator.copy()
-df.describe()
 
-# Simple mean as a baseline
-imputer_mean = SimpleImputer(strategy="mean")
-df_mean = pd.DataFrame(imputer_mean.fit_transform(np.array(df)), columns=df.columns)
-df_mean.describe()
+# Create typology dummies
+df_VP = pd.read_csv("output\\streams_VP.csv", index_col="wb")
+d = pd.get_dummies(df_VP["ov_typ"]).astype(int)
+d["softBottom"] = d["RW4"] + d["RW5"]
+d.columns = [
+    "small",
+    "medium",
+    "large",
+    "smallSoftBottom",
+    "mediumSoftBottom",
+    "softBottom",
+]
 
-# Iterative imputer using the BayesianRidge() estimator
-imputer = IterativeImputer()
+# Merge DataFrames for typology and DVFI fauna index
+col = ["small", "medium", "large", "softBottom"]
+dfTypology = dfIndicator.merge(d[col], how="inner", on="wb")
+
+# Typology for observed water bodies by year
+typ = pd.DataFrame(index=years)  #  empty DataFrame to store typology by year
+for x in col:
+    typ[x] = 100 * dfTypology[dfTypology[x] == 1].count() / dfTypology.count()
+    typ.loc["all", x] = 100 * len(d[d[x] == 1]) / len(d)
+typ.to_csv("output/streams_VP_stats.csv")
+
+# Iterative imputer using the BayesianRidge() estimator with increased tolerance
+imputer = IterativeImputer(random_state=0, tol=1e-1)
+
 # Fit imputer and transform the dataset
-df_imp = pd.DataFrame(
-    imputer.fit_transform(np.array(df)), index=df.index, columns=df.columns
+dfImp = pd.DataFrame(
+    imputer.fit_transform(np.array(dfTypology)),
+    index=dfTypology.index,
+    columns=dfTypology.columns,
 )
-df_imp.describe()
+dfImp = dfImp.drop(columns=col)
 
-df_eco_imp, stats_imp = c.ecological_status(waterbodyType, df_imp, df_VP, "imp")
+df_eco_imp, stats_imp = c.ecological_status(waterbodyType, dfImp, dfVP, "imp")

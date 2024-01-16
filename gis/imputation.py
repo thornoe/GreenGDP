@@ -19,27 +19,20 @@ Author:     Thor Donsby Noe
 ########################################################################################
 import os
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tqdm
 
-# import matplotlib.colors
-# import seaborn as sns
 # To use this experimental feature, we need to explicitly ask for it:
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
 from sklearn.metrics import accuracy_score
 
-# from sklearn.kernel_approximation import Nystroem
-# from sklearn.ensemble import RandomForestRegressor
-# from sklearn.neighbors import KNeighborsRegressor
-
 
 # Function for score
 def AccuracyScore(y_true, y_pred):
-    """Return average precision (AP) of predicted ecological status compared to known ecological status after converting DVFI fauna index for streams to index of ecological status."""
-    eco_true, eco_pred = [], []
+    """Convert DVFI fauna index for streams to index of ecological status and return accuracy score, i.e., the share of observed streams each year where predicted ecological status matches the true ecological status (which LOO-CV omits)."""
+    eco_true, eco_pred = [], []  #  empy lists for storing transformed observations
     for a, b in zip([y_true, y_pred], [eco_true, eco_pred]):
         # Categorical variable for ecological status: Bad, Poor, Moderate, Good, High
         conditions = [
@@ -66,10 +59,6 @@ years = dfIndicator.columns
 
 # Create typology dummies
 df_VP = pd.read_csv("output\\streams_VP.csv", index_col="wb")
-for RW in ["RW1", "RW2", "RW3", "RW4", "RW5", "RW6"]:
-    len(df_VP[df_VP.ov_typ == RW]), round(
-        100 * len(df_VP[df_VP.ov_typ == RW]) / len(df_VP)
-    )
 d = pd.get_dummies(df_VP["ov_typ"]).astype(int)
 d["softBottom"] = d["RW4"] + d["RW5"]
 d.columns = [
@@ -82,13 +71,19 @@ d.columns = [
 ]
 
 # Merge DataFrames for typology and DVFI fauna index
-dfTypology = dfIndicator.merge(
-    d[["small", "medium", "large", "softBottom"]], how="inner", on="wb"
-)
+col = ["small", "medium", "large", "softBottom"]
+dfTypology = dfIndicator.merge(d[col], how="inner", on="wb")
+
+# Typology for observed water bodies by year
+typ = pd.DataFrame(index=years)  #  empty DataFrame to store typology by year
+for c in col:
+    typ[c] = 100 * dfTypology[dfTypology[c] == 1].count() / dfTypology.count()
+    typ.loc["all", c] = 100 * len(d[d[c] == 1]) / len(d)
+typ.to_csv("output/streams_VP_stats.csv")
 
 
 ########################################################################################
-#   2. Multivariate feature imputation - leave-one-out CV makes it very slow!
+#   2. Multivariate feature imputation (note: LOO CV takes ~1 day to run for each model)
 ########################################################################################
 # Iterative imputer using the BayesianRidge() estimator with increased tolerance
 imputer = IterativeImputer(random_state=0, tol=1e-1)
@@ -119,16 +114,26 @@ imputer = IterativeImputer(random_state=0, tol=1e-1)
 #         1992: [np.nan, 1.4, 1.9, 2.4, 2.9],
 #     }
 # )
-# years = dfIndicator.columns
 # dfTypology = dfIndicator.copy()
 # dfTypology["small"] = [1, 1, 0, 0, 0]
+# years = dfIndicator.columns
+
+# Data subset to measure the prediction improvement from including 1988
+# dfIndicator = dfIndicator.drop(columns=1988)
+# dfTypology = dfTypology.drop(columns=1988)
+# years = [1989]
+# accuracy dfIndicator & dfTypology in 1989 drops by  up to if omitting year 1988
+#   0.6073825503355704 & 0.6191275167785235 respectively
+
+# DataFrame for storing accuracy scores by year and calculating weighted average
+scores = pd.DataFrame(dfIndicator.count(), index=years, columns=["obs"])
 
 # Leave-one-out cross-validation (LOO-CV) loop over every observed stream and year
-scores = pd.DataFrame()  #  empty DataFrame for accuracy scores by year
 dfIndicator.name = "No typology"
 dfTypology.name = "Typology"
 for df in (dfIndicator, dfTypology):
-    print(df.name, "used for imputation. LOO-CV applied to observed streams each year:")
+    print("Total:", (scores[df.name] * scores["obs"]).sum() / scores["obs"].sum())
+    print(df.name, "used for imputation. LOO-CV of observed streams each year:")
     for t in tqdm.tqdm(years):
         y = df[df[t].notnull()].index
         Y = pd.DataFrame(index=y)
@@ -144,48 +149,26 @@ for df in (dfIndicator, dfTypology):
             Y.loc[i, "pred"] = X_imp.loc[i, t]
 
         # Accuracy of ecological status after converting DVFI fauna index for streams
-        acc = AccuracyScore(Y["true"], Y["pred"])
+        accuracy = AccuracyScore(Y["true"], Y["pred"])
 
         # Save accuracy score each year to DataFrame for scores
-        scores.loc[t, df.name] = acc
+        scores.loc[t, df.name] = accuracy
 
-scores
+    # Total accuracy (weighted by number of observations)
+    print("Total:", (scores[df.name] * scores["obs"]).sum() / scores["obs"].sum())
+    # accuracy dfIndicator - accuracy dfTypology (improvement of .14 percentage points)
+    #   0.6241328429537296 - 0.6255202942277622
 
-# Save accuracy to CSV
+# Save accuracy scores to CSV
 scores.to_csv("output/streams_eco_imp_accuracy.csv")
-
-# Total accuracy, i.e., weight by observations: dfIndicator.count()
 
 ########################################################################################
 #   4. Visualization: Distribution by year                                    #
 ########################################################################################
-b = "#1f77b4"  #  blue from d3.scale.category10c()
-o = "#ff7f0e"  #  orange from d3.scale.category10c()
+# Read accuracy scores from CSV
+scores = pd.read_csv("output/streams_eco_imp_accuracy.csv", index_col=0)
+s = scores[["No typology", "Typology"]]
 
-
-# plot accuracy scores - find pd.plot() bar example!; wider page margins in appendix?
-fig, ax = plt.figure(figsize=(12, 7.4))  #  create new figure
-plt.bar(ax - 0.2, scores["No typology"], 0.4, label="No typology")
-plt.bar(ax + 0.2, scores["Typology"], 0.4, label="Typology")
-ax.set(title="Accuracy of imputation using LOO-CV", ylabel="Accuracy score")
-ax.set_xticks(np.array(years))
-plt.legend()
-plt.show()
+# Plot accuracy scores
+fig = s.plot(kind="bar", figsize=(12, 6), ylabel="Accuracy score").get_figure()
 fig.savefig("output/streams_eco_imp_accuracy.pdf", bbox_inches="tight")
-
-for t in xval:
-    ax.bar(
-        t,
-        scores[t],
-        xerr=stds_diabetes[t],
-        color=colors[t],
-        alpha=0.6,
-        align="center",
-    )
-
-ax.set_title("Imputation Techniques with Diabetes Data")
-ax.set_xlim(left=np.min(mses_diabetes) * 0.9, right=np.max(mses_diabetes) * 1.1)
-ax.set_yticks(xval)
-ax.set_xlabel("MSE")
-ax.invert_yaxis()
-ax.set_yticklabels(x_labels)
