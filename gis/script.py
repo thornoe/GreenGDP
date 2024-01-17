@@ -112,8 +112,9 @@ for waterbodyType in ["streams"]:
 
     # Impute missing observations
 
+
     # Save time series of total shares (weighted by length) of quality
-    # df.to_csv('output\\' + waterbodyType + '_ecological_status.csv')
+    # df.to_csv('output\\' + waterbodyType + '_eco_imp_catch.csv')
 
     # Assign
     # Clean up after each iteration of loop

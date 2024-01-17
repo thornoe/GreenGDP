@@ -593,43 +593,46 @@ class Water_Quality:
             stats.to_csv("output\\" + waterbodyType + "_eco_" + suffix + "_stats.csv")
             dfStatus.to_csv("output\\" + waterbodyType + "_eco_" + suffix + ".csv")
 
-            # Create missing values graph (heatmap of missing observations by year):
-            self.missing_values_graph(waterbodyType, df, suffix)
+            # Analysis of missing observations (not relevant for imputed data)
+            if suffix == "obs":
+                # Create missing values graph (heatmap of missing observations by year):
+                self.missing_values_graph(waterbodyType, df, suffix)
 
-            # Elaborate column names of statistics for online presentation
-            stats.columns = [
-                "Status known (%)",
-                "Share of known is High (%)",
-                "Share of known is Good (%)",
-                "Share of known is Moderate (%)",
-                "Share of known is Poor (%)",
-                "Share of known is Bad (%)",
-            ]
+                # Create df limited to water bodies that are observed at least once
+                observed = dfVP[["length"]].merge(
+                    dfStatus.dropna(how="all"),
+                    how="inner",
+                    on="wb",
+                )
 
-            # Save statistics as Markdown for online presentation
-            stats = stats.drop([1988])
-            stats.astype(int).to_html("output\\" + waterbodyType + "_eco_obs_stats.md")
+                # Report length and share of water bodies observed at least once.
+                msg = "{0} km is the total shore length of {1} included in VP3, of which {2}% of {1} representing {3} km ({4}% of total shore length of {1}) have been assessed at least once. On average, {5}% of {1} representing {6} km ({7}% of total shore length of {1}) are assessed each year.\n".format(
+                    round(totalLength * 10 ** (-3)),
+                    waterbodyType,
+                    round(100 * len(observed) / len(df)),
+                    round(observed["length"].sum() * 10 ** (-3)),
+                    round(100 * observed["length"].sum() / totalLength),
+                    round(100 * np.mean(dfStatus.count() / len(df))),
+                    round(stats["known"].mean() / 100 * totalLength * 10 ** (-3)),
+                    round(stats["known"].mean()),
+                )
+                # print(msg)  # print statistics in Python
+                arcpy.AddMessage(msg)  # return statistics in ArcGIS
 
-            # Create df limited to water bodies that are observed at least once
-            observed = dfVP[["length"]].merge(
-                dfStatus.dropna(how="all"),
-                how="inner",
-                on="wb",
-            )
+                # Elaborate column names of statistics for online presentation
+                stats.columns = [
+                    "Share of known is High (%)",
+                    "Share of known is Good (%)",
+                    "Share of known is Moderate (%)",
+                    "Share of known is Poor (%)",
+                    "Share of known is Bad (%)",
+                    "Status known (%)",
+                ]
 
-            # Report length and share of water bodies observed at least once.
-            msg = "{0} km is the total shore length of {1} included in VP3, of which {2}% of {1} representing {3} km ({4}% of total shore length of {1}) have been assessed at least once. On average, {5}% of {1} representing {6} km ({7}% of total shore length of {1}) are assessed each year.\n".format(
-                round(totalLength * 10 ** (-3)),
-                waterbodyType,
-                round(100 * len(observed) / len(df)),
-                round(observed["length"].sum() * 10 ** (-3)),
-                round(100 * observed["length"].sum() / totalLength),
-                round(100 * np.mean(dfStatus.count() / len(df))),
-                round(stats["known"].mean() / 100 * totalLength * 10 ** (-3)),
-                round(stats["known"].mean()),
-            )
-            # print(msg)  # print statistics in Python
-            arcpy.AddMessage(msg)  # return statistics in ArcGIS
+                # Save statistics as Markdown for online presentation
+                stats.astype(int).to_html(
+                    "output\\" + waterbodyType + "_eco_obs_stats.md"
+                )
 
             return dfStatus, stats
 
