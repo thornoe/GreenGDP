@@ -563,49 +563,52 @@ class Water_Quality:
             # Create an empty df for statistics
             stats = pd.DataFrame(
                 index=self.years,
-                columns=[
-                    "Status known (%)",
-                    "Share of known is High (%)",
-                    "Share of known is Good (%)",
-                    "Share of known is Moderate (%)",
-                    "Share of known is Poor (%)",
-                    "Share of known is Bad (%)",
-                ],
+                columns=["high", "good", "moderate", "poor", "bad", "known"],
             )
 
             # Calculate the above statistics for each year
             for i in self.years:
                 y = df[[i, "length"]].reset_index(drop=True)
-                y["known"] = np.select([y[i].notna()], [y["length"]])
                 y["high"] = np.select([y[i] == 4], [y["length"]])
                 y["good"] = np.select([y[i] == 3], [y["length"]])
                 y["moderate"] = np.select([y[i] == 2], [y["length"]])
                 y["poor"] = np.select([y[i] == 1], [y["length"]])
                 y["bad"] = np.select([y[i] == 0], [y["length"]])
+                y["known"] = np.select([y[i].notna()], [y["length"]])
 
                 # Add shares of total length to stats
                 knownLength = y["known"].sum()
                 stats.loc[i] = [
-                    100 * knownLength / totalLength,
                     100 * y["high"].sum() / knownLength,
                     100 * y["good"].sum() / knownLength,
                     100 * y["moderate"].sum() / knownLength,
                     100 * y["poor"].sum() / knownLength,
                     100 * y["bad"].sum() / knownLength,
+                    100 * knownLength / totalLength,
                 ]
 
-            # Save statistics to html for online presentation
-            stats.astype(int).to_html("output\\" + waterbodyType + "_eco_obs_stats.md")
-
-            # Shorten column names of statistics
-            stats.columns = ["known", "high", "good", "moderate", "poor", "bad"]
-
             # Save statistics and water bodies to CSV
-            dfStatus.to_csv("output\\" + waterbodyType + "_eco_" + suffix + ".csv")
+            if suffix != "obs":
+                stats = stats.drop(columns="known")
             stats.to_csv("output\\" + waterbodyType + "_eco_" + suffix + "_stats.csv")
+            dfStatus.to_csv("output\\" + waterbodyType + "_eco_" + suffix + ".csv")
 
             # Create missing values graph (heatmap of missing observations by year):
             self.missing_values_graph(waterbodyType, df, suffix)
+
+            # Elaborate column names of statistics for online presentation
+            stats.columns = [
+                "Status known (%)",
+                "Share of known is High (%)",
+                "Share of known is Good (%)",
+                "Share of known is Moderate (%)",
+                "Share of known is Poor (%)",
+                "Share of known is Bad (%)",
+            ]
+
+            # Save statistics as Markdown for online presentation
+            stats = stats.drop([1988])
+            stats.astype(int).to_html("output\\" + waterbodyType + "_eco_obs_stats.md")
 
             # Create df limited to water bodies that are observed at least once
             observed = dfVP[["length"]].merge(
