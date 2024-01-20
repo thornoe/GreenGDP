@@ -68,7 +68,7 @@ print(
 5020718 - 4999453
 
 # Households in coastal catchment areas
-# df.drop(columns=["alder", "ind", "gen_alder", "gen_ind"], inplace=True)
+# df.drop(columns=['alder', 'ind', 'gen_alder', 'gen_ind'], inplace=True)
 sum(df["sum_hust"] < 1000) / len(df)  # share with <= 1000 households
 sum(df["sum_hust"] < 5000) / len(df)  # share with <= 5000 households
 

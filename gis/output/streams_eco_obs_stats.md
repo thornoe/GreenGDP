@@ -12,15 +12,6 @@
   </thead>
   <tbody>
     <tr>
-      <th>1988</th>
-      <td>5</td>
-      <td>36</td>
-      <td>38</td>
-      <td>17</td>
-      <td>1</td>
-      <td>10</td>
-    </tr>
-    <tr>
       <th>1989</th>
       <td>2</td>
       <td>35</td>
@@ -60,7 +51,7 @@
       <th>1993</th>
       <td>4</td>
       <td>33</td>
-      <td>42</td>
+      <td>43</td>
       <td>16</td>
       <td>2</td>
       <td>24</td>
@@ -86,7 +77,7 @@
     <tr>
       <th>1996</th>
       <td>5</td>
-      <td>35</td>
+      <td>34</td>
       <td>41</td>
       <td>15</td>
       <td>2</td>
@@ -153,7 +144,7 @@
       <td>40</td>
       <td>10</td>
       <td>0</td>
-      <td>45</td>
+      <td>44</td>
     </tr>
     <tr>
       <th>2004</th>
@@ -168,10 +159,10 @@
       <th>2005</th>
       <td>9</td>
       <td>40</td>
-      <td>39</td>
-      <td>10</td>
+      <td>40</td>
+      <td>9</td>
       <td>0</td>
-      <td>34</td>
+      <td>33</td>
     </tr>
     <tr>
       <th>2006</th>
@@ -185,11 +176,11 @@
     <tr>
       <th>2007</th>
       <td>9</td>
-      <td>40</td>
+      <td>41</td>
       <td>41</td>
       <td>8</td>
       <td>0</td>
-      <td>29</td>
+      <td>28</td>
     </tr>
     <tr>
       <th>2008</th>
@@ -221,7 +212,7 @@
     <tr>
       <th>2011</th>
       <td>9</td>
-      <td>42</td>
+      <td>43</td>
       <td>38</td>
       <td>8</td>
       <td>0</td>
@@ -231,7 +222,7 @@
       <th>2012</th>
       <td>12</td>
       <td>45</td>
-      <td>34</td>
+      <td>33</td>
       <td>7</td>
       <td>0</td>
       <td>28</td>
@@ -241,7 +232,7 @@
       <td>10</td>
       <td>46</td>
       <td>34</td>
-      <td>8</td>
+      <td>7</td>
       <td>0</td>
       <td>33</td>
     </tr>
@@ -293,11 +284,11 @@
     <tr>
       <th>2019</th>
       <td>20</td>
-      <td>43</td>
+      <td>44</td>
       <td>28</td>
       <td>6</td>
       <td>0</td>
-      <td>29</td>
+      <td>28</td>
     </tr>
     <tr>
       <th>2020</th>
