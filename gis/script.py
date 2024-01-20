@@ -1,4 +1,4 @@
-'''
+"""
 Name:       script.py
 
 Label:      Construct and map longitudinal data of ecological status of water bodies.
@@ -12,7 +12,7 @@ Usage:      This script supports WaterbodiesScriptTool in the gis.tbx toolbox.
 
 License:    MIT Copyright (c) 2020-2024
 Author:     Thor Donsby Noe
-'''
+"""
 ########################################################################################
 #   0. Imports
 ########################################################################################
@@ -30,8 +30,8 @@ arcpy.env.overwriteOutput = True
 
 # Specify the parent folder as the working directory of the operating system
 # os.chdir(arcpy.GetParameterAsText(0))
-root = r'C:\Users\au687527\GitHub\GreenGDP'
-path = root + '\\gis'
+root = r"C:\Users\au687527\GitHub\GreenGDP"
+path = root + "\\gis"
 arcpy.env.workspace = path
 os.chdir(path)
 
@@ -52,26 +52,26 @@ year_last = 2020
 
 # Specify the names of each type of water body and its data files
 data = {
-    'catch': ['demographics.csv', 'geographical.xlsx'],
-    'streams': ['streams_DVFI.xlsx', 'streams_1988-2020.xlsx'],
+    "catch": ["demographics.csv", "geographical.xlsx"],
+    "streams": ["streams_DVFI.xlsx", "streams_1988-2020.xlsx"],
 }
 
 # Specify the names of the corresponding linkage files
 linkage = {
-    'coastal': 'coastal_stations_VP3.csv',
-    'lakes': 'lakes_stations_VP3.csv',
-    'streams': 'streams_stations_VP3.csv',
+    "coastal": "coastal_stations_VP3.csv",
+    "lakes": "lakes_stations_VP3.csv",
+    "streams": "streams_stations_VP3.csv",
 }
 
 # WFS service URL for the current water body plan (VP2 is for 2015-2021)
-wfs_service = 'https://wfs2-miljoegis.mim.dk/vp3endelig2022/ows?service=WFS&request=Getcapabilities'
+wfs_service = "https://wfs2-miljoegis.mim.dk/vp3endelig2022/ows?service=WFS&request=Getcapabilities"
 
 # For the WFS, specify the name of the feature class (fc) for each type of water body
 wfs_fc = {
-    'catch': 'vp3e2022_kystvand_opland_afg',
-    'coastal': 'vp3e2022_marin_samlet_1mil',
-    'lakes': 'vp3e2022_soe_samlet',
-    'streams': 'vp3e2022_vandloeb_samlet',
+    "catch": "vp3e2022_kystvand_opland_afg",
+    "coastal": "vp3e2022_marin_samlet_1mil",
+    "lakes": "vp3e2022_soe_samlet",
+    "streams": "vp3e2022_vandloeb_samlet",
 }
 
 ########################################################################################
@@ -96,7 +96,7 @@ c = script_module.Water_Quality(
 df_eco_catch = pd.DataFrame()
 
 # Loop over each category j ∈ {coastal, lakes, streams}
-for j in ['streams']:
+for j in ["streams"]:
     # Get the feature class from the WFS service
     c.get_fc_from_WFS(j)
 
@@ -111,20 +111,20 @@ for j in ['streams']:
     #     c.map_book(j, df_eco_obs)
 
     # Impute missing values for biophysical indicator and return ecological status
-    df_eco_imp, imp_stats = c.impute_missing(j, df_ind_obs, df_VP, 'imp', index_sorted)
+    df_eco_imp, imp_stats = c.impute_missing(j, df_ind_obs, df_VP, "imp", index_sorted)
 
     # Save time series of total shares (weighted by length) of quality
     # df.to_csv('output\\' + j + '_eco_imp_catch.csv')
 
     # Assign
     # Clean up after each iteration of loop
-    if keep_gdb != 'true':
+    if keep_gdb != "true":
         # Delete feature class
         if arcpy.Exists(j):
             arcpy.Delete_management(j)
 
 # Clean up geodatabase
-if keep_gdb != 'true':
+if keep_gdb != "true":
     # Delete all feature classes in geodatabase
     for fc in arcpy.ListFeatureClasses():
         arcpy.Delete_management(fc)
