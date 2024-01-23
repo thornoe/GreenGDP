@@ -28,21 +28,21 @@ from sklearn.impute import IterativeImputer
 from sklearn.metrics import accuracy_score
 
 # Color-blind-friendly ordinal scale, modified from: gist.github.com/thriveth/8560036
-ColorMap = {
+ColorCycle = {
     "blue": "#377eb8",
     "orange": "#ff7f00",
     "green": "#4daf4a",
-    "gray": "#999999",
+    "gray": "#999999",  #  moved up
     "pink": "#f781bf",
     "brown": "#a65628",
     "purple": "#984ea3",
     "yellow": "#dede00",
-    "red": "#e41a1c",
+    "red": "#e41a1c",  #  moved down
 }
 
 # Set the default color map and figure size for pyplots
-plt.rcParams["axes.prop_cycle"] = plt.cycler("color", list(ColorMap.values()))
-plt.rcParams["figure.figsize"] = [12, 6]
+plt.rcParams["axes.prop_cycle"] = plt.cycler("color", list(ColorCycle.values()))
+plt.rcParams["figure.figsize"] = [12, 6]  #  wide format (appendix with wide margins)
 
 
 # Function for score
@@ -58,7 +58,7 @@ def AccuracyScore(y_true, y_pred):
             (a >= 4.5) & (a < 6.5),
             a >= 6.5,
         ]
-        b.append(np.select(conditions, [1, 2, 3, 4, 5], default=np.nan))
+        b.append(np.select(conditions, [0, 1, 2, 3, 4], default=np.nan))
     return accuracy_score(eco_true[0], eco_pred[0])
 
 
@@ -117,21 +117,21 @@ d.to_csv("output/streams_VP_stats.csv")
 # Iterative imputer using the BayesianRidge() estimator with increased tolerance
 imputer = IterativeImputer(random_state=0, tol=1e-1)
 
-# Example data for testing LOO-CV below (takes ~1 second rather than ~3 days to run)
-# dfIndObs = pd.DataFrame(
-#     {
-#         1988: [0.5, 1.0, 1.5, 2.0, np.nan],
-#         1989: [0.6, 1.1, 1.6, np.nan, 2.6],
-#         1990: [0.7, 1.2, np.nan, 2.2, 2.7],
-#         1991: [0.8, np.nan, 1.8, 2.3, 2.8],
-#         1992: [np.nan, 1.4, 1.9, 2.4, 2.9],
-#     }
-# )
-# dfTypology = dfIndObs.copy()
-# dfTypology['small'] = [1, 1, 0, 0, 0]
-# dfDistrict = dfTypology.copy()
-# dfDistrict['DK2'] = [1, 0, 1, 0, 0]
-# years = list(range(1989, 1992 + 1))
+# Example data for testing LOO-CV below (takes ~3 seconds rather than ~3 days to run)
+dfIndObs = pd.DataFrame(
+    {
+        1988: [2.5, 3.0, 3.5, 4.0, np.nan],
+        1989: [2.6, 3.1, 3.6, np.nan, 4.6],
+        1990: [2.7, 3.2, np.nan, 4.2, 4.7],
+        1991: [2.8, np.nan, 3.8, 4.3, 4.8],
+        1992: [np.nan, 3.4, 3.9, 4.4, 4.9],
+    }
+)
+dfTypology = dfIndObs.copy()
+dfTypology["small"] = [1, 1, 0, 0, 0]
+dfDistrict = dfTypology.copy()
+dfDistrict["DK2"] = [1, 0, 1, 0, 0]
+years = list(range(1989, 1992 + 1))
 
 # DataFrame for storing accuracy scores by year and calculating weighted average
 scores = pd.DataFrame(dfIndObs.count(), index=years, columns=["n"]).astype(int)
@@ -157,7 +157,6 @@ for df in (dfIndObs, dfTypology, dfDistrict):  #  LOO-CV using different dummies
     # loop over each year t
     print(df.name, "used for imputation. LOO-CV of observed streams each year:")
     for t in tqdm.tqdm(years):  #  time each model and report its progress in years
-        scores[df.name] = X_imp.loc[i, t]  #  store predicted value
         y = df[df[t].notnull()].index  #  index for observed values at year t
         Y = pd.DataFrame(index=y)  #  empty df for observed and predicted values
         Y["true"] = df.loc[y, t]  #  column with the observed ('true') values

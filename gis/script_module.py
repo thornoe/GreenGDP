@@ -11,7 +11,7 @@ Usage:      This module supports script.py and WaterbodiesScriptTool in gis.tbx.
             See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
 
 Functions:  The class in this module contains 10 functions of which some are nested:
-            - get_data(), get_fc_from_WFS(), and map_book() are standalone functions.
+            - get_data(), get_fc_from_WFS(), map_book(), and values_by_catchment_area() are standalone functions.
             - observed_indicator() calls:
                 - stations_to_streams(), which calls:
                     - longitudinal(), which again calls:
@@ -20,6 +20,8 @@ Functions:  The class in this module contains 10 functions of which some are nes
                 - ecological_status(), which calls:
                     - indicator_to_status()
                     - missing_values_graph()
+            - valuation() calls:
+                - BT()
             Descriptions can be seen under each function.
 
 License:    MIT Copyright (c) 2020-2023
@@ -35,6 +37,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+from scipy import interpolate
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
 
@@ -64,6 +67,25 @@ class Water_Quality:
         self.keep_gdb = keepGeodatabase
         self.path = os.getcwd()
         self.arcPath = self.path + "\\gis.gdb"
+
+        # Color-blind-friendly ordinal scale, modified: gist.github.com/thriveth/8560036
+        self.ColorCycle = {
+            "blue": "#377eb8",
+            "orange": "#ff7f00",
+            "green": "#4daf4a",
+            "gray": "#999999",  #  moved up
+            "pink": "#f781bf",
+            "brown": "#a65628",
+            "purple": "#984ea3",
+            "yellow": "#dede00",
+            "red": "#e41a1c",  #  moved down
+        }
+
+        # Set the default color map and figure size for pyplots
+        plt.rcParams["axes.prop_cycle"] = plt.cycler(
+            "color", list(self.ColorCycle.values())
+        )
+        plt.rcParams["figure.figsize"] = [10, 6.18]  #  golden ratio
 
         # Set the ArcPy workspace
         arcpy.env.workspace = self.arcPath
@@ -157,7 +179,7 @@ class Water_Quality:
 
             # Set the names of the fields (columns) in fc that contain the ID (and typology)
             if fc == "catch":
-                fields = ["op_id"]
+                fields = ["op_id", "op_navn"]
             else:
                 fields = ["ov_id", "ov_navn", "ov_typ", "distr_id"]
 
@@ -277,7 +299,7 @@ class Water_Quality:
             # Stations covered by the linkage tabel for the third water body plan VP3
             link = df.dropna(subset=["ov_id"])
 
-            # Convert waterbody ID (wb) to integers
+            # Convert water body ID (wb) to integers
             link["wb"] = link["ov_id"].str.slice(7).astype(int)
 
             # Stations not covered by the linkage table for VP3
@@ -341,19 +363,19 @@ class Water_Quality:
             finally:
                 del cursor
 
-            # Specify name of feature class for streams in VP3 (lines)
+            # Specify name of feature class for streams in VP3 (polylines)
             fc = j
 
-            # Specify name of joined feature class (lines)
+            # Specify name of joined feature class (polylines)
             fcJoined = fcStations + "_joined"
 
             # Spatial Join unmatched stations with streams within given radius
             arcpy.SpatialJoin_analysis(
-                fc,
-                fcStations,
-                fcJoined,  #  will overwrite if it already exists
-                "JOIN_ONE_TO_MANY",
-                "KEEP_COMMON",
+                target_features=fc,
+                join_features=fcStations,
+                out_feature_class=fcJoined,  #  will overwrite if it already exists
+                join_operation="JOIN_ONE_TO_MANY",
+                join_type="KEEP_COMMON",
                 match_option="CLOSEST",
                 search_radius=radius,
                 distance_field_name="Distance",
@@ -366,7 +388,7 @@ class Water_Quality:
             stations = [row for row in arcpy.da.SearchCursor(fcJoined, fieldsJ)]
             join = pd.DataFrame(stations, columns=fieldsJ).sort_values("Distance")
 
-            # Convert waterbody ID (wb) to integers
+            # Convert water body ID (wb) to integers
             join["wb"] = join["ov_id"].str.slice(7).astype(int)
 
             # Capitalize water body names
@@ -398,17 +420,17 @@ class Water_Quality:
             # Group multiple stations in a water body: Take the median and round down
             waterbodies = allMatches.groupby("wb").median().apply(np.floor)
 
-            # Fields in fc that contain waterbody ID, typology, district, and length
+            # Fields in fc that contain water body ID, typology, district, and length
             fields = ["ov_id", "ov_typ", "distr_id", "Shape_Length"]
 
             # Create df from fc with characteristics of all streams in VP
             dataVP = [row for row in arcpy.da.SearchCursor(fc, fields)]
             dfVP = pd.DataFrame(dataVP, columns=fields)
 
-            # Shore length is counted on both sides of the stream
-            dfVP[["length"]] = dfVP[["Shape_Length"]] * 2
+            # Shore length is counted on both sides of the stream; convert to km
+            dfVP[["length"]] = dfVP[["Shape_Length"]] * 2 / 1000
 
-            # Convert waterbody ID (wb) to integers and sort (ascending)
+            # Convert water body ID (wb) to integers and sort (ascending)
             dfVP["wb"] = dfVP["ov_id"].str.slice(7).astype(int)
             dfVP = dfVP.sort_values("wb")
 
@@ -596,8 +618,11 @@ class Water_Quality:
                 col = ["small", "medium", "large", "softBottom"]
                 dummies = typology[col].merge(district["DK2"], how="inner", on="wb")
 
-            # Merge DataFrames for observed biophysical indicator and dummies
-            dfIndObsDum = dfIndObs.merge(dummies, how="inner", on="wb")
+                # Merge DataFrames for observed biophysical indicator and dummies
+                dfIndObsDum = dfIndObs.merge(dummies, how="inner", on="wb")
+
+            else:
+                dfIndObsDum = dfIndObs.copy()
 
             # Iterative imputer using BayesianRidge() estimator with increased tolerance
             imputer = IterativeImputer(random_state=0, tol=1e-1)
@@ -647,18 +672,27 @@ class Water_Quality:
             # Create an empty df for statistics
             stats = pd.DataFrame(
                 index=self.years,
-                columns=["high", "good", "moderate", "poor", "bad", "known"],
+                columns=[
+                    "high",
+                    "good",
+                    "moderate",
+                    "poor",
+                    "bad",
+                    "not good",
+                    "known",
+                ],
             )
 
             # Calculate the above statistics for each year
             for t in self.years:
                 y = df[[t, "length"]].reset_index(drop=True)
+                y["high"] = np.select([y[t] == 4], [y["length"]])
+                y["good"] = np.select([y[t] == 3], [y["length"]])
+                y["moderate"] = np.select([y[t] == 2], [y["length"]])
+                y["poor"] = np.select([y[t] == 1], [y["length"]])
+                y["bad"] = np.select([y[t] == 0], [y["length"]])
+                y["not good"] = np.select([y[t] < 3], [y["length"]])
                 y["known"] = np.select([y[t].notna()], [y["length"]])
-                y["high"] = np.select([y[t] == 5], [y["length"]])
-                y["good"] = np.select([y[t] == 4], [y["length"]])
-                y["moderate"] = np.select([y[t] == 3], [y["length"]])
-                y["poor"] = np.select([y[t] == 2], [y["length"]])
-                y["bad"] = np.select([y[t] == 1], [y["length"]])
 
                 # Add shares of total length to stats
                 knownLength = y["known"].sum()
@@ -668,6 +702,7 @@ class Water_Quality:
                     100 * y["moderate"].sum() / knownLength,
                     100 * y["poor"].sum() / knownLength,
                     100 * y["bad"].sum() / knownLength,
+                    100 * y["not good"].sum() / knownLength,
                     100 * knownLength / totalLength,
                 ]
 
@@ -710,6 +745,7 @@ class Water_Quality:
                     "Share of known is Moderate (%)",
                     "Share of known is Poor (%)",
                     "Share of known is Bad (%)",
+                    "Share of known is not Good (%)",
                     "Status known (%)",
                 ]
 
@@ -718,7 +754,7 @@ class Water_Quality:
 
             if index is None:
                 return dfEco, stats, indexSorted
-            return dfEco, stats
+            return dfEco, stats["not good"]
 
         except:
             # Report severe error messages
@@ -748,7 +784,7 @@ class Water_Quality:
                         (df[t] >= 4.5) & (df[t] < 6.5),
                         df[t] >= 6.5,
                     ]
-                    df[t] = np.select(conditions, [1, 2, 3, 4, 5], default=np.nan)
+                    df[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
 
             return df
 
@@ -781,14 +817,14 @@ class Water_Quality:
                 df = frame.copy().reindex(index)
 
             # Plot heatmap
-            df.fillna(0, inplace=True)
+            df.fillna(-1, inplace=True)
             cm = sns.xkcd_palette(["grey", "red", "orange", "yellow", "green", "blue"])
             plt.figure(figsize=(12, 12))
             ax = sns.heatmap(
                 df,
                 cmap=cm,
                 cbar=False,
-                cbar_kws={"ticks": [0, 1, 2, 3, 4, 5]},
+                cbar_kws={"ticks": [-1, 0, 1, 2, 3, 4]},
             )
             ax.set(yticklabels=[])
             plt.ylabel(
@@ -819,6 +855,276 @@ class Water_Quality:
             tbinfo = traceback.format_tb(tb)[0]
             msg = "Could not create missing values graph (heatmap) for ecological status of {1}:\nTraceback info:\n{2}Error Info:\n{2}".format(
                 j, tbinfo, str(sys.exc_info()[1])
+            )
+            print(msg)  # print error message in Python
+            arcpy.AddError(msg)  # return error message in ArcGIS
+            sys.exit(1)
+
+    def values_by_catchment_area(self, j, dfEcoImp, dfVP):
+        """Assign water bodies to coastal catchment areas and calculate the weighted arithmetic mean of ecological status after truncating from above at Good status.
+        For each year t, set up df with variables for the Benefit Transfer equation."""
+        try:
+            # Specify name of joined feature class (polygons)
+            jCatch = j + "_catch"
+
+            # Join water bodies with the coastal catchment area they have their center in
+            arcpy.SpatialJoin_analysis(
+                target_features=j,
+                join_features="catch",
+                out_feature_class=jCatch,  #  will overwrite if it already exists
+                join_operation="JOIN_ONE_TO_MANY",
+                match_option="HAVE_THEIR_CENTER_IN",
+            )
+
+            # Fields in fc that contain coastal catchment area ID and water body ID
+            fields = ["op_id", "ov_id"]
+
+            # Create DataFrame from jCatch of water bodies in each coastal catchment area
+            dataCatch = [row for row in arcpy.da.SearchCursor(jCatch, fields)]
+            dfCatch = pd.DataFrame(dataCatch, columns=fields)
+
+            # Convert water body ID (wb) and coastal catchment area ID to integers
+            dfCatch["wb"] = dfCatch["ov_id"].str.slice(7).astype(int)
+            dfCatch["v"] = dfCatch["op_id"]
+
+            # Specify columns, water body ID as index, sort by coastal catchment area ID
+            dfCatch = dfCatch[["wb", "v"]].set_index("wb").sort_values(by="v")
+
+            if j == "streams":
+                # Assign unjoined water bodies to their relevant coastal catchment area
+                dfCatch.loc[3024, "v"] = "113"  #  assign Kruså to Inner Flensborg Fjord
+                dfCatch.loc[8504, "v"] = "233"  #  assign outlet from Kilen to Venø Bugt
+
+            # Merge df for imputed ecological status w. coastal catchment area and length
+            dfEcoImpCatch = dfEcoImp.merge(dfCatch, how="inner", on="wb").astype(int)
+            dfEco = dfEcoImpCatch.merge(dfVP[["length"]], how="inner", on="wb")
+
+            # List of coastal catchment areas where category j is present
+            j_present = list(dfEco["v"].unique())
+
+            # Total length of water bodies of category j by coastal catchment area v
+            shores_v = dfEco[["v", "length"]].groupby("v").sum().iloc[:, 0]
+
+            # Demographics by coastal catchment area v and year t (1990-2018)
+            dem = pd.read_csv(
+                "data\\" + self.data["shared"][1], index_col=[0, 1]
+            ).sort_index()
+
+            # Years used for interpolation of demographics
+            t_old = np.arange(1990, 2018 + 1)
+            t_new = np.arange(1990, 2020 + 1)
+
+            # For each coastal catchment area v, extrapolate demographics to 2019-2020
+            frames_v = {}  #  dictionary to store df for each coastal catchment area v
+            for v in dem.index.get_level_values(0).unique():
+                df = pd.DataFrame(
+                    index=t_new
+                )  #  empty df to store values for each year t
+                df.index.name = "t"
+                for col in dem.columns:
+                    # Function for linear extrapolation
+                    f = interpolate.interp1d(
+                        t_old, dem.loc[v, col], fill_value="extrapolate"
+                    )
+                    df[col] = f(t_new)
+                frames_v[v] = df  #  store df in dictionary of DataFrames
+            dfDem = pd.concat(frames_v).sort_index()
+            dfDem.index.names = ["v", "t"]
+
+            # Consumer Price Index by year t (1990-2020)
+            CPI = pd.read_excel("data\\" + self.data["shared"][0], index_col=0)
+
+            # Merge CPI with demographics by v and t (households, age, and hh income)
+            Dem = dfDem[["N"]].merge(CPI, "left", left_index=True, right_index=True)
+            Dem["D age"] = np.select([dfDem["age"] > 45], [1])  # dummy mean age > 45
+            # Mean gross real household income (100,000 DKK, 2018 prices) by v and t
+            Dem["y"] = dfDem["income"] * CPI.loc[2018, "CPI"] / Dem["CPI"] / 100000
+            Dem["ln y"] = np.log(Dem["y"])  #  log mean gross real household income
+            Dem = Dem.loc[j_present].reorder_levels([1, 0]).sort_index()
+
+            # Geographical data by coastal catchment area v (assumed time-invariant)
+            Geo = pd.read_excel("data\\" + self.data["shared"][2], index_col=0)
+            Geo.index.name = "v"
+            Geo = Geo.loc[j_present].sort_index()
+
+            # For each year t, create a DataFrame of variables needed for benefit transfer
+            frames_t = (
+                {}
+            )  # create empty dictionary to store a DataFrame for each year t
+
+            # DataFrame for water quality truncated from above at Good ecological status
+            Q = dfEco.mask(dfEco == 4, 3)
+
+            # Create DataFrames with dummy for less than good ecological status
+            SL = Q.copy()
+            SL[t_new] = SL[t_new].mask(SL[t_new] < 3, 1).mask(SL[t_new] == 3, 0)
+
+            for t in self.years:
+                df = (
+                    pd.DataFrame()
+                )  #  empty DataFrame for values by coastal catchment area
+                # \bar{Q}: mean ecological status of water bodies weighted by shore length
+                Q[t] = Q[t] * Q["length"]  #  ecological status × shore length
+                df["Q"] = df["Q"] = Q[["v", t]].groupby("v").sum()[t] / shores_v
+                if t > 1989:
+                    df["ln y"] = Dem.loc[t, "ln y"]  #  log mean gross real hh income
+                    df["D age"] = Dem.loc[t, "D age"]  #  dummy for mean age > 45 years
+                    SL[t] = SL[t] * SL["length"]  #  shore length if eco status < good
+                    SL_not_good = SL[["v", t]].groupby("v").sum()  #  SL if eco < good
+                    df["ln PSL"] = SL_not_good[t] / Geo["shore all j"]  #  proport. SL
+                    df["ln PSL"] = np.select(
+                        [df["ln PSL"] != 0], [np.log(df["ln PSL"])]  #  log if PSL != 0
+                    )
+                    df["ln PAL"] = Geo["ln PAL"]  #  proportion arable land
+                    df["SL"] = SL_not_good / 1000  #  SL in 1000 km
+                    if j == "lakes":
+                        df["D lake"] = 1
+                    else:
+                        df["D lake"] = 0
+                    df["N"] = Dem.loc[t, "N"]  #  number of households
+                frames_t[t] = df  #  store df in dictionary of DataFrames
+            dfBT = pd.concat(frames_t)
+            dfBT.index.names = ["t", "v"]
+
+            return dfBT, shores_v
+
+        except:
+            # Report severe error messages
+            tb = sys.exc_info()[2]  # get traceback object for Python errors
+            tbinfo = traceback.format_tb(tb)[0]
+            msg = "Could not set up df with variables by coastal catchment area for {0}:\nTraceback info:\n{1}Error Info:\n{2}".format(
+                j, tbinfo, str(sys.exc_info()[1])
+            )
+            print(msg)  # print error message in Python
+            arcpy.AddError(msg)  # return error message in ArcGIS
+            sys.exit(1)
+
+    def valuation(self, dfBT, real=False, investment=False):
+        """Valuation of water quality as either current costs or investment value (IV).
+        If not set to return real values (2018 prices), instead returns values in the prices of both the current year and the preceding year (for chain linking).
+        """
+        try:
+            # Copy DataFrame with the variables needed for the benefit transfer equation
+            d = dfBT.copy()
+
+            if investment is False:
+                # MWTP = 0 if all water bodies of type j have ≥ Good ecological status
+                d["nonzero"] = np.select([d["Q"] < 2.99], [1])  #  dummy
+
+                # Distance from current to Good: convert mean Q to lnΔQ ≡ ln(Q good - Q)
+                d["Q"] = np.select([d["Q"] < 2.99], [np.log(3 - d["Q"])])
+
+            else:
+                # Actual change in ecological status since preceding year
+                d = d.reorder_levels(["j", "v", "t"]).sort_index()
+                d["Q"] = d["Q"].diff()
+                d = d.reorder_levels(["j", "t", "v"]).sort_index()
+
+                # MWTP = 0 if actual change in water quality is zero
+                d["nonzero"] = np.select([d["Q"] != 0], [1])  #  dummy
+
+                # Mark if actual change is negative (used to switch MWTP to negative)
+                d["neg"] = np.select([d["Q"] < 0], [1])  #  dummy
+
+                # Convert Q to the log of the actual change
+                conditions = [d["Q"] > 0, d["Q"] < 0]
+                d["Q"] = np.select(conditions, [np.log(d["Q"]), np.log(-d["Q"])])
+
+            # Drop year 1989 and specify integer values
+            d = d.drop(d[d.index.get_level_values("t") == 1989].index)
+            d[["D age", "D lake", "N"]] = d[["D age", "D lake", "N"]].astype(int)
+
+            # Consumer Price Index by year t (1990-2020)
+            CPI = pd.read_excel("data\\" + self.data["shared"][0], index_col=0)
+
+            # Merge data with CPI to correct for assumption of unitary income elasticity
+            kw = dict(how="left", left_index=True, right_index=True)
+            df1 = d.merge(CPI, **kw)
+            df1["unityMWTP"] = self.BT(df1)  #  MWTP assuming unitary income elasticity
+            df2018 = df1[df1.index.get_level_values("t") == 2018].copy()
+            df2018["elastMWTP"] = self.BT(df2018, elast=1.453)  #  meta study income ε
+            df2018["factor"] = df2018["elastMWTP"] / df2018["unityMWTP"]
+            df2018 = df2018.droplevel("t")
+            df2 = df1.merge(df2018[["factor"]], **kw)
+            df2 = df2.reorder_levels(["j", "t", "v"]).sort_index()
+            df2["MWTP"] = df2["unityMWTP"] * df2["factor"] * df2["nonzero"]
+
+            # Aggregate real MWTP per hh over households in coastal catchment area
+            df2["RWP"] = df2["MWTP"] * df2["N"] / 1e06  #  million DKK (2018 prices)
+
+            if investment is True:
+                # Apply net present value (NPV) factor
+                df2["RWP"] = df2["RWP"] * df2["NPV"]
+
+                # Switch MWTP to negative if actual change is negative
+                cond = [df2["neg"] == 1]
+                df2["RWP"] = np.select(cond, [-df2["RWP"]], default=df2["RWP"])
+
+                if real is True:
+                    df2["IV"] = df2["RWP"]
+                    return df2[["IV"]]
+
+            if real is True:
+                # Return complete dataset
+                return df2[["RWP"]]
+
+            # Aggregate nominal MWTP per hh over households in coastal catchment area
+            df2["CWP"] = df2["RWP"] * df2["CPI"] / CPI.loc[2018, "CPI"]  #  million DKK
+
+            # CWP in the prices of the preceding year (for year-by-year chain linking)
+            df2["D"] = df2["CWP"] * df2["CPI t-1"] / df2["CPI"]  #  million DKK
+
+            # Aggregate over coastal catchment areas
+            grouped = (
+                df2[["CWP", "D"]]
+                .groupby(["j", "t"])
+                .sum()
+                .unstack(level=0)
+                .rename_axis(None)
+                .rename_axis([None, None], axis=1)
+            )
+
+            if investment is True:
+                # Rename CWP to IV
+                grouped.columns = grouped.columns.set_levels(["IV", "D"], level=0)
+
+            return grouped
+
+        except:
+            # Report severe error messages
+            tb = sys.exc_info()[2]  # get traceback object for Python errors
+            tbinfo = traceback.format_tb(tb)[0]
+            msg = "Could not apply valuation to df {0}:\nTraceback info:\n{1}Error Info:\n{2}".format(
+                d, tbinfo, str(sys.exc_info()[1])
+            )
+            print(msg)  # print error message in Python
+            arcpy.AddError(msg)  # return error message in ArcGIS
+            sys.exit(1)
+
+    def BT(self, df, elast=1):
+        """Apply Benefit Transfer equation from meta study (Zandersen et al., 2022)"""
+        try:
+            # ln MWTP for improvement from current ecological status to "Good"
+            lnMWTP = (
+                4.142
+                + 0.551 * df["Q"]
+                + elast * df["ln y"]
+                + 0.496 * df["D age"]
+                + 0.121 * df["ln PSL"]
+                - 0.072 * df["ln PAL"]
+                - 0.005 * df["SL"]
+                - 0.378 * df["D lake"]
+            )
+            # Real MWTP per household (DKK, 2018 prices) using variances from meta study
+            MWTP = np.exp(lnMWTP + (0.136 + 0.098) / 2)
+            return MWTP
+
+        except:
+            # Report severe error messages
+            tb = sys.exc_info()[2]  # get traceback object for Python errors
+            tbinfo = traceback.format_tb(tb)[0]
+            msg = "Could not apply benefit transfer equation to df {0} with elasticity {1}:\nTraceback info:\n{1}Error Info:\n{2}".format(
+                df, tbinfo, str(sys.exc_info()[1])
             )
             print(msg)  # print error message in Python
             arcpy.AddError(msg)  # return error message in ArcGIS
