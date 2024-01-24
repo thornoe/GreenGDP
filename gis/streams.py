@@ -1,5 +1,5 @@
 """
-Name:       script_streams.py
+Name:       streams.py
 
 Label:      Construct and map longitudinal data of ecological status of streams.
 
