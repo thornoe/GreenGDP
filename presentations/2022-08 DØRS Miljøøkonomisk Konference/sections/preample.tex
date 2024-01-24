@@ -1,0 +1,60 @@
+\usepackage{hyperref}
+\usepackage[utf8]{inputenc} % utf8x  defines more symbols, but may cause compatible problems
+\usepackage{lmodern,textcomp} % Latin Modern fonts, recognizes euro symbol €
+
+% Math
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{bm} % bold symbol in math mode
+\usepackage{cancel} % https://tex.stackexchange.com/a/75530
+
+% Optional packages
+\usepackage{appendixnumberbeamer}
+% \usepackage[style=authoryear, backend=bibtex8, natbib=true, maxcitenames=2]{biblatex}
+% \usepackage{booktabs}
+% \usepackage[scale=2]{ccicons}
+% \usepgfplotslibrary{dateplot}
+\usepackage{epigraph}
+% \usepackage{graphicx}
+% \usepackage{import}
+\usepackage{multicol}
+\usepackage{multirow,array}
+% \usepackage{multimedia}
+% \usepackage{pgfplots}
+\usepackage[super,negative]{nth} % write 1st with superscript
+% \usepackage{subcaption} % for subfigure and subtable
+\usepackage{tcolorbox}
+% \usepackage{ulem} % use the "sout" tag to "strikethrough" text
+% \usepackage{xcolor}
+\definecolor[named]{darkgreen}{HTML}{008000}
+\definecolor{grey}{gray}{0.8}
+
+% -----------------------------------------------------------------------------
+% ------NOTES --------------------------------------------------------
+% -----------------------------------------------------------------------------
+% notes usage: gist.github.com/andrejbauer/ac361549ac2186be0cdb
+% pympress viewer: https://github.com/Cimbali/pympress
+
+
+% -----------------------------------------------------------------------------
+% ------ ENVIRONMENT --------------------------------------------------------
+% -----------------------------------------------------------------------------
+
+\setcounter{MaxMatrixCols}{10}
+\newenvironment{stepenumerate}{\begin{enumerate}[<+->]}{\end{enumerate}}
+\newenvironment{stepitemize}{\begin{itemize}[<+->]}{\end{itemize} }
+\newenvironment{stepenumeratewithalert}{\begin{enumerate}[<+-| alert@+>]}{\end{enumerate}}
+\newenvironment{stepitemizewithalert}{\begin{itemize}[<+-| alert@+>]}{\end{itemize} }
+\usetheme[progressbar=frametitle]{Madrid}
+
+% -----------------------------------------------------------------------------
+% ------ TITLE AND BIB --------------------------------------------------------
+% -----------------------------------------------------------------------------
+
+\title[Green GDP: The Water Environment]{Green GDP}
+\subtitle{Valuation of the water environment since 1990}
+\author[Thor Donsby Noe]{\textbf{Thor Donsby Noe}\inst{1} \and Jette Bredahl Jacobsen\inst{2}}
+\date[26 August 2022]{Conference of the Danish Environmental Economic Council 2022}
+\institute[AU/ECON]{\inst{1}AU/ECON \and \inst{2}UCPH/IFRO}
+
+% \addbibresource{bibliography.bib}

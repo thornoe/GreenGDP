@@ -3,71 +3,125 @@ Name:       script_module.py
 
 Label:      Construct and map longitudinal data of ecological status of streams.
 
-Summary:    ThorNoe.github.io/GNNP/ explains the approach and methodology.
+Summary:    ThorNoe.GitHub.io/GreenGDP explains the overall approach and methodology.
 
 Rqmts:      ArcGIS Pro must be installed on the system and be up to date.
 
 Usage:      This module supports script.py and WaterbodiesScriptTool in gis.tbx.
-            See GitHub.com/ThorNoe/GNNP for instructions to run or update it all.
+            See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
 
-Function:   The class in this module contains 8 functions of which some are nested:
-            - ecological_status() calls:
-              - DVFI_to_status()
-              - stations_to_streams() which calls:
-                - longitudinal() which again calls:
-                  - frame()
+Functions:  The class in this module contains 10 functions of which some are nested:
+            - get_data(), get_fc_from_WFS(), map_book(), and values_by_catchment_area() are standalone functions.
+            - observed_indicator() calls:
+                - stations_to_streams(), which calls:
+                    - longitudinal(), which again calls:
+                        - frame()
+            - impute_missing() calls:
+                - ecological_status(), which calls:
+                    - indicator_to_status()
+                    - missing_values_graph()
+            - valuation() calls:
+                - BT()
             Descriptions can be seen under each function.
 
-Created:    25/03/2020
+License:    MIT Copyright (c) 2020-2023
 Author:     Thor Donsby Noe
 """
+import os
+import sys
+import traceback
+import urllib.request
 
+import arcpy
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import arcpy, sys, traceback, os, urllib
-arcpy.env.overwriteOutput = True    # set overwrite option
+import seaborn as sns
+from scipy import interpolate
+from sklearn.experimental import enable_iterative_imputer  # noqa
+from sklearn.impute import IterativeImputer
 
+arcpy.env.overwriteOutput = True  # set overwrite option
 
 
 class Water_Quality:
-    """ Class for all data processing and mapping functions
-    """
-    def __init__(self, dataFilenames, linkageFilenames, WFS_featureClassNames,
-                 WFS_fieldNamesWaterbodyID, WFS_fieldNamesWaterbodySize,
-                 keepGeodatabase):
+    """Class for all data processing and mapping functions"""
+
+    def __init__(
+        self,
+        yearFirst,
+        yearLast,
+        dataFilenames,
+        linkageFilenames,
+        WFS_ServiceURL,
+        WFS_featureClassNames,
+        WFS_replaceFeatureClasses,
+        keepGeodatabase,
+    ):
+        self.years = list(range(yearFirst, yearLast + 1))
         self.data = dataFilenames
         self.linkage = linkageFilenames
+        self.wfs_service = WFS_ServiceURL
         self.wfs_fc = WFS_featureClassNames
-        self.wfs_vpID = WFS_fieldNamesWaterbodyID
-        self.wfs_size = WFS_fieldNamesWaterbodySize
+        self.wfs_replace = WFS_replaceFeatureClasses
         self.keep_gdb = keepGeodatabase
         self.path = os.getcwd()
-        self.arcPath = self.path + '\\gis.gdb'
-        arcpy.env.workspace = self.arcPath  # Set the ArcPy workspace
+        self.arcPath = self.path + "\\gis.gdb"
 
+        # Color-blind-friendly ordinal scale, modified: gist.github.com/thriveth/8560036
+        self.ColorCycle = {
+            "blue": "#377eb8",
+            "orange": "#ff7f00",
+            "green": "#4daf4a",
+            "gray": "#999999",  #  moved up
+            "pink": "#f781bf",
+            "brown": "#a65628",
+            "purple": "#984ea3",
+            "yellow": "#dede00",
+            "red": "#e41a1c",  #  moved down
+        }
+
+        # Set the default color map and figure size for pyplots
+        plt.rcParams["axes.prop_cycle"] = plt.cycler(
+            "color", list(self.ColorCycle.values())
+        )
+        plt.rcParams["figure.figsize"] = [10, 6.18]  #  golden ratio
+
+        # Set the ArcPy workspace
+        arcpy.env.workspace = self.arcPath
+
+        # Check that folders for data, output, and linkage files exist or create them
+        self.get_data()
+
+        # Get feature class for coastal catchment areas from the WFS service
+        self.get_fc_from_WFS("catch")
 
     def get_data(self):
-        """ Function to check that the folders and their files exist.
-            Otherwise creates the folder and downloads the files from GitHub.
-        """
+        """Function to check that the folders and their files exist.
+        Otherwise creates the folders and downloads the files from GitHub."""
         try:
-            # Dictionary for all data and linkage files
-            allFiles = {'data': [b for a in list(self.data.values()) for b in a],
-                        'linkage': [a for a in list(self.linkage.values())]}
+            # Dictionary for folders and their data and linkage files
+            allFiles = {
+                "data": [a for b in list(self.data.values()) for a in b],
+                "linkage": [a for a in list(self.linkage.values())],
+                "output": [],
+            }
+
         except:
             # Report severe error messages
             tb = sys.exc_info()[2]  # get traceback object for Python errors
             tbinfo = traceback.format_tb(tb)[0]
-            msg = 'Could not set up dictionary with all files:\nTraceback info:\n{0}Error Info:\n{1}'\
-                  .format(tbinfo, str(sys.exc_info()[1]))
-            print(msg)            # print error message in Python
-            arcpy.AddError(msg)   # return error message in ArcGIS
+            msg = "Could not set up dictionary with all files:\nTraceback info:\n{0}Error Info:\n{1}".format(
+                tbinfo, str(sys.exc_info()[1])
+            )
+            print(msg)  # print error message in Python
+            arcpy.AddError(msg)  # return error message in ArcGIS
             sys.exit(1)
 
         for key, filenames in allFiles.items():
             try:
                 # Create the folder if it doesn't exist
-                newPath = self.path + '\\' + key
+                newPath = self.path + "\\" + key
                 os.makedirs(newPath, exist_ok=True)
                 os.chdir(newPath)
 
@@ -75,252 +129,231 @@ class Water_Quality:
                     # Download the files if they don't exist
                     if not os.path.exists(f):
                         try:
-                            url = 'https://github.com/thornoe/GNNP/raw/master/gis/' + key + '/' + f
+                            url = (
+                                "https://github.com/thornoe/GreenGDP/raw/master/gis/"
+                                + key
+                                + "/"
+                                + f
+                            )
                             urllib.request.urlretrieve(url, f)
                         except urllib.error.URLError as e:
                             ## Report URL error messages
-                            urlmsg = 'URL error for {0}:\n{1}'.format(f, e.reason)
-                            print(urlmsg)            # print URL error message in Python
-                            arcpy.AddError(urlmsg)   # return URL error message in ArcGIS
+                            urlmsg = "URL error for {0}:\n{1}".format(f, e.reason)
+                            print(urlmsg)  # print URL error message in Python
+                            arcpy.AddError(urlmsg)  # return URL error message in ArcGIS
                             sys.exit(1)
                         except:
                             ## Report other severe error messages
-                            tb = sys.exc_info()[2]  # get traceback object for Python errors
+                            tb = sys.exc_info()[
+                                2
+                            ]  # get traceback object for Python errors
                             tbinfo = traceback.format_tb(tb)[0]
-                            msg = 'Could not download {0}:\nTraceback info:\n{1}Error Info:\n{2}'\
-                                  .format(f, tbinfo, str(sys.exc_info()[1]))
-                            print(msg)            # print error message in Python
-                            arcpy.AddError(msg)   # return error message in ArcGIS
+                            msg = "Could not download {0}:\nTraceback info:\n{1}Error Info:\n{2}".format(
+                                f, tbinfo, str(sys.exc_info()[1])
+                            )
+                            print(msg)  # print error message in Python
+                            arcpy.AddError(msg)  # return error message in ArcGIS
                             sys.exit(1)
 
-            except OSError as e:
+            except OSError:
                 # Report system errors
                 tb = sys.exc_info()[2]  # get traceback object for Python errors
                 tbinfo = traceback.format_tb(tb)[0]
-                OSmsg = 'System error for {0} folder:\nTraceback info:\n{1}Error Info:\n{2}'\
-                        .format(folderName, tbinfo, str(sys.exc_info()[1]))
-                print(OSmsg)            # print system error message in Python
-                arcpy.AddError(OSmsg)   # return system error message in ArcGIS
+                OSmsg = "System error for {0} folder:\nTraceback info:\n{1}Error Info:\n{2}".format(
+                    key, tbinfo, str(sys.exc_info()[1])
+                )
+                print(OSmsg)  # print system error message in Python
+                arcpy.AddError(OSmsg)  # return system error message in ArcGIS
                 sys.exit(1)
 
             finally:
                 # Change the directory back to the original working folder
                 os.chdir(self.path)
 
-
-
-    def get_fc_from_WFS(self, fc, WFS_Service):
-        """ Create a feature class from a WFS service given the type of water body.
-            Also create a template with only the most necessary fields.
-        """
+    def get_fc_from_WFS(self, fc):
+        """Create a feature class from a WFS service given the type of water body.
+        Also create a template with only the most necessary fields."""
         try:
             # Set names of the feature class for the given type of water body
             WFS_FeatureType = self.wfs_fc[fc]
 
-            # Set the names of the fields containing the water body plan IDs and names
-            vpID = self.wfs_vpID[fc]
+            # Set the names of the fields (columns) in fc that contain the ID (and typology)
+            if fc == "catch":
+                fields = ["op_id", "op_navn"]
+            else:
+                fields = ["ov_id", "ov_navn", "ov_typ", "distr_id"]
+
+            if self.wfs_replace != 0:
+                # Delete the fc template to create it anew
+                if arcpy.Exists(fc):
+                    arcpy.Delete_management(fc)
 
             if not arcpy.Exists(fc):
-                # Execute the WFSToFeatureClass tool to download the feature class.
-                arcpy.WFSToFeatureClass_conversion(WFS_Service, WFS_FeatureType,
-                                                   self.arcPath, fc, max_features=15000)
+                # Execute the WFSToFeatureClass tool to download the fc
+                arcpy.conversion.WFSToFeatureClass(
+                    self.wfs_service,
+                    WFS_FeatureType,
+                    self.arcPath,
+                    fc,
+                    max_features=10000,
+                )
 
-            # Make a template as a copy of the input to preserve the original
-            fcTemplate = fc + 'Template'
-            if arcpy.Exists(fcTemplate):
-                arcpy.Delete_management(fcTemplate)
-            arcpy.CopyFeatures_management(fc, fcTemplate)
+                # Create a list of unnecessary fields
+                fieldsUnnecessary = []
+                fieldObjList = arcpy.ListFields(fc)
+                for field in fieldObjList:
+                    if not field.required:
+                        if field.name not in fields:
+                            fieldsUnnecessary.append(field.name)
 
-            # Create a list of unnecessary fields
-            fieldNameList = []
-            fieldObjList = arcpy.ListFields(fcTemplate)
-            for field in fieldObjList:
-                if not field.required:
-                    if not field.name == vpID:
-                        fieldNameList.append(field.name)
-
-            # Remove unnecessary fields (columns) to reduce the size of the feature class
-            arcpy.DeleteField_management(fcTemplate, fieldNameList)
+                # Remove unnecessary fields (columns) to reduce the size of the feature class
+                arcpy.DeleteField_management(fc, fieldsUnnecessary)
 
         except:
             # Report severe error messages from Python or ArcPy
             tb = sys.exc_info()[2]  # get traceback object for Python errors
             tbinfo = traceback.format_tb(tb)[0]
-            pymsg = 'Python errors while using WFS for {0}:\nTraceback info:\n{1}Error Info:\n{2}'\
-                    .format(fc, tbinfo, str(sys.exc_info()[1]))
-            arcmsg = 'ArcPy errors while using WFS for {0}:\n{1}'\
-                     .format(fc, arcpy.GetMessages(severity=2))
-            print(pymsg)            # print Python error message in Python
-            print(arcmsg)           # print ArcPy error message in Python
-            arcpy.AddError(pymsg)   # return Python error message in ArcGIS
+            pymsg = "Python errors while using WFS for {0}:\nTraceback info:\n{1}Error Info:\n{2}".format(
+                fc, tbinfo, str(sys.exc_info()[1])
+            )
+            arcmsg = "ArcPy errors while using WFS for {0}:\n{1}".format(
+                fc, arcpy.GetMessages(severity=2)
+            )
+            print(pymsg)  # print Python error message in Python
+            print(arcmsg)  # print ArcPy error message in Python
+            arcpy.AddError(pymsg)  # return Python error message in ArcGIS
             arcpy.AddError(arcmsg)  # return ArcPy error message in ArcGIS
             sys.exit(1)
 
-
-
-    def frame(self, waterbodyType, parameterCol, parameterType, valueCol):
-        """ Function to set up a Pandas DataFrame for a given type of water body
-        """
+    def observed_indicator(self, j):
+        """Based on the type of water body, set up a longitudinal DataFrame with the
+        observed indicators for all water bodies."""
         try:
-            # Obtain the filenames from the initialization of this class
-            filenames = self.data[waterbodyType]
+            if j == "streams":
+                # Create longitudinal df and use linkage table to assign stations to water bodies
+                df, dfVP = self.stations_to_streams(
+                    j,
+                )
 
-            # Read and concatenate the data for the two time periods
-            df1 = pd.read_excel('data\\' + filenames[0]) # 1990-2018
-            df2 = pd.read_excel('data\\' + filenames[1]) # 2019-
-            df = pd.concat([df1, df2], join="inner", ignore_index=True)
+            # Save observations to CSV for later statistical work
+            df.to_csv("output\\" + j + "_ind_obs.csv")
 
-            # Create 'Year' column from the date integer
-            df['Year'] = df['Dato'].astype(str).str.slice(0, 4).astype(int)
+            # Save characteristics of water bodies to CSV for later work
+            dfVP.to_csv("output\\" + j + "_VP.csv")
 
-            # Subset the data to only contain the relevant parameter
-            df = df[df[parameterCol].str.contains(parameterType)]
-
-            # Subset the data to only contain the relevant parameter
-            df = df[df[parameterCol].str.contains(parameterType)]
-
-            # Subset the data to relevant variables and sort by year
-            df = df[['ObservationsStedNr', 'Lokalitetsnavn', 'Year', valueCol,
-                     'Xutm_Euref89_Zone32', 'Yutm_Euref89_Zone32']]\
-                     .sort_values('Year')
-
-            # Shorten column names
-            df.columns = ['Station', 'Location', 'Year', valueCol, 'X', 'Y']
-
-            # Capitalize location names
-            df['Location'] = df['Location'].str.upper()
-
-            return df
+            return df, dfVP
 
         except:
-            ## Report severe error messages
+            # Report severe error messages
             tb = sys.exc_info()[2]  # get traceback object for Python errors
             tbinfo = traceback.format_tb(tb)[0]
-            msg = 'Could not set up DataFrame for {0}:\nTraceback info:\n{1}Error Info:\n{2}'\
-                  .format(waterbodyType, tbinfo, str(sys.exc_info()[1]))
-            print(msg)            # print error message in Python
-            arcpy.AddError(msg)   # return error message in ArcGIS
+            msg = "Could not create df with observations for {0}:\nTraceback info:\n{1}Error Info:\n{2}".format(
+                j, tbinfo, str(sys.exc_info()[1])
+            )
+            print(msg)  # print error message in Python
+            arcpy.AddError(msg)  # return error message in ArcGIS
             sys.exit(1)
 
+    def stations_to_streams(self, j, radius=15):
+        """Streams: Assign monitoring stations to water bodies via linkage table.
 
+        For unmatched stations: Assign to stream within a radius of 15 meters where the location names match the name of the stream.
 
-    def longitudinal(self, waterbodyType):
-        """ Set up a longitudinal dataframe based on the type of water body
+        For a given year, finds DVFI for a stream with multiple stations
+        by taking the median and rounding down.
 
-            Streams: For a given year, finds DVFI for a station with multiple
-                     observations by taking the median and rounding down.
+        Finally, extends to all streams in the current water body plan (VP3) and adds the ID, catchment area, and length of each stream in km using the feature classes collected via get_fc_from_WFS()
         """
         try:
-            # Set up a Pandas DataFrame for the chosen type of water body
-            if waterbodyType == 'streams':
-                df = self.frame(waterbodyType, 'Indekstype', 'DVFI', 'Indeks')
+            # Create longitudinal df for stations in streams by monitoring version
+            d = self.data[j][1]
+            x = "Xutm_Euref89_Zone32"
+            y = "Yutm_Euref89_Zone32"
+            DVFI_F = self.longitudinal(
+                j, d, x, y, "Indeks", "Indekstype", "Faunaklasse, felt"
+            )
+            DVFI_M = self.longitudinal(j, d, x, y, "Indeks", "Indekstype", "DVFI, MIB")
+            DVFI_1 = self.longitudinal(j, d, x, y, "Indeks", "Indekstype", "DVFI")
 
-                # Drop obs with unknown index value and save index as integers
-                df = df[df.Indeks != 'U']
-                df['Indeks'] = df['Indeks'].astype(int)
+            # Create longitudinal df for stations in streams after 2020
+            DVFI_2 = self.longitudinal(
+                j, self.data[j][0], "Målested X-UTM", "Målested Y-UTM)", "Indeks"
+            )
 
-            # Set up a longitudinal df with every station and its latest records
-            long = df[['Station', 'Location', 'X', 'Y']]\
-                     .groupby(['Station'], as_index=False).last()
-
-            # Sorted list of the years covered by the data
-            years = list(df.Year.unique())
-            years.sort()
-
-            # Add a column for each year
-            for i in years:
-                # Subset to relevant year
-                dfYear = df[df['Year']==i]
-
-                # Drop year and coordinates
-                dfYear = dfYear.drop(['Year', 'X', 'Y'], axis=1)
-
-                if waterbodyType == 'streams':
-                    # Group multiple obs for a station: Take the median and round down
-                    dfYear = dfYear.groupby(['Station']).median().apply(np.floor).astype(int)
-
-                # Merge into longitudinal df
-                dfYear.columns = [i]
-                long = long.merge(dfYear, how="left", on='Station')
-
-            return long, years
-
-        except:
-            ## Report severe error messages
-            tb = sys.exc_info()[2]  # get traceback object for Python errors
-            tbinfo = traceback.format_tb(tb)[0]
-            msg = 'Could not set up DataFrame for {0}:\nTraceback info:\n{1}Error Info:\n{2}'\
-                  .format(waterbodyType, tbinfo, str(sys.exc_info()[1]))
-            print(msg)            # print error message in Python
-            arcpy.AddError(msg)   # return error message in ArcGIS
-            sys.exit(1)
-
-
-
-    def stations_to_streams(self, waterbodyType, stationID, waterbodyID,
-                            waterbodyName, booleanVar):
-        """ Streams: Assign monitoring stations to water bodies via linkage table.
-
-            For unmatched stations: Assign to stream within a radius of 15 meters
-            where the locaton names match the name of the stream.
-
-            For a given year, finds DVFI for a stream with multiple stations
-            by taking the median and rounding down.
-
-            Finally, extends to all streams in the current water body plan and
-            adds the length of each stream in km.
-        """
-        try:
-            # Create a longitudinal DataFrame for stations in streams
-            long, years = self.longitudinal(waterbodyType)
+            # Group by station and keep first non-null entry each year DVFI>MIB>felt
+            long = (
+                pd.concat([DVFI_F, DVFI_M, DVFI_1, DVFI_2])
+                .groupby(["station"], as_index=False)
+                .last()
+            )
 
             # Read the linkage table
-            link = pd.read_excel('linkage\\' + self.linkage[waterbodyType])
+            dfLinkage = pd.read_csv("linkage\\" + self.linkage[j])
 
-            df = long.merge(link[[stationID, waterbodyID, booleanVar]], how="left",
-                            left_on='Station', right_on=stationID)
+            # Convert station ID to integers
+            dfLinkage["station"] = dfLinkage["station_id"].str.slice(7).astype(int)
 
-            # Drop water bodies that were only present in the draft for VP2
-            df = df[df[booleanVar]!=0].drop(columns=[booleanVar])
+            # Merge longitudinal DataFrame with linkage table for water bodies in VP3
+            df = long.merge(dfLinkage[["station", "ov_id"]], how="left", on="station")
 
-            # Make station-ID and coordinates into integers
-            df[['Station', 'X', 'Y']] = df[['Station', 'X', 'Y']].astype(int)
+            # Stations covered by the linkage tabel for the third water body plan VP3
+            link = df.dropna(subset=["ov_id"])
 
-            # Stations in current water body plan (VP2)
-            match = df.dropna(subset=[stationID]).drop(columns=[stationID])
+            # Convert water body ID (wb) to integers
+            link["wb"] = link["ov_id"].str.slice(7).astype(int)
 
-            # Stations not covered by the linkage table
-            noMatch = df[df[stationID].isna()].drop(columns=[stationID, waterbodyID])
+            # Stations not covered by the linkage table for VP3
+            noLink = df[df["ov_id"].isna()].drop(columns=["ov_id"])
 
-            # Create a spatial reference object with the same geoprachical coordinate system
+            # Create a spatial reference object with the same geographical coordinate system
             spatialRef = arcpy.SpatialReference("ETRS 1989 UTM Zone 32N")
 
-            # Create a new feature class shapefile (will overwrite if it already exists)
-            fcStations = waterbodyType + '_stations'
-            arcpy.CreateFeatureclass_management(self.arcPath, fcStations, "POINT",
-                                                spatial_reference=spatialRef)
+            # Specify name of feature class for stations (points)
+            fcStations = j + "_stations"
 
-            # Create fields for 'Station' and 'Location'
-            arcpy.AddField_management(fcStations, 'Station', "INTEGER")
-            arcpy.AddField_management(fcStations, 'Location', "TEXT")
+            # Create new feature class shapefile (will overwrite if it already exists)
+            arcpy.CreateFeatureclass_management(
+                self.arcPath, fcStations, "POINT", spatial_reference=spatialRef
+            )
+
+            # Create fields for 'station' and 'location'
+            arcpy.AddField_management(fcStations, "station", "INTEGER")
+            arcpy.AddField_management(fcStations, "location", "TEXT")
 
             # Create cursor to insert stations that were not in the linkage table
             try:
-                with arcpy.da.InsertCursor(fcStations, ['SHAPE@XY', 'Station', 'Location']) as cursor:
+                with arcpy.da.InsertCursor(
+                    fcStations, ["SHAPE@XY", "station", "location"]
+                ) as cursor:
                     # Loop over each station-ID in df:
-                    for index, row in noMatch.iterrows():
+                    for index, row in noLink.iterrows():
                         try:
                             # Use cursor to insert new row in feature class
-                            cursor.insertRow([(row['X'], row['Y']), row['Station'], row['Location']])
+                            cursor.insertRow(
+                                [(row["x"], row["y"]), row["station"], row["location"]]
+                            )
 
                         except:
                             # Report other severe error messages from Python or ArcPy
-                            tb = sys.exc_info()[2]  # get traceback object for Python errors
+                            tb = sys.exc_info()[
+                                2
+                            ]  # get traceback object for Python errors
                             tbinfo = traceback.format_tb(tb)[0]
-                            print('Python errors while inserting station {0} in {1}:\nTraceback info:{2}\nError Info:\n{3}\n'\
-                                  .format(str(row['Station']), fcStations, tbinfo, str(sys.exc_info()[1])))
-                            print('ArcPy errors while inserting station {0} in {1}:\n{2}'\
-                                  .format(str(row['Station']), fcStations, tbinfo, str(arcpy.GetMessages(severity=2))))
+                            print(
+                                "Python errors while inserting station {0} in {1}:\nTraceback info:{2}\nError Info:\n{3}\n".format(
+                                    str(row["station"]),
+                                    fcStations,
+                                    tbinfo,
+                                    str(sys.exc_info()[1]),
+                                )
+                            )
+                            print(
+                                "ArcPy errors while inserting station {0} in {1}:\n{2}".format(
+                                    str(row["station"]),
+                                    fcStations,
+                                    tbinfo,
+                                )
+                            )
                             sys.exit(1)
 
                         finally:
@@ -330,111 +363,224 @@ class Water_Quality:
             finally:
                 del cursor
 
-            # Refer to the template created with get_fc_from_WFS()
-            fcTemplate = waterbodyType + 'Template'
+            # Specify name of feature class for streams in VP3 (polylines)
+            fc = j
 
-            # Specify joined feature class (will overwrite if it already exists)
-            joinedFC = fcStations + '_joined'
+            # Specify name of joined feature class (polylines)
+            fcJoined = fcStations + "_joined"
 
-            # Spatial Join unmatched stations with streams within 15 meters
-            arcpy.SpatialJoin_analysis(fcTemplate, fcStations, joinedFC,
-                                       "JOIN_ONE_TO_MANY", "KEEP_COMMON",
-                                       match_option="CLOSEST",
-                                       search_radius=50,
-                                       distance_field_name='Distance')
+            # Spatial Join unmatched stations with streams within given radius
+            arcpy.SpatialJoin_analysis(
+                target_features=fc,
+                join_features=fcStations,
+                out_feature_class=fcJoined,  #  will overwrite if it already exists
+                join_operation="JOIN_ONE_TO_MANY",
+                join_type="KEEP_COMMON",
+                match_option="CLOSEST",
+                search_radius=radius,
+                distance_field_name="Distance",
+            )
 
-            # Set the names of the field containing the water body plan IDs
-            vpID = self.wfs_vpID[waterbodyType]
+            # Specify fields of interest of fcJoined
+            fieldsJ = ["station", "ov_id", "ov_navn", "location", "Distance"]
 
-            # Fields of interest
-            fieldNames = ['Station', 'Distance', 'Location', vpID]
+            # Create DataFrame from fcJoined and sort by distance (ascending)
+            stations = [row for row in arcpy.da.SearchCursor(fcJoined, fieldsJ)]
+            join = pd.DataFrame(stations, columns=fieldsJ).sort_values("Distance")
 
-            # Use SeachCursor to read columns to pd.DataFrame
-            data = [row for row in arcpy.da.SearchCursor(joinedFC, fieldNames)]
-            joined = pd.DataFrame(data, columns=fieldNames)
-
-            # Add water body names from linkage table and sort by distance (ascending)
-            j = joined.merge(link[[waterbodyName, waterbodyID]], how="inner",
-                             left_on=vpID, right_on=waterbodyID)\
-                             .drop([vpID], axis=1)\
-                             .sort_values('Distance')
+            # Convert water body ID (wb) to integers
+            join["wb"] = join["ov_id"].str.slice(7).astype(int)
 
             # Capitalize water body names
-            j[waterbodyName] = j[waterbodyName].str.upper()
+            join["ov_navn"] = join["ov_navn"].str.upper()
 
-            # Indicate matching water body names
-            j['Match'] = np.select([j['Location']==j[waterbodyName]], [True])
+            # Rename unnamed water bodies to distinguish from named water bodies
+            join["location"].mask(
+                join["location"] == "[IKKE NAVNGIVET]", "UDEN NAVN", inplace=True
+            )
+
+            # a Indicate that station and stream has the same water body name
+            join["match"] = np.select([join["location"] == join["ov_navn"]], [True])
 
             # Subset to unique stations with their closest matching water body
-            jMatches = j[j['Match']==True].groupby(['Station'], as_index=False).first()
+            jClosest = (
+                join[join["match"] == True].groupby(["station"], as_index=False).first()
+            )
 
-            # Inner merge of noMatch and j_matches stations with their closest matching water body
-            jMatches = noMatch.merge(jMatches[['Station', waterbodyID]],
-                                     how='inner', on='Station')
+            # Inner merge of noLink stations and jClosest water body with matching name
+            noLinkClosest = noLink.merge(
+                jClosest[["station", "wb"]], how="inner", on="station"
+            )
 
-            # Concatenate the dfs of stations that have been matched to a water body
-            allMatches = pd.concat([match, jMatches])
+            # df containing all stations that have been matched to a water body
+            allMatches = pd.concat([link, noLinkClosest]).drop(
+                columns=["station", "location", "x", "y", "ov_id"]
+            )
 
             # Group multiple stations in a water body: Take the median and round down
-            waterBodies = allMatches.groupby([waterbodyID]).median().apply(np.floor)\
-                                    .drop(columns=['Station', 'X', 'Y'])
+            waterbodies = allMatches.groupby("wb").median().apply(np.floor)
 
-            # Field/column names for length of water bodies
-            length = self.wfs_size[waterbodyType]
+            # Fields in fc that contain water body ID, typology, district, and length
+            fields = ["ov_id", "ov_typ", "distr_id", "Shape_Length"]
 
-            # Use SeachCursor to create df with length (km) of all water bodies
-            dataLength = [row for row in arcpy.da.SearchCursor(waterbodyType, [vpID, length])]
-            dfLength = pd.DataFrame(dataLength, columns=[vpID, length])
+            # Create df from fc with characteristics of all streams in VP
+            dataVP = [row for row in arcpy.da.SearchCursor(fc, fields)]
+            dfVP = pd.DataFrame(dataVP, columns=fields)
 
-            # Merge length-df with df for water bodies in the current water body plan (VP2)
-            allVP = dfLength.merge(waterBodies, how="outer", left_on=vpID,
-                                   right_index=True).set_index(vpID)
+            # Shore length is counted on both sides of the stream; convert to km
+            dfVP[["length"]] = dfVP[["Shape_Length"]] * 2 / 1000
 
-            # Save to CSV for later statistical work
-            allVP.to_csv('output\\streams_DVFI_longitudinal.csv')
+            # Convert water body ID (wb) to integers and sort (ascending)
+            dfVP["wb"] = dfVP["ov_id"].str.slice(7).astype(int)
+            dfVP = dfVP.sort_values("wb")
 
-            # Report the number of stations matched by linkage table and ArcPy
-            msg = "{0} stations were matched to a water body by the official linkage table. Besides, {1} were located within 15 meters of a water body carrying the name of the station's location."\
-                  .format(len(match), len(jMatches))
-            print(msg)            # print number of stations in Python
-            arcpy.AddMessage(msg) # return number of stations in ArcGIS
+            # Merge df for all streams in VP3 with df for streams with observed status
+            allVP = dfVP[["wb"]].merge(waterbodies, how="left", on="wb")
 
-            return allVP, years
+            # Set water body ID as index
+            allVP = allVP.set_index("wb")
+            dfVP = dfVP[["wb", "ov_typ", "distr_id", "length"]].set_index("wb")
+
+            # Report stations matched by linkage table and distance+name respectively
+            msg = "{0}:\n{1} out of {2} stations were linked to a water body by the official linkage table. Besides, {3} were located within {4} meters of a water body carrying the name of the station's location.".format(
+                str(j),
+                len(link),
+                len(df),
+                len(jClosest),
+                str(radius),
+            )
+            # print(msg)  # print number of stations in Python
+            arcpy.AddMessage(msg)  # return number of stations in ArcGIS
+
+            return allVP, dfVP
 
         except:
             # Report severe error messages
             tb = sys.exc_info()[2]  # get traceback object for Python errors
             tbinfo = traceback.format_tb(tb)[0]
-            pymsg = 'Python errors while assigning stations to streams:\nTraceback info:\n{0}Error Info:\n{1}'\
-                    .format(tbinfo, str(sys.exc_info()[1]))
-            arcmsg = 'ArcPy errors while assigning stations to streams:\n{0}'\
-                     .format(arcpy.GetMessages(severity=2))
-            print(pymsg)            # print Python error message in Python
-            print(arcmsg)           # print ArcPy error message in Python
-            arcpy.AddError(pymsg)   # return Python error message in ArcGIS
+            pymsg = "Python errors while assigning stations to streams:\nTraceback info:\n{0}Error Info:\n{1}".format(
+                tbinfo, str(sys.exc_info()[1])
+            )
+            arcmsg = "ArcPy errors while assigning stations to streams:\n{0}".format(
+                arcpy.GetMessages(severity=2)
+            )
+            print(pymsg)  # print Python error message in Python
+            print(arcmsg)  # print ArcPy error message in Python
+            arcpy.AddError(pymsg)  # return Python error message in ArcGIS
             arcpy.AddError(arcmsg)  # return ArcPy error message in ArcGIS
             sys.exit(1)
 
         finally:
             # Clean up
-            for fc in [waterbodyType, fcStations, joinedFC]:
-                if arcpy.Exists(fc):
-                    arcpy.Delete_management(fc)
+            if self.keep_gdb != "true":
+                # Delete feature classes
+                for fc in [fcStations, fcJoined]:
+                    if arcpy.Exists(fc):
+                        arcpy.Delete_management(fc)
 
+    def longitudinal(
+        self,
+        j,
+        fileName,
+        x="X_UTM32",
+        y="Y_UTM32",
+        valueCol="Resultat",
+        parameterCol=0,
+        parameter=0,
+    ):
+        """Set up a longitudinal DataFrame based on the type of water body.
 
-
-    def DVFI_to_status(self, df, years):
-        """ Convert DVFI fauna index for streams to index of ecological status.
-        """
+        Streams: For a given year, finds DVFI for a station with multiple
+                 observations by taking the median and rounding down."""
         try:
-            for i in years:
-                # Categorical variable for ecological status: Bad, Poor, Moderate, Good, High
-                conditions = [df[i]==1,
-                              (df[i]==2) | (df[i]==3),
-                              df[i]==4,
-                              (df[i]==5) | (df[i]==6),
-                              df[i]==7]
-                df[i] = np.select(conditions, [1, 2, 3, 4, 5], default=np.nan)
+            # Set up a Pandas DataFrame for the chosen type of water body
+            if j == "streams":
+                df = self.frame(
+                    j,
+                    fileName,
+                    x,
+                    y,
+                    valueCol,
+                    parameterCol,
+                    parameter,
+                )
+
+                # Drop obs with unknown index value and save index as integers
+                df = df[df.ind != "U"]
+                df["ind"] = df["ind"].astype(int)
+
+            # Set up a longitudinal df with every station and its latest records
+            long = (
+                df[["station", "location", "x", "y"]]
+                .groupby(["station"], as_index=False)
+                .last()
+            )
+            if j == "coastal":
+                long = long.drop(columns="location")
+
+            # Add a column for each year with observations
+            for t in df["year"].unique():
+                # Subset to relevant year and drop location, year, and coordinates
+                dfYear = df[df["year"] == t].drop(
+                    ["location", "year", "x", "y"], axis=1
+                )
+
+                # Group multiple obs for a station: Take the median and round down
+                dfYear = (
+                    dfYear.groupby(["station"]).median().apply(np.floor).astype(int)
+                )
+
+                # Merge into longitudinal df
+                dfYear.columns = [t]
+                long = long.merge(dfYear, how="left", on="station")
+
+            return long
+
+        except:
+            ## Report severe error messages
+            tb = sys.exc_info()[2]  # get traceback object for Python errors
+            tbinfo = traceback.format_tb(tb)[0]
+            msg = "Could not set up DataFrame for {0}:\nTraceback info:\n{1}Error Info:\n{2}".format(
+                j, tbinfo, str(sys.exc_info()[1])
+            )
+            print(msg)  # print error message in Python
+            arcpy.AddError(msg)  # return error message in ArcGIS
+            sys.exit(1)
+
+    def frame(self, j, fileName, x, y, valueCol, parameterCol=0, parameter=0):
+        """Function to set up a Pandas DataFrame for a given type of water body"""
+        try:
+            # Read the data
+            df = pd.read_excel("data\\" + fileName)  # 1987-2020
+
+            # Create 'Year' column from the date integer
+            df["year"] = df["Dato"].astype(str).str.slice(0, 4).astype(int)
+
+            if parameterCol != 0:
+                # Subset the data to only contain the relevant parameter
+                df = df[df[parameterCol] == parameter]
+
+            # Subset the data to relevant variables and sort by year
+            df = (
+                df[
+                    [
+                        "ObservationsStedNr",
+                        "Lokalitetsnavn",
+                        "year",
+                        valueCol,
+                        x,
+                        y,
+                    ]
+                ]
+                .dropna(subset=valueCol)
+                .sort_values("year")
+            )
+
+            # Shorten column names
+            df.columns = ["station", "location", "year", "ind", "x", "y"]
+
+            # Capitalize location names
+            df["location"] = df["location"].str.upper()
 
             return df
 
@@ -442,129 +588,556 @@ class Water_Quality:
             ## Report severe error messages
             tb = sys.exc_info()[2]  # get traceback object for Python errors
             tbinfo = traceback.format_tb(tb)[0]
-            msg = 'Could not convert DVFI to ecological status:\nTraceback info:\n{0}Error Info:\n{1}'\
-                  .format(tbinfo, str(sys.exc_info()[1]))
-            print(msg)            # print error message in Python
-            arcpy.AddError(msg)   # return error message in ArcGIS
+            msg = "Could not set up DataFrame for {0}:\nTraceback info:\n{1}Error Info:\n{2}".format(
+                j, tbinfo, str(sys.exc_info()[1])
+            )
+            print(msg)  # print error message in Python
+            arcpy.AddError(msg)  # return error message in ArcGIS
             sys.exit(1)
 
-
-
-    def ecological_status(self, waterbodyType):
-        """ Based on the type of water body, set up a longitudinal dataframe
-            and convert it to the EU index of ecological status, i.e. from 1-5
-            for bad, poor, moderate, good, and high water quality respectively.
-
-            Create a table of statistics and export it as an html table.
-
-            Print the size and share of water bodies observed at least once.
-        """
+    def impute_missing(self, j, dfIndObs, dfVP, index):
+        """Impute ecological status for all water bodies from the observed indicator."""
         try:
-            # Create an output folder if it doesn't exist
-            os.makedirs(self.path + '\\output', exist_ok=True)
+            if j == "streams":
+                # Create dummies for typology
+                typology = pd.get_dummies(dfVP["ov_typ"]).astype(int)
+                typology["softBottom"] = typology["RW4"] + typology["RW5"]
+                typology.columns = [
+                    "small",
+                    "medium",
+                    "large",
+                    "smallSoftBottom",
+                    "mediumSoftBottom",
+                    "softBottom",
+                ]
 
-            if waterbodyType == 'streams':
-                # Create longitudinal df and use linkage table to assign stations to water bodies
-                allVP, years = self.stations_to_streams(waterbodyType,
-                                                        stationID='DCE_stationsnr',
-                                                        waterbodyID='VP2_g_del_cd',
-                                                        waterbodyName='Navn',
-                                                        booleanVar='VP2_gældende')
+                # Create dummy for the district DK2 (Sealand, Lolland, Falster, and Møn)
+                district = pd.get_dummies(dfVP["distr_id"]).astype(int)
 
-                # Convert DVFI fauna index for streams to index of ecological status
-                df = self.DVFI_to_status(allVP, years)
+                # Merge dummies for typology and water body district DK2
+                col = ["small", "medium", "large", "softBottom"]
+                dummies = typology[col].merge(district["DK2"], how="inner", on="wb")
 
-            # Save to CSV for later statistical work
-            df.to_csv('output\\' + waterbodyType + '_ecological_status.csv')
+                # Merge DataFrames for observed biophysical indicator and dummies
+                dfIndObsDum = dfIndObs.merge(dummies, how="inner", on="wb")
 
-            # Specify name of size-variable
-            size = self.wfs_size[waterbodyType]
+            else:
+                dfIndObsDum = dfIndObs.copy()
 
-            # Calculate total size of all water bodies in current water body plan (VP2)
-            totalSize = df[size].sum()
+            # Iterative imputer using BayesianRidge() estimator with increased tolerance
+            imputer = IterativeImputer(random_state=0, tol=1e-1)
+
+            # Fit imputer, transform data iteratively, and limit to years of interest
+            dfIndImp = pd.DataFrame(
+                imputer.fit_transform(np.array(dfIndObsDum)),
+                index=dfIndObsDum.index,
+                columns=dfIndObsDum.columns,
+            )[self.years]
+
+            # Convert imputed biophysical indicator to ecological status
+            dfEcoImp, impStats = self.ecological_status(j, dfIndImp, dfVP, "imp", index)
+
+            return dfEcoImp, impStats
+
+        except:
+            ## Report severe error messages
+            tb = sys.exc_info()[2]  # get traceback object for Python errors
+            tbinfo = traceback.format_tb(tb)[0]
+            msg = "Could not impute biophysical indicator to ecological status for {0}:\nTraceback info:\n{1}Error Info:\n{2}".format(
+                j, tbinfo, str(sys.exc_info()[1])
+            )
+            print(msg)  # print error message in Python
+            arcpy.AddError(msg)  # return error message in ArcGIS
+            sys.exit(1)
+
+    def ecological_status(self, j, dfIndicator, dfVP, suffix="obs", index=None):
+        """Based on the type of water body, convert the longitudinal DataFrame to the EU index of ecological status, i.e. from 1-5 for Bad, Poor, Moderate, Good, and High water quality respectively.
+
+        Create a table of statistics and export it as an html table.
+
+        Print the length and share of water bodies observed at least once."""
+        try:
+            # Convert index of indicators to index of ecological status
+            dfEco = self.indicator_to_status(j, dfIndicator)
+
+            # Create missing values graph (heatmap of missing observations by year):
+            indexSorted = self.missing_values_graph(j, dfEco, suffix, index)
+
+            # Merge df for observed ecological status with df for characteristics
+            df = dfEco.merge(dfVP[["length"]], how="inner", on="wb")
+
+            # Calculate total length of all water bodies in current water body plan (VP2)
+            totalLength = df["length"].sum()
 
             # Create an empty df for statistics
-            stats = pd.DataFrame(index=['Status known (%)',
-                                        'Share of known is high (%)',
-                                        'Share of known is good (%)',
-                                        'Share of known is moderate (%)',
-                                        'Share of known is poor (%)',
-                                        'Share of known is bad (%)'])
+            stats = pd.DataFrame(
+                index=self.years,
+                columns=[
+                    "high",
+                    "good",
+                    "moderate",
+                    "poor",
+                    "bad",
+                    "not good",
+                    "known",
+                ],
+            )
 
             # Calculate the above statistics for each year
-            for i in years:
-                y = df[[size, i]].reset_index(drop=True)
-                y['Known'] = np.select([y[i].notna()], [y[size]])
-                y['High'] = np.select([y[i]==5], [y[size]])
-                y['Good'] = np.select([y[i]==4], [y[size]])
-                y['Moderate'] = np.select([y[i]==3], [y[size]])
-                y['Poor'] = np.select([y[i]==2], [y[size]])
-                y['Bad'] = np.select([y[i]==1], [y[size]])
+            for t in self.years:
+                y = df[[t, "length"]].reset_index(drop=True)
+                y["high"] = np.select([y[t] == 4], [y["length"]])
+                y["good"] = np.select([y[t] == 3], [y["length"]])
+                y["moderate"] = np.select([y[t] == 2], [y["length"]])
+                y["poor"] = np.select([y[t] == 1], [y["length"]])
+                y["bad"] = np.select([y[t] == 0], [y["length"]])
+                y["not good"] = np.select([y[t] < 3], [y["length"]])
+                y["known"] = np.select([y[t].notna()], [y["length"]])
 
-                # Add shares of total size to stats
-                knownSize = y['Known'].sum()
-                stats[i] = [100*knownSize/totalSize,
-                            100*y['High'].sum()/knownSize,
-                            100*y['Good'].sum()/knownSize,
-                            100*y['Moderate'].sum()/knownSize,
-                            100*y['Poor'].sum()/knownSize,
-                            100*y['Bad'].sum()/knownSize]
+                # Add shares of total length to stats
+                knownLength = y["known"].sum()
+                stats.loc[t] = [
+                    100 * y["high"].sum() / knownLength,
+                    100 * y["good"].sum() / knownLength,
+                    100 * y["moderate"].sum() / knownLength,
+                    100 * y["poor"].sum() / knownLength,
+                    100 * y["bad"].sum() / knownLength,
+                    100 * y["not good"].sum() / knownLength,
+                    100 * knownLength / totalLength,
+                ]
 
-            # Convert statistics to integers
-            stats = stats.astype(int)
+            # For imputed ecological status, convert to integers and drop 'known' column
+            if suffix != "obs":
+                dfEco = dfEco.astype(int)
+                stats = stats.drop(columns="known")
 
-            # Save to html for online presentation
-            stats.to_html('output\\' + waterbodyType + '_stats.md')
+            # Save both dataset and statistics on ecological status to CSV
+            dfEco.to_csv("output\\" + j + "_eco_" + suffix + ".csv")
+            stats.to_csv("output\\" + j + "_eco_" + suffix + "_stats.csv")
 
-            # Water bodies observed at least once
-            observed = df[[size]].merge(df.drop(columns=[size]).dropna(how="all"),
-                                        how="inner", left_index=True, right_index=True)
+            # Brief analysis of missing observations (not relevant for imputed data)
+            if suffix == "obs":
+                # Create df limited to water bodies that are observed at least once
+                observed = dfVP[["length"]].merge(
+                    dfEco.dropna(how="all"),
+                    how="inner",
+                    on="wb",
+                )
 
-            # Unit of measurement
-            if waterbodyType == 'streams':
-                unit = 'km'
-            else:
-                unit = 'sq. km'
+                # Report length and share of water bodies observed at least once.
+                msg = "{0} km is the total shore length of {1} included in VP3, of which {2}% of {1} representing {3} km ({4}% of total shore length of {1}) have been assessed at least once. On average, {5}% of {1} representing {6} km ({7}% of total shore length of {1}) are assessed each year.\n".format(
+                    round(totalLength * 10 ** (-3)),
+                    j,
+                    round(100 * len(observed) / len(df)),
+                    round(observed["length"].sum() * 10 ** (-3)),
+                    round(100 * observed["length"].sum() / totalLength),
+                    round(100 * np.mean(dfEco.count() / len(df))),
+                    round(stats["known"].mean() / 100 * totalLength * 10 ** (-3)),
+                    round(stats["known"].mean()),
+                )
+                # print(msg)  # print statistics in Python
+                arcpy.AddMessage(msg)  # return statistics in ArcGIS
 
-            # Report size and share of water bodies observed at least once.
-            msg = 'The current water body plan covers {0} {1} of {2}, of which {2} representing {3} {1} ({4}%) have been assessed at least once. On average {2} representing {5} {1} ({6}%) are assessed each year.'\
-                  .format(int(totalSize), unit, waterbodyType,
-                          int(observed[size].sum()),
-                          int(100*observed[size].sum()/totalSize),
-                          int(stats.iloc[0].mean()*totalSize/100),
-                          int(stats.iloc[0].mean()))
-            print(msg)            # print statistics in Python
-            arcpy.AddMessage(msg) # return statistics in ArcGIS
+                # Elaborate column names of statistics for online presentation
+                stats.columns = [
+                    "Share of known is High (%)",
+                    "Share of known is Good (%)",
+                    "Share of known is Moderate (%)",
+                    "Share of known is Poor (%)",
+                    "Share of known is Bad (%)",
+                    "Share of known is not Good (%)",
+                    "Status known (%)",
+                ]
 
-            return df, years
+                # Save statistics as Markdown for online presentation
+                stats.astype(int).to_html("output\\" + j + "_eco_obs_stats.md")
+
+            if index is None:
+                return dfEco, stats, indexSorted
+            return dfEco, stats["not good"]
 
         except:
             # Report severe error messages
             tb = sys.exc_info()[2]  # get traceback object for Python errors
             tbinfo = traceback.format_tb(tb)[0]
-            msg = 'Could not create df with ecological status for {0}:\nTraceback info:\n{1}Error Info:\n{2}'\
-                  .format(waterbodyType, tbinfo, str(sys.exc_info()[1]))
-            print(msg)            # print error message in Python
-            arcpy.AddError(msg)   # return error message in ArcGIS
+            msg = "Could not create df with observed ecological status for {0}:\nTraceback info:\n{1}Error Info:\n{2}".format(
+                j, tbinfo, str(sys.exc_info()[1])
+            )
+            print(msg)  # print error message in Python
+            arcpy.AddError(msg)  # return error message in ArcGIS
             sys.exit(1)
 
+    def indicator_to_status(self, j, dfIndicator):
+        """Convert biophysical indicators to ecological status."""
+        try:
+            # Copy DataFrame for the biophysical indicator
+            df = dfIndicator.copy()
 
+            if j == "streams":
+                # Convert DVFI fauna index for streams to index of ecological status
+                for t in df.columns:
+                    # Categorical variable for ecological status: Bad, Poor, Moderate, Good, High
+                    conditions = [
+                        df[t] < 1.5,
+                        (df[t] >= 1.5) & (df[t] < 3.5),
+                        (df[t] >= 3.5) & (df[t] < 4.5),
+                        (df[t] >= 4.5) & (df[t] < 6.5),
+                        df[t] >= 6.5,
+                    ]
+                    df[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
 
-    def map_book(self, fc, df, yearsList):
-        """ Create a pdf map book with a page for each year
+            return df
+
+        except:
+            ## Report severe error messages
+            tb = sys.exc_info()[2]  # get traceback object for Python errors
+            tbinfo = traceback.format_tb(tb)[0]
+            msg = "Could not convert biophysical indicator to ecological status for {0}:\nTraceback info:\n{1}Error Info:\n{2}".format(
+                j, tbinfo, str(sys.exc_info()[1])
+            )
+            print(msg)  # print error message in Python
+            arcpy.AddError(msg)  # return error message in ArcGIS
+            sys.exit(1)
+
+    def missing_values_graph(self, j, frame, suffix="obs", index=None):
+        """Heatmap visualizing observations of ecological status as either missing or using the EU index of ecological status, i.e., from 1-5 for Bad, Poor, Moderate, Good, and High water quality respectively.
+        Saves a figure of the heatmap."""
+        try:
+            if index is None:
+                # Sort water bodies by number of missing values across years of interest
+                df = frame.copy()
+                df["nan"] = df.shape[1] - df.count(axis=1)
+                df = df.sort_values(["nan"], ascending=False)[self.years]
+
+                # Save index to reuse the order after imputing the missing values
+                index = df.index
+
+            else:
+                # Sort water bodies by number of missing values prior to imputation
+                df = frame.copy().reindex(index)
+
+            # Plot heatmap
+            df.fillna(-1, inplace=True)
+            cm = sns.xkcd_palette(["grey", "red", "orange", "yellow", "green", "blue"])
+            plt.figure(figsize=(12, 12))
+            ax = sns.heatmap(
+                df,
+                cmap=cm,
+                cbar=False,
+                cbar_kws={"ticks": [-1, 0, 1, 2, 3, 4]},
+            )
+            ax.set(yticklabels=[])
+            plt.ylabel(
+                str(len(df)) + " " + j + " ordered by number of missing values",
+                fontsize=14,
+            )
+            plt.xlabel("")
+            plt.title(
+                (
+                    "Ecological status of "
+                    + j
+                    + ":"
+                    + "\nMissing value (gray), Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
+                ),
+                fontsize=14,
+            )
+            plt.tight_layout()
+            plt.savefig(
+                "output\\" + j + "_eco_" + suffix + ".pdf",
+                bbox_inches="tight",
+            )
+
+            return index
+
+        except:
+            # Report severe error messages
+            tb = sys.exc_info()[2]  # get traceback object for Python errors
+            tbinfo = traceback.format_tb(tb)[0]
+            msg = "Could not create missing values graph (heatmap) for ecological status of {1}:\nTraceback info:\n{2}Error Info:\n{2}".format(
+                j, tbinfo, str(sys.exc_info()[1])
+            )
+            print(msg)  # print error message in Python
+            arcpy.AddError(msg)  # return error message in ArcGIS
+            sys.exit(1)
+
+    def values_by_catchment_area(self, j, dfEcoImp, dfVP):
+        """Assign water bodies to coastal catchment areas and calculate the weighted arithmetic mean of ecological status after truncating from above at Good status.
+        For each year t, set up df with variables for the Benefit Transfer equation."""
+        try:
+            # Specify name of joined feature class (polygons)
+            jCatch = j + "_catch"
+
+            # Join water bodies with the coastal catchment area they have their center in
+            arcpy.SpatialJoin_analysis(
+                target_features=j,
+                join_features="catch",
+                out_feature_class=jCatch,  #  will overwrite if it already exists
+                join_operation="JOIN_ONE_TO_MANY",
+                match_option="HAVE_THEIR_CENTER_IN",
+            )
+
+            # Fields in fc that contain coastal catchment area ID and water body ID
+            fields = ["op_id", "ov_id"]
+
+            # Create DataFrame from jCatch of water bodies in each coastal catchment area
+            dataCatch = [row for row in arcpy.da.SearchCursor(jCatch, fields)]
+            dfCatch = pd.DataFrame(dataCatch, columns=fields)
+
+            # Convert water body ID (wb) and coastal catchment area ID to integers
+            dfCatch["wb"] = dfCatch["ov_id"].str.slice(7).astype(int)
+            dfCatch["v"] = dfCatch["op_id"]
+
+            # Specify columns, water body ID as index, sort by coastal catchment area ID
+            dfCatch = dfCatch[["wb", "v"]].set_index("wb").sort_values(by="v")
+
+            if j == "streams":
+                # Assign unjoined water bodies to their relevant coastal catchment area
+                dfCatch.loc[3024, "v"] = "113"  #  assign Kruså to Inner Flensborg Fjord
+                dfCatch.loc[8504, "v"] = "233"  #  assign outlet from Kilen to Venø Bugt
+
+            # Merge df for imputed ecological status w. coastal catchment area and length
+            dfEcoImpCatch = dfEcoImp.merge(dfCatch, how="inner", on="wb").astype(int)
+            dfEco = dfEcoImpCatch.merge(dfVP[["length"]], how="inner", on="wb")
+
+            # List of coastal catchment areas where category j is present
+            j_present = list(dfEco["v"].unique())
+
+            # Total length of water bodies of category j by coastal catchment area v
+            shores_v = dfEco[["v", "length"]].groupby("v").sum().iloc[:, 0]
+
+            # Demographics by coastal catchment area v and year t (1990-2018)
+            dem = pd.read_csv(
+                "data\\" + self.data["shared"][1], index_col=[0, 1]
+            ).sort_index()
+
+            # Years used for interpolation of demographics
+            t_old = np.arange(1990, 2018 + 1)
+            t_new = np.arange(1990, 2020 + 1)
+
+            # For each coastal catchment area v, extrapolate demographics to 2019-2020
+            frames_v = {}  #  dictionary to store df for each coastal catchment area v
+            for v in dem.index.get_level_values(0).unique():
+                df = pd.DataFrame(
+                    index=t_new
+                )  #  empty df to store values for each year t
+                df.index.name = "t"
+                for col in dem.columns:
+                    # Function for linear extrapolation
+                    f = interpolate.interp1d(
+                        t_old, dem.loc[v, col], fill_value="extrapolate"
+                    )
+                    df[col] = f(t_new)
+                frames_v[v] = df  #  store df in dictionary of DataFrames
+            dfDem = pd.concat(frames_v).sort_index()
+            dfDem.index.names = ["v", "t"]
+
+            # Consumer Price Index by year t (1990-2020)
+            CPI = pd.read_excel("data\\" + self.data["shared"][0], index_col=0)
+
+            # Merge CPI with demographics by v and t (households, age, and hh income)
+            Dem = dfDem[["N"]].merge(CPI, "left", left_index=True, right_index=True)
+            Dem["D age"] = np.select([dfDem["age"] > 45], [1])  # dummy mean age > 45
+            # Mean gross real household income (100,000 DKK, 2018 prices) by v and t
+            Dem["y"] = dfDem["income"] * CPI.loc[2018, "CPI"] / Dem["CPI"] / 100000
+            Dem["ln y"] = np.log(Dem["y"])  #  log mean gross real household income
+            Dem = Dem.loc[j_present].reorder_levels([1, 0]).sort_index()
+
+            # Geographical data by coastal catchment area v (assumed time-invariant)
+            Geo = pd.read_excel("data\\" + self.data["shared"][2], index_col=0)
+            Geo.index.name = "v"
+            Geo = Geo.loc[j_present].sort_index()
+
+            # For each year t, create a DataFrame of variables needed for benefit transfer
+            frames_t = (
+                {}
+            )  # create empty dictionary to store a DataFrame for each year t
+
+            # DataFrame for water quality truncated from above at Good ecological status
+            Q = dfEco.mask(dfEco == 4, 3)
+
+            # Create DataFrames with dummy for less than good ecological status
+            SL = Q.copy()
+            SL[t_new] = SL[t_new].mask(SL[t_new] < 3, 1).mask(SL[t_new] == 3, 0)
+
+            for t in self.years:
+                df = (
+                    pd.DataFrame()
+                )  #  empty DataFrame for values by coastal catchment area
+                # \bar{Q}: mean ecological status of water bodies weighted by shore length
+                Q[t] = Q[t] * Q["length"]  #  ecological status × shore length
+                df["Q"] = df["Q"] = Q[["v", t]].groupby("v").sum()[t] / shores_v
+                if t > 1989:
+                    df["ln y"] = Dem.loc[t, "ln y"]  #  log mean gross real hh income
+                    df["D age"] = Dem.loc[t, "D age"]  #  dummy for mean age > 45 years
+                    SL[t] = SL[t] * SL["length"]  #  shore length if eco status < good
+                    SL_not_good = SL[["v", t]].groupby("v").sum()  #  SL if eco < good
+                    df["ln PSL"] = SL_not_good[t] / Geo["shore all j"]  #  proport. SL
+                    df["ln PSL"] = np.select(
+                        [df["ln PSL"] != 0], [np.log(df["ln PSL"])]  #  log if PSL != 0
+                    )
+                    df["ln PAL"] = Geo["ln PAL"]  #  proportion arable land
+                    df["SL"] = SL_not_good / 1000  #  SL in 1000 km
+                    if j == "lakes":
+                        df["D lake"] = 1
+                    else:
+                        df["D lake"] = 0
+                    df["N"] = Dem.loc[t, "N"]  #  number of households
+                frames_t[t] = df  #  store df in dictionary of DataFrames
+            dfBT = pd.concat(frames_t)
+            dfBT.index.names = ["t", "v"]
+
+            return dfBT, shores_v
+
+        except:
+            # Report severe error messages
+            tb = sys.exc_info()[2]  # get traceback object for Python errors
+            tbinfo = traceback.format_tb(tb)[0]
+            msg = "Could not set up df with variables by coastal catchment area for {0}:\nTraceback info:\n{1}Error Info:\n{2}".format(
+                j, tbinfo, str(sys.exc_info()[1])
+            )
+            print(msg)  # print error message in Python
+            arcpy.AddError(msg)  # return error message in ArcGIS
+            sys.exit(1)
+
+    def valuation(self, dfBT, real=False, investment=False):
+        """Valuation of water quality as either current costs or investment value (IV).
+        If not set to return real values (2018 prices), instead returns values in the prices of both the current year and the preceding year (for chain linking).
         """
         try:
-            # Set the name of the field (column) containing the water body plan IDs
-            vpID = self.wfs_vpID[fc]
+            # Copy DataFrame with the variables needed for the benefit transfer equation
+            d = dfBT.copy()
 
-            # Refer to the template
-            fcTemplate = fc + 'Template'
+            if investment is False:
+                # MWTP = 0 if all water bodies of type j have ≥ Good ecological status
+                d["nonzero"] = np.select([d["Q"] < 2.99], [1])  #  dummy
 
+                # Distance from current to Good: convert mean Q to lnΔQ ≡ ln(Q good - Q)
+                d["Q"] = np.select([d["Q"] < 2.99], [np.log(3 - d["Q"])])
+
+            else:
+                # Actual change in ecological status since preceding year
+                d = d.reorder_levels(["j", "v", "t"]).sort_index()
+                d["Q"] = d["Q"].diff()
+                d = d.reorder_levels(["j", "t", "v"]).sort_index()
+
+                # MWTP = 0 if actual change in water quality is zero
+                d["nonzero"] = np.select([d["Q"] != 0], [1])  #  dummy
+
+                # Mark if actual change is negative (used to switch MWTP to negative)
+                d["neg"] = np.select([d["Q"] < 0], [1])  #  dummy
+
+                # Convert Q to the log of the actual change
+                conditions = [d["Q"] > 0, d["Q"] < 0]
+                d["Q"] = np.select(conditions, [np.log(d["Q"]), np.log(-d["Q"])])
+
+            # Drop year 1989 and specify integer values
+            d = d.drop(d[d.index.get_level_values("t") == 1989].index)
+            d[["D age", "D lake", "N"]] = d[["D age", "D lake", "N"]].astype(int)
+
+            # Consumer Price Index by year t (1990-2020)
+            CPI = pd.read_excel("data\\" + self.data["shared"][0], index_col=0)
+
+            # Merge data with CPI to correct for assumption of unitary income elasticity
+            kw = dict(how="left", left_index=True, right_index=True)
+            df1 = d.merge(CPI, **kw)
+            df1["unityMWTP"] = self.BT(df1)  #  MWTP assuming unitary income elasticity
+            df2018 = df1[df1.index.get_level_values("t") == 2018].copy()
+            df2018["elastMWTP"] = self.BT(df2018, elast=1.453)  #  meta study income ε
+            df2018["factor"] = df2018["elastMWTP"] / df2018["unityMWTP"]
+            df2018 = df2018.droplevel("t")
+            df2 = df1.merge(df2018[["factor"]], **kw)
+            df2 = df2.reorder_levels(["j", "t", "v"]).sort_index()
+            df2["MWTP"] = df2["unityMWTP"] * df2["factor"] * df2["nonzero"]
+
+            # Aggregate real MWTP per hh over households in coastal catchment area
+            df2["RWP"] = df2["MWTP"] * df2["N"] / 1e06  #  million DKK (2018 prices)
+
+            if investment is True:
+                # Apply net present value (NPV) factor
+                df2["RWP"] = df2["RWP"] * df2["NPV"]
+
+                # Switch MWTP to negative if actual change is negative
+                cond = [df2["neg"] == 1]
+                df2["RWP"] = np.select(cond, [-df2["RWP"]], default=df2["RWP"])
+
+                if real is True:
+                    df2["IV"] = df2["RWP"]
+                    return df2[["IV"]]
+
+            if real is True:
+                # Return complete dataset
+                return df2[["RWP"]]
+
+            # Aggregate nominal MWTP per hh over households in coastal catchment area
+            df2["CWP"] = df2["RWP"] * df2["CPI"] / CPI.loc[2018, "CPI"]  #  million DKK
+
+            # CWP in the prices of the preceding year (for year-by-year chain linking)
+            df2["D"] = df2["CWP"] * df2["CPI t-1"] / df2["CPI"]  #  million DKK
+
+            # Aggregate over coastal catchment areas
+            grouped = (
+                df2[["CWP", "D"]]
+                .groupby(["j", "t"])
+                .sum()
+                .unstack(level=0)
+                .rename_axis(None)
+                .rename_axis([None, None], axis=1)
+            )
+
+            if investment is True:
+                # Rename CWP to IV
+                grouped.columns = grouped.columns.set_levels(["IV", "D"], level=0)
+
+            return grouped
+
+        except:
+            # Report severe error messages
+            tb = sys.exc_info()[2]  # get traceback object for Python errors
+            tbinfo = traceback.format_tb(tb)[0]
+            msg = "Could not apply valuation to df {0}:\nTraceback info:\n{1}Error Info:\n{2}".format(
+                d, tbinfo, str(sys.exc_info()[1])
+            )
+            print(msg)  # print error message in Python
+            arcpy.AddError(msg)  # return error message in ArcGIS
+            sys.exit(1)
+
+    def BT(self, df, elast=1):
+        """Apply Benefit Transfer equation from meta study (Zandersen et al., 2022)"""
+        try:
+            # ln MWTP for improvement from current ecological status to "Good"
+            lnMWTP = (
+                4.142
+                + 0.551 * df["Q"]
+                + elast * df["ln y"]
+                + 0.496 * df["D age"]
+                + 0.121 * df["ln PSL"]
+                - 0.072 * df["ln PAL"]
+                - 0.005 * df["SL"]
+                - 0.378 * df["D lake"]
+            )
+            # Real MWTP per household (DKK, 2018 prices) using variances from meta study
+            MWTP = np.exp(lnMWTP + (0.136 + 0.098) / 2)
+            return MWTP
+
+        except:
+            # Report severe error messages
+            tb = sys.exc_info()[2]  # get traceback object for Python errors
+            tbinfo = traceback.format_tb(tb)[0]
+            msg = "Could not apply benefit transfer equation to df {0} with elasticity {1}:\nTraceback info:\n{1}Error Info:\n{2}".format(
+                df, tbinfo, str(sys.exc_info()[1])
+            )
+            print(msg)  # print error message in Python
+            arcpy.AddError(msg)  # return error message in ArcGIS
+            sys.exit(1)
+
+    def map_book(self, fc, df):
+        """Create a pdf map book with a page for each year using the fc created with get_fc_from_WFS()"""
+        try:
             # Add an integer field (column) for storing the ecological status
-            arcpy.AddField_management(fcTemplate, 'status', 'INTEGER')
+            arcpy.AddField_management(fc, "status", "INTEGER")
 
             # Create a map book to contain a pdf page for each year
-            bookPath = self.path + '\\output\\' + fc + '.pdf'
+            bookPath = self.path + "\\output\\" + fc + ".pdf"
             if os.path.exists(bookPath):
                 os.remove(bookPath)
 
@@ -572,35 +1145,45 @@ class Water_Quality:
             book = arcpy.mp.PDFDocumentCreate(bookPath)
 
             ##### Make a feature class, layer and pdf map for each year
-            for i in yearsList:
+            for t in self.years[::-1]:
                 try:
                     # Copy feature class from template
-                    fcYear = fc + str(i) + 'fc'
+                    fcYear = fc + str(t) + "fc"
                     if arcpy.Exists(fcYear):
                         arcpy.Delete_management(fcYear)
-                    arcpy.CopyFeatures_management(fcTemplate, fcYear)
+                    arcpy.CopyFeatures_management(fc, fcYear)
 
                     # Create update cursor for feature layer
-                    with arcpy.da.UpdateCursor(fcYear, [vpID, 'status']) as cursor:
+                    with arcpy.da.UpdateCursor(fcYear, ["ov_id", "status"]) as cursor:
                         try:
                             # For each row/object in feature class add ecological status from df
                             for row in cursor:
                                 if row[0] in df.index:
-                                    row[1] = df.loc[row[0], i]
+                                    row[1] = df.loc[row[0], t]
                                     cursor.updateRow(row)
 
                         except:
                             # Report severe error messages from Python or ArcPy
-                            tb = sys.exc_info()[2]  # get traceback object for Python errors
+                            tb = sys.exc_info()[
+                                2
+                            ]  # get traceback object for Python errors
                             tbinfo = traceback.format_tb(tb)[0]
-                            pymsg = 'Python errors while updating {0} in {1}:\nTraceback info:\n{2}Error Info:\n{3}'\
-                                    .format(row[0], fc, tbinfo, str(sys.exc_info()[1]))
-                            arcmsg = 'ArcPy errors while updating {0} in {1}:\n{2}'\
-                                     .format(row[0], fc, arcpy.GetMessages(severity=2))
-                            print(pymsg)            # print Python error message in Python
-                            print(arcmsg)           # print ArcPy error message in Python
-                            arcpy.AddError(pymsg)   # return Python error message in ArcGIS
-                            arcpy.AddError(arcmsg)  # return ArcPy error message in ArcGIS
+                            pymsg = "Python errors while updating {0} in {1}:\nTraceback info:\n{2}Error Info:\n{3}".format(
+                                row[0], fc, tbinfo, str(sys.exc_info()[1])
+                            )
+                            arcmsg = (
+                                "ArcPy errors while updating {0} in {1}:\n{2}".format(
+                                    row[0], fc, arcpy.GetMessages(severity=2)
+                                )
+                            )
+                            print(pymsg)  # print Python error message in Python
+                            print(arcmsg)  # print ArcPy error message in Python
+                            arcpy.AddError(
+                                pymsg
+                            )  # return Python error message in ArcGIS
+                            arcpy.AddError(
+                                arcmsg
+                            )  # return ArcPy error message in ArcGIS
                             sys.exit(1)
 
                         finally:
@@ -608,24 +1191,24 @@ class Water_Quality:
                             del cursor, row
 
                     # Create a feature layer for the feature class (name of layer applies to the legend)
-                    layerYear = fc + str(i)
+                    layerYear = fc + str(t)
                     arcpy.MakeFeatureLayer_management(fcYear, layerYear)
 
                     # Apply symbology for ecological status from layer
-                    arcpy.ApplySymbologyFromLayer_management(layerYear,
-                                     self.path + '\\' + fc + '_symbology.lyrx')
+                    arcpy.ApplySymbologyFromLayer_management(
+                        layerYear, self.path + "\\" + fc + "_symbology.lyrx"
+                    )
 
                     # Save layer file
-#                    if arcpy.Exists(layerYear + '.lyrx'):
-#                        arcpy.Delete_management(layerYear + '.lyrx')
-                    arcpy.SaveToLayerFile_management(layerYear,
-                                                     layerYear + '.lyrx')
+                    if arcpy.Exists(layerYear + ".lyrx"):
+                        arcpy.Delete_management(layerYear + ".lyrx")
+                    arcpy.SaveToLayerFile_management(layerYear, layerYear + ".lyrx")
 
                     # Reference the layer file
-                    lyrFile = arcpy.mp.LayerFile(layerYear + '.lyrx')
+                    lyrFile = arcpy.mp.LayerFile(layerYear + ".lyrx")
 
                     # Reference the ArcGIS Pro project, its map, and the layout to export
-                    aprx = arcpy.mp.ArcGISProject(self.path + '\\gis.aprx')
+                    aprx = arcpy.mp.ArcGISProject(self.path + "\\gis.aprx")
                     m = aprx.listMaps("Map")[0]
                     lyt = aprx.listLayouts("Layout")[0]
 
@@ -633,33 +1216,36 @@ class Water_Quality:
                     m.addLayer(lyrFile, "TOP")
 
                     # Export layout to a temporary PDF
-                    lyt.exportToPDF('temp.pdf', resolution = 300)
+                    lyt.exportToPDF("temp.pdf", resolution=300)
 
                     # Append the page to the map book
-                    book.appendPages(self.path + '\\temp.pdf')
+                    book.appendPages(self.path + "\\temp.pdf")
 
                 except:
                     # Report severe error messages from Python or ArcPy
                     tb = sys.exc_info()[2]  # get traceback object for Python errors
                     tbinfo = traceback.format_tb(tb)[0]
-                    pymsg = 'Python errors while creating a PDF for {0}, {1}:\nTraceback info:\n{2}Error Info:\n{3}'\
-                            .format(fc, i, tbinfo, str(sys.exc_info()[1]))
-                    arcmsg = 'ArcPy errors while creating a PDF for {0}, {1}:\n{2}'\
-                             .format(fc, i, arcpy.GetMessages(severity=2))
-                    print(pymsg)            # print Python error message in Python
-                    print(arcmsg)           # print ArcPy error message in Python
-                    arcpy.AddError(pymsg)   # return Python error message in ArcGIS
+                    pymsg = "Python errors while creating a PDF for {0}, {1}:\nTraceback info:\n{2}Error Info:\n{3}".format(
+                        fc, t, tbinfo, str(sys.exc_info()[1])
+                    )
+                    arcmsg = (
+                        "ArcPy errors while creating a PDF for {0}, {1}:\n{2}".format(
+                            fc, t, arcpy.GetMessages(severity=2)
+                        )
+                    )
+                    print(pymsg)  # print Python error message in Python
+                    print(arcmsg)  # print ArcPy error message in Python
+                    arcpy.AddError(pymsg)  # return Python error message in ArcGIS
                     arcpy.AddError(arcmsg)  # return ArcPy error message in ArcGIS
                     sys.exit(1)
 
                 finally:
                     # Clean up after each iteration of loop
-                    if self.keep_gdb!='true':
+                    if self.keep_gdb != "true":
                         # Delete feature class and layer file
-                        if arcpy.Exists(fcYear):
-                            arcpy.Delete_management(fcYear)
-                        if arcpy.Exists(layerYear + '.lyrx'):
-                            arcpy.Delete_management(layerYear + '.lyrx')
+                        for fc in [fcYear, layerYear + ".lyrx"]:
+                            if arcpy.Exists(fc):
+                                arcpy.Delete_management(fc)
                     del fcYear, layerYear, lyrFile, aprx, m, lyt
 
             # Commit changes and save the map book
@@ -669,25 +1255,24 @@ class Water_Quality:
             # Report severe error messages from Python or ArcPy
             tb = sys.exc_info()[2]  # get traceback object for Python errors
             tbinfo = traceback.format_tb(tb)[0]
-            pymsg = 'Python errors while creating a map book for {0}:\nTraceback info:\n{1}Error Info:\n{2}'\
-                    .format(fc, tbinfo, str(sys.exc_info()[1]))
-            arcmsg = 'ArcPy errors while creating a map book for {0}:\n{1}'\
-                     .format(fc, arcpy.GetMessages(severity=2))
-            print(pymsg)            # print Python error message in Python
-            print(arcmsg)           # print ArcPy error message in Python
-            arcpy.AddError(pymsg)   # return Python error message in ArcGIS
+            pymsg = "Python errors while creating a map book for {0}:\nTraceback info:\n{1}Error Info:\n{2}".format(
+                fc, tbinfo, str(sys.exc_info()[1])
+            )
+            arcmsg = "ArcPy errors while creating a map book for {0}:\n{1}".format(
+                fc, arcpy.GetMessages(severity=2)
+            )
+            print(pymsg)  # print Python error message in Python
+            print(arcmsg)  # print ArcPy error message in Python
+            arcpy.AddError(pymsg)  # return Python error message in ArcGIS
             arcpy.AddError(arcmsg)  # return ArcPy error message in ArcGIS
             sys.exit(1)
 
         finally:
             # Clean up
-            if os.path.exists('temp.pdf'):
-                os.remove('temp.pdf')
-            if arcpy.Exists(fcTemplate):
-                arcpy.Delete_management(fcTemplate)
+            if os.path.exists("temp.pdf"):
+                os.remove("temp.pdf")
             del book
-            if self.keep_gdb!='true':
+            if self.keep_gdb != "true":
                 # Delete the entire geodatabase (all FCs must be deleted first)
                 if arcpy.Exists(self.arcPath):
                     arcpy.Delete_management(self.arcPath)
-

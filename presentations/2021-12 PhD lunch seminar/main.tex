@@ -1,0 +1,35 @@
+\input{sections/preample.tex} % packages, bib, and title page
+
+\setbeamertemplate{navigation symbols}{}
+
+% Select what to do with command \inline{}:
+    \newcommand{\inline}[1]{}  % hide inline notes
+    % \newcommand{\inline}[1]{\par{\bfseries\color{blue}#1\par}} % show blue inline notes
+
+% Select what to do with command \note{}:
+    % \setbeameroption{hide notes} % Only slides
+    % \setbeameroption{show only notes} % Only notes
+    \setbeameroption{show notes on second screen=right} % Both
+
+\begin{document}
+
+\begin{frame}
+    \maketitle
+    \footnotesize
+    The research project \textit{’Developing and Implementing Green National Accounts and the Green GDP’} is funded by KR Foundation and the Carlsberg Foundation.
+\end{frame}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{frame}{Outline}
+    \tableofcontents
+\end{frame}
+
+\input{sections/01_intro}
+\input{sections/02_overview}
+\input{sections/03_examples}
+\input{sections/04_results}
+
+\end{document}
