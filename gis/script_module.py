@@ -13,9 +13,7 @@ Usage:      This module supports script.py and WaterbodiesScriptTool in gis.tbx.
 Functions:  The class in this module contains 10 functions of which some are nested:
             - get_data(), get_fc_from_WFS(), map_book(), and values_by_catchment_area() are standalone functions.
             - observed_indicator() calls:
-                - stations_to_streams(), which calls:
-                    - longitudinal(), which again calls:
-                        - frame()
+                - longitudinal()
             - impute_missing() calls:
                 - ecological_status(), which calls:
                     - indicator_to_status()
@@ -103,7 +101,7 @@ class Water_Quality:
             # Dictionary for folders and their data and linkage files
             allFiles = {
                 "data": [a for b in list(self.data.values()) for a in b],
-                "linkage": [a for b in list(self.data.values()) for a in b],
+                "linkage": [a for b in list(self.linkage.values()) for a in b],
                 "output": [],
             }
 
@@ -225,70 +223,53 @@ class Water_Quality:
             arcpy.AddError(arcmsg)  # return ArcPy error message in ArcGIS
             sys.exit(1)
 
-    def observed_indicator(self, j):
-        """Based on the type of water body, set up a longitudinal DataFrame with the
-        observed indicators for all water bodies."""
-        try:
-            if j == "streams":
-                # Create longitudinal df and use linkage table to assign stations to water bodies
-                df, dfVP = self.stations_to_streams(
-                    j,
-                )
+    def observed_indicator(self, j, radius=15):
+        """Set up a longitudinal DataFrame for all water bodies of category j by year t.
 
-            # Save observations to CSV for later statistical work
-            df.to_csv("output\\" + j + "_ind_obs.csv")
+        Assign monitoring stations to water bodies in water body plan via linkage table.
 
-            # Save characteristics of water bodies to CSV for later work
-            dfVP.to_csv("output\\" + j + "_VP.csv")
+        For monitoring stations not included in the linkage table: Assign a station to a waterbody if the station's coordinates are located within said waterbody. For streams, if the station is within a radius of 15 meters of a stream where the name of the stream matches the location name attached to the monitoring station).
 
-            return df, dfVP
-
-        except:
-            # Report severe error messages
-            tb = sys.exc_info()[2]  # get traceback object for Python errors
-            tbinfo = traceback.format_tb(tb)[0]
-            msg = "Could not create df with observations for {0}:\nTraceback info:\n{1}Error Info:\n{2}".format(
-                j, tbinfo, str(sys.exc_info()[1])
-            )
-            print(msg)  # print error message in Python
-            arcpy.AddError(msg)  # return error message in ArcGIS
-            sys.exit(1)
-
-    def stations_to_streams(self, j, radius=15):
-        """Streams: Assign monitoring stations to water bodies via linkage table.
-
-        For unmatched stations: Assign to stream within a radius of 15 meters where the location names match the name of the stream.
-
-        For a given year, finds DVFI for a stream with multiple stations
-        by taking the median and rounding down.
-
-        Finally, extends to all streams in the current water body plan (VP3) and adds the ID, catchment area, and length of each stream in km using the feature classes collected via get_fc_from_WFS()
+        Finally, construct the longitudinal DataFrame of observed biophysical indicator by year for all water bodies in the current water body plan. Separately, save the water body ID, typology, district ID, and shore length of each water body in VP3 using the feature classes collected via the get_fc_from_WFS() function.
         """
         try:
             # Create longitudinal df for stations in streams by monitoring version
-            d = self.data[j][1]
-            x = "Xutm_Euref89_Zone32"
-            y = "Yutm_Euref89_Zone32"
-            DVFI_F = self.longitudinal(
-                j, d, x, y, "Indeks", "Indekstype", "Faunaklasse, felt"
+            kwargs = dict(
+                f=self.data[j][1],
+                d="Dato",
+                x="Xutm_Euref89_Zone32",
+                y="Yutm_Euref89_Zone32",
+                valueCol="Indeks",
+                parameterCol="Indekstype",
             )
-            DVFI_M = self.longitudinal(j, d, x, y, "Indeks", "Indekstype", "DVFI, MIB")
-            DVFI_1 = self.longitudinal(j, d, x, y, "Indeks", "Indekstype", "DVFI")
+            DVFI_F = self.longitudinal(j, parameter="Faunaklasse, felt", **kwargs)
+            DVFI_M = self.longitudinal(j, parameter="DVFI, MIB", **kwargs)
+            DVFI = self.longitudinal(j, parameter="DVFI", **kwargs)
 
-            # Create longitudinal df for stations in streams after 2020
-            DVFI_2 = self.longitudinal(
-                j, self.data[j][0], "Målested X-UTM", "Målested Y-UTM)", "Indeks"
+            # Create df for observations after 2020 (after ODA database update Jan 2024)
+            DVFI2 = self.longitudinal(
+                j,
+                f=self.data[j][0],
+                d="Dato",
+                x="Målested X-UTM",
+                y="Målested Y-UTM)",
+                valueCol="Indeks",
             )
 
-            # Group by station and keep first non-null entry each year DVFI>MIB>felt
+            # Obtain some of the missing coordinates
+            stations = pd.read_csv("linkage\\" + self.linkage[j][1]).astype(int)
+            stations.columns = ["station", "x", "y"]
+            stations2 = DVFI2[["station"]].merge(stations, how="inner", on="station")
+
+            # Group by station and keep last non-null entry each year for DVFI>MIB>felt
             long = (
-                pd.concat([DVFI_F, DVFI_M, DVFI_1, DVFI_2])
-                .groupby(["station"], as_index=False)
+                pd.concat([DVFI_F, DVFI_M, DVFI, DVFI2, stations2])
+                .groupby("station", as_index=False)
                 .last()
             )
 
             # Read the linkage table
-            dfLinkage = pd.read_csv("linkage\\" + self.linkage[j])
+            dfLinkage = pd.read_csv("linkage\\" + self.linkage[j][0])
 
             # Convert station ID to integers
             dfLinkage["station"] = dfLinkage["station_id"].str.slice(7).astype(int)
@@ -404,7 +385,7 @@ class Water_Quality:
 
             # Subset to unique stations with their closest matching water body
             jClosest = (
-                join[join["match"] == True].groupby(["station"], as_index=False).first()
+                join[join["match"] == True].groupby("station", as_index=False).first()
             )
 
             # Inner merge of noLink stations and jClosest water body with matching name
@@ -440,6 +421,12 @@ class Water_Quality:
             # Set water body ID as index
             allVP = allVP.set_index("wb")
             dfVP = dfVP[["wb", "ov_typ", "distr_id", "length"]].set_index("wb")
+
+            # Save observations to CSV for later statistical work
+            allVP.to_csv("output\\" + j + "_ind_obs.csv")
+
+            # Save characteristics of water bodies to CSV for later work
+            dfVP.to_csv("output\\" + j + "_VP.csv")
 
             # Report stations matched by linkage table and distance+name respectively
             msg = "{0}:\n{1} out of {2} stations were linked to a water body by the official linkage table. Besides, {3} were located within {4} meters of a water body carrying the name of the station's location.".format(
@@ -478,60 +465,84 @@ class Water_Quality:
                     if arcpy.Exists(fc):
                         arcpy.Delete_management(fc)
 
-    def longitudinal(
-        self,
-        j,
-        fileName,
-        x="X_UTM32",
-        y="Y_UTM32",
-        valueCol="Resultat",
-        parameterCol=0,
-        parameter=0,
-    ):
-        """Set up a longitudinal DataFrame based on the type of water body.
+    def longitudinal(self, j, f, d, x, y, valueCol, parameterCol=0, parameter=0):
+        """Set up a longitudinal DataFrame for all stations in category j by year t.
 
-        Streams: For a given year, finds DVFI for a station with multiple
-                 observations by taking the median and rounding down."""
+        Streams: For a given year, find the DVFI index value of bottom fauna for a station with multiple observations by taking the median and rounding down.
+
+        Lakes and coastal waters: For a given year, estimate the chlorophyll summer average for every station monitored at least four times during May-September by linear interpolating of daily data from May 1 to September 30 (or extrapolate by inserting the first/last observation from May/September if there exist no observations outside of said period that are no more than 6 weeks away from the first/last observation in May/September).
+        """
         try:
-            # Set up a Pandas DataFrame for the chosen type of water body
+            # Read the data
+            df = pd.read_excel("data\\" + f)
+
+            # Create 'Year' column from the date column
+            df["year"] = df[d].astype(str).str.slice(0, 4).astype(int)
+
+            if parameterCol != 0:
+                # Subset the data to only contain the relevant parameter
+                df = df[df[parameterCol] == parameter]
+
+            # Drop missing values and sort by year
+            df = df.dropna(subset=valueCol).sort_values("year")
+
+            # Column names for longitudinal DataFrame
+            cols = ["station", "x", "y"]
+
             if j == "streams":
-                df = self.frame(
-                    j,
-                    fileName,
-                    x,
-                    y,
-                    valueCol,
-                    parameterCol,
-                    parameter,
-                )
+                cols.append("location")
 
-                # Drop obs with unknown index value and save index as integers
-                df = df[df.ind != "U"]
-                df["ind"] = df["ind"].astype(int)
+                # Subset to relevant variables
+                df = df[
+                    [
+                        "ObservationsStedNr",
+                        x,
+                        y,
+                        "Lokalitetsnavn",
+                        "year",
+                        valueCol,
+                    ]
+                ]
 
-            # Set up a longitudinal df with every station and its latest records
-            long = (
-                df[["station", "location", "x", "y"]]
-                .groupby(["station"], as_index=False)
-                .last()
-            )
-            if j == "coastal":
-                long = long.drop(columns="location")
+                # Capitalize location names
+                df["Lokalitetsnavn"] = df["Lokalitetsnavn"].str.upper()
 
-            # Add a column for each year with observations
+                # Drop obs with unknown indicator value "U" and convert it to integer
+                df = df[df[valueCol] != "U"]
+                df[valueCol] = df[valueCol].astype(int)
+
+            else:
+                df = df[
+                    [
+                        "ObservationsStedNr",
+                        x,
+                        y,
+                        "year",
+                        valueCol,
+                    ]
+                ]
+
+            # Shorten column names
+            df.columns = cols + ["year", "ind"]
+
+            # Set up a longitudinal df with every station and its last non-null entry
+            long = df[cols].groupby("station", as_index=False).last()
+
+            # Add a column for each year t with observations for the indicator
             for t in df["year"].unique():
-                # Subset to relevant year and drop location, year, and coordinates
-                dfYear = df[df["year"] == t].drop(
-                    ["location", "year", "x", "y"], axis=1
-                )
+                # Subset to year t
+                dfYear = df[df["year"] == t]
+
+                # Subset to station and indicator columns only
+                dfYear = dfYear[["station", "ind"]]
 
                 # Group multiple obs for a station: Take the median and round down
-                dfYear = (
-                    dfYear.groupby(["station"]).median().apply(np.floor).astype(int)
-                )
+                dfYear = dfYear.groupby("station").median().apply(np.floor).astype(int)
+
+                # Rename the indicator column to the given year
+                dfYear.columns = [t]
 
                 # Merge into longitudinal df
-                dfYear.columns = [t]
                 long = long.merge(dfYear, how="left", on="station")
 
             return long
@@ -547,22 +558,25 @@ class Water_Quality:
             arcpy.AddError(msg)  # return error message in ArcGIS
             sys.exit(1)
 
-    def frame(self, j, fileName, x, y, valueCol, parameterCol=0, parameter=0):
+    def frame(self, j, f, d, x, y, valueCol, parameterCol=0, parameter=0):
         """Function to set up a Pandas DataFrame for a given type of water body"""
         try:
             # Read the data
-            df = pd.read_excel("data\\" + fileName)  # 1987-2020
+            df = pd.read_excel("data\\" + f)  # 1987-2020
 
-            # Create 'Year' column from the date integer
-            df["year"] = df["Dato"].astype(str).str.slice(0, 4).astype(int)
+            # Create 'Year' column from the date column
+            df["year"] = df[d].astype(str).str.slice(0, 4).astype(int)
 
             if parameterCol != 0:
                 # Subset the data to only contain the relevant parameter
                 df = df[df[parameterCol] == parameter]
 
-            # Subset the data to relevant variables and sort by year
-            df = (
-                df[
+            # Drop missing values and sort by year
+            df = df.dropna(subset=valueCol).sort_values("year")
+
+            # Subset to relevant variables
+            if j == "streams":
+                df = df[
                     [
                         "ObservationsStedNr",
                         "Lokalitetsnavn",
@@ -572,15 +586,26 @@ class Water_Quality:
                         y,
                     ]
                 ]
-                .dropna(subset=valueCol)
-                .sort_values("year")
-            )
 
-            # Shorten column names
-            df.columns = ["station", "location", "year", "ind", "x", "y"]
+                # Shorten column names
+                df.columns = ["station", "location", "year", "ind", "x", "y"]
 
-            # Capitalize location names
-            df["location"] = df["location"].str.upper()
+                # Capitalize location names
+                df["location"] = df["location"].str.upper()
+
+            else:
+                df = df[
+                    [
+                        "ObservationsStedNr",
+                        "year",
+                        valueCol,
+                        x,
+                        y,
+                    ]
+                ]
+
+                # Shorten column names
+                df.columns = ["station", "year", "ind", "x", "y"]
 
             return df
 
@@ -1038,14 +1063,14 @@ class Water_Quality:
             CPI = pd.read_excel("data\\" + self.data["shared"][0], index_col=0)
 
             # Merge data with CPI to correct for assumption of unitary income elasticity
-            kw = dict(how="left", left_index=True, right_index=True)
-            df1 = d.merge(CPI, **kw)
+            kwargs = dict(how="left", left_index=True, right_index=True)
+            df1 = d.merge(CPI, **kwargs)
             df1["unityMWTP"] = self.BT(df1)  #  MWTP assuming unitary income elasticity
             df2018 = df1[df1.index.get_level_values("t") == 2018].copy()
             df2018["elastMWTP"] = self.BT(df2018, elast=1.453)  #  meta study income ε
             df2018["factor"] = df2018["elastMWTP"] / df2018["unityMWTP"]
             df2018 = df2018.droplevel("t")
-            df2 = df1.merge(df2018[["factor"]], **kw)
+            df2 = df1.merge(df2018[["factor"]], **kwargs)
             df2 = df2.reorder_levels(["j", "t", "v"]).sort_index()
             df2["MWTP"] = df2["unityMWTP"] * df2["factor"] * df2["nonzero"]
 

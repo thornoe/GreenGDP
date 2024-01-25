@@ -157,55 +157,114 @@ for field in arcpy.ListFields("streams_catch"):
     field.name, field.type, field.length
 arcpy.Delete_management("catch")
 
-# def frame(self, j, fileName, parameterType, parameterCol, valueCol):
-"""Function to set up a Pandas DataFrame for a given type of water body"""
-fileName = data[j][0]
-parameterType, parameterCol, valueCol = "DVFI", "Indekstype", "Indeks"
+# def longitudinal(self, j, f, d, x, y, valueCol, parameterCol=0, parameter=0):
+"""Set up a longitudinal DataFrame for all stations in category j by year t.
+Streams: For a given year, find the DVFI index value of bottom fauna for a station with multiple observations by taking the median and rounding down
+Lakes and coastal waters: For a given year, estimate the chlorophyll summer average for every station monitored at least four times during May-September by linear interpolating of daily data from May 1 to September 30 (or extrapolate by inserting the first/last observation from May/September if there exist no observations outside of said period that are no more than 6 weeks away from the first/last observation in May/September)."""
+f = c.data[j][0]
+d = "Dato"
+x = "Målested X-UTM"
+y = "Målested Y-UTM)"
+valueCol = "Indeks"
+i = 2002
+parameterCol = 0
+parameter = 0
 
-# def longitudinal(self, j, fileName, parameterType):
-"""Set up a longitudinal DataFrame based on the type of water body.
-Streams: For a given year, finds DVFI for a station with multiple
-         observations by taking the median and rounding down."""
-fileName, parameterType = data[j][0], "DVFI"
-df = c.frame(
-    j,
-    fileName,
-    parameterType,
+# Read the data
+df = pd.read_excel("data\\" + f)
+# Create 'Year' column from the date column
+df["year"] = df[d].astype(str).str.slice(0, 4).astype(int)
+if parameterCol != 0:
+    # Subset the data to only contain the relevant parameter
+    df = df[df[parameterCol] == parameter]
+# Drop missing values and sort by year
+df = df.dropna(subset=valueCol).sort_values("year")
+# Column names for longitudinal DataFrame
+cols = ["station", "x", "y"]
+if j == "streams":
+    cols.append("location")
+    # Subset to relevant variables
+    df = df[
+        [
+            "ObservationsStedNr",
+            x,
+            y,
+            "Lokalitetsnavn",
+            "year",
+            valueCol,
+        ]
+    ]
+    # Capitalize location names
+    df["Lokalitetsnavn"] = df["Lokalitetsnavn"].str.upper()
+    # Drop obs with unknown indicator value "U" and convert it to integer
+    df = df[df[valueCol] != "U"]
+    df[valueCol] = df[valueCol].astype(int)
+else:
+    df = df[
+        [
+            "ObservationsStedNr",
+            x,
+            y,
+            "year",
+            valueCol,
+        ]
+    ]
+# Shorten column names
+df.columns = cols + ["year", "ind"]
+# Set up a longitudinal df with every station and its last non-null entry
+long = df[cols].groupby("station", as_index=False).last()
+# Add a column for each year t with observations for the indicator
+for t in df["year"].unique():
+    # Subset to year t
+    dfYear = df[df["year"] == t]
+    # Subset to station and indicator columns only
+    dfYear = dfYear[["station", "ind"]]
+    # Group multiple obs for a station: Take the median and round down
+    dfYear = dfYear.groupby("station").median().apply(np.floor).astype(int)
+    # Rename the indicator column to the given year
+    dfYear.columns = [t]
+    # Merge into longitudinal df
+    long = long.merge(dfYear, how="left", on="station")
+
+# def observed_indicator(self, j, radius=15):
+"""Set up a longitudinal DataFrame for all water bodies of category j by year t.
+Assign monitoring stations to water bodies in water body plan via linkage table.
+For monitoring stations not included in the linkage table: Assign a station to a waterbody if the station's coordinates are located within said waterbody. For streams, if the station is within a radius of 15 meters of a stream where the name of the stream matches the location name attached to the monitoring station).
+Finally, construct the longitudinal DataFrame of observed biophysical indicator by year for all water bodies in the current water body plan. Separately, save the water body ID, typology, district ID, and shore length of each water body in VP3 using the feature classes collected via the get_fc_from_WFS() function."""
+radius = 50
+# Create longitudinal df for stations in streams by monitoring version
+kwargs = dict(
+    f=c.data[j][1],
+    d="Dato",
+    x="Xutm_Euref89_Zone32",
+    y="Yutm_Euref89_Zone32",
+    valueCol="Indeks",
     parameterCol="Indekstype",
+)
+DVFI_F = c.longitudinal(j, parameter="Faunaklasse, felt", **kwargs)
+DVFI_M = c.longitudinal(j, parameter="DVFI, MIB", **kwargs)
+DVFI = c.longitudinal(j, parameter="DVFI", **kwargs)
+# Create df for observations after 2020 (after ODA database update Jan 2024)
+DVFI2 = c.longitudinal(
+    j,
+    f=c.data[j][0],
+    d="Dato",
+    x="Målested X-UTM",
+    y="Målested Y-UTM)",
     valueCol="Indeks",
 )
-i = 2001
-
-# def stations_to_streams(self, j, fileName, radius=15):
-"""Streams: Assign monitoring stations to water bodies via linkage table.
-For unmatched stations: Assign to stream within a radius of 15 meters where the location names match the name of the stream.
-For a given year, finds DVFI for a stream with multiple stations
-by taking the median and rounding down.
-Finally, extends to all streams in the current water body plan (VP3) and adds the ID, catchment area, and length of each stream in km using the feature classes collected via get_fc_from_WFS()"""
-fileName, radius = data[j][0], 15
-# Create longitudinal df for stations in streams by monitoring version
-d = c.data[j][1]
-x = "Xutm_Euref89_Zone32"
-y = "Yutm_Euref89_Zone32"
-DVFI_F = c.longitudinal(j, d, x, y, "Indeks", "Indekstype", "Faunaklasse, felt")
-DVFI_M = c.longitudinal(j, d, x, y, "Indeks", "Indekstype", "DVFI, MIB")
-DVFI1 = c.longitudinal(j, d, x, y, "Indeks", "Indekstype", "DVFI")
-# Create longitudinal df for stations in streams after 2020
-DVFI2 = c.longitudinal(j, c.data[j][0], "Målested X-UTM", "Målested Y-UTM)", "Indeks")
-# Read the linkage table
-locations = pd.read_csv("linkage\\" + c.linkage[j][1])
-
-DVFI2.describe()
-
-# Group by station and keep first non-null entry each year DVFI>MIB>felt
+# Obtain some of the missing coordinates
+stations = pd.read_csv("linkage\\" + c.linkage[j][1]).astype(int)
+stations.columns = ["station", "x", "y"]
+stations2 = DVFI2[["station"]].merge(stations, how="inner", on="station")
+# Group by station and keep last non-null entry each year for DVFI>MIB>felt
 long = (
-    pd.concat([DVFI_F, DVFI_M, DVFI1, DVFI2])
-    .groupby(["station"], as_index=False)
+    pd.concat([DVFI_F, DVFI_M, DVFI, DVFI2, stations2])
+    .groupby("station", as_index=False)
     .last()
 )
-DVFI2.tail(50)
 # Read the linkage table
-dfLinkage = pd.read_csv("linkage\\" + c.linkage[j])
+dfLinkage = pd.read_csv("linkage\\" + c.linkage[j][0])
 # Convert station-ID to integers
 dfLinkage["station"] = dfLinkage["station_id"].str.slice(7).astype(int)
 # Merge longitudinal DataFrame with linkage table for water bodies in VP3
@@ -577,14 +636,14 @@ d[["D age", "D lake", "N"]] = d[["D age", "D lake", "N"]].astype(int)
 CPI = pd.read_excel("data\\" + c.data["shared"][0], index_col=0)
 
 # Merge data with CPI to correct for assumption of unitary income elasticity
-kw = dict(how="left", left_index=True, right_index=True)
-df1 = d.merge(CPI, **kw)
+kwargs = dict(how="left", left_index=True, right_index=True)
+df1 = d.merge(CPI, **kwargs)
 df1["unityMWTP"] = c.BT(df1)  #  MWTP assuming unitary income elasticity
 df2018 = df1[df1.index.get_level_values("t") == 2018].copy()
 df2018["elastMWTP"] = c.BT(df2018, elast=1.453)  #  meta study income ε
 df2018["factor"] = df2018["elastMWTP"] / df2018["unityMWTP"]
 df2018 = df2018.droplevel("t")
-df2 = df1.merge(df2018[["factor"]], **kw)
+df2 = df1.merge(df2018[["factor"]], **kwargs)
 df2 = df2.reorder_levels(["j", "t", "v"]).sort_index()
 df2["MWTP"] = df2["unityMWTP"] * df2["factor"] * df2["nonzero"]
 
@@ -649,8 +708,8 @@ df = pd.DataFrame(
 df = df.append(
     pd.DataFrame([np.nan, np.nan, np.nan], index=[1989, 2019, 2020])
 ).sort_index()
-kw = dict(method="index", fill_value="extrapolate", limit_direction="both")
-df.interpolate(**kw, inplace=True)
+kwargs = dict(method="index", fill_value="extrapolate", limit_direction="both")
+df.interpolate(**kwargs, inplace=True)
 
 # Save to CSV
 df.to_csv("output\\" + "D_age.csv")
