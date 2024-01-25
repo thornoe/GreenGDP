@@ -75,15 +75,17 @@ year_last = 2020
 
 # Specify the names of data files for each category of water body and shared statistics
 data = {
+    "coastal": ["coastal_chlorophyll.xlsx"],
+    "lakes": ["lakes_chlorophyll.xlsx"],
     "streams": ["streams_DVFI.xlsx", "streams_1988-2020.xlsx"],
     "shared": ["CPI_NPV.xlsx", "demographics.csv", "geographical.xlsx"],
 }
 
-# Specify the names of the corresponding linkage files
+# Specify the names of the corresponding linkage files (and other supporting tables)
 linkage = {
-    "coastal": "coastal_stations_VP3.csv",
-    "lakes": "lakes_stations_VP3.csv",
-    "streams": "streams_stations_VP3.csv",
+    "coastal": ["coastal_stations_VP3.csv", "coastal_chlorophyll_limits.csv"],
+    "lakes": ["lakes_stations_VP3.csv", "lakes_stations_XY.csv"],
+    "streams": ["streams_stations_VP3.csv", "streams_stations_XY.csv"],
 }
 
 # WFS service URL for the current water body plan (VP2 is for 2015-2021)
@@ -127,7 +129,7 @@ stats_j = {}
 c.get_fc_from_WFS(j)
 
 # Create a DataFrame with observed biophysical indicator by year
-# df_ind_obs, df_VP = c.observed_indicator(j)
+df_ind_obs, df_VP = c.observed_indicator(j)
 df_ind_obs = pd.read_csv("output\\" + j + "_ind_obs.csv", index_col="wb")
 df_ind_obs.columns = df_ind_obs.columns.astype(int)
 df_VP = pd.read_csv("output\\" + j + "_VP.csv", index_col="wb")
@@ -190,12 +192,18 @@ DVFI_M = c.longitudinal(j, d, x, y, "Indeks", "Indekstype", "DVFI, MIB")
 DVFI1 = c.longitudinal(j, d, x, y, "Indeks", "Indekstype", "DVFI")
 # Create longitudinal df for stations in streams after 2020
 DVFI2 = c.longitudinal(j, c.data[j][0], "Målested X-UTM", "Målested Y-UTM)", "Indeks")
+# Read the linkage table
+locations = pd.read_csv("linkage\\" + c.linkage[j][1])
+
+DVFI2.describe()
+
 # Group by station and keep first non-null entry each year DVFI>MIB>felt
 long = (
     pd.concat([DVFI_F, DVFI_M, DVFI1, DVFI2])
     .groupby(["station"], as_index=False)
     .last()
 )
+DVFI2.tail(50)
 # Read the linkage table
 dfLinkage = pd.read_csv("linkage\\" + c.linkage[j])
 # Convert station-ID to integers

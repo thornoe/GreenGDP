@@ -24,7 +24,7 @@ Functions:  The class in this module contains 10 functions of which some are nes
                 - BT()
             Descriptions can be seen under each function.
 
-License:    MIT Copyright (c) 2020-2023
+License:    MIT Copyright (c) 2024
 Author:     Thor Donsby Noe
 """
 import os
@@ -103,7 +103,7 @@ class Water_Quality:
             # Dictionary for folders and their data and linkage files
             allFiles = {
                 "data": [a for b in list(self.data.values()) for a in b],
-                "linkage": [a for a in list(self.linkage.values())],
+                "linkage": [a for b in list(self.data.values()) for a in b],
                 "output": [],
             }
 

@@ -10,7 +10,7 @@ Rqmts:      ArcGIS Pro must be installed on the system and be up to date.
 Usage:      This script supports WaterbodiesScriptTool in the gis.tbx toolbox.
             See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
 
-License:    MIT Copyright (c) 2020-2024
+License:    MIT Copyright (c) 2024
 Author:     Thor Donsby Noe
 """
 ########################################################################################
@@ -51,15 +51,17 @@ year_last = 2020
 
 # Specify the names of data files for each category of water body and shared statistics
 data = {
+    "coastal": ["coastal_chlorophyll.xlsx"],
+    "lakes": ["lakes_chlorophyll.xlsx"],
     "streams": ["streams_DVFI.xlsx", "streams_1988-2020.xlsx"],
-    "shared": ["CPI_NPC.xlsx", "demographics.csv", "geographical.xlsx"],
+    "shared": ["CPI_NPV.xlsx", "demographics.csv", "geographical.xlsx"],
 }
 
-# Specify the names of the corresponding linkage files
+# Specify the names of the corresponding linkage files (and other supporting tables)
 linkage = {
-    "coastal": "coastal_stations_VP3.csv",
-    "lakes": "lakes_stations_VP3.csv",
-    "streams": "streams_stations_VP3.csv",
+    "coastal": ["coastal_stations_VP3.csv", "coastal_chlorophyll_limits.csv"],
+    "lakes": ["lakes_stations_VP3.csv", "lakes_stations_XY.csv"],
+    "streams": ["streams_stations_VP3.csv", "streams_stations_XY.csv"],
 }
 
 # WFS service URL for the current water body plan (VP2 is for 2015-2021)
