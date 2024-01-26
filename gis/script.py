@@ -99,7 +99,7 @@ shores_j = {}
 stats_j = {}
 
 # Loop over each category j ∈ {coastal, lakes, streams}
-for j in ["streams"]:
+for j in linkage.keys():
     # Get the feature class from the WFS service
     c.get_fc_from_WFS(j)
 
