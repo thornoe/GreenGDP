@@ -265,9 +265,7 @@ class Water_Quality:
 
                 # Group by station; keep last non-missing entry each year, DVFI>MIB>felt
                 long = (
-                    pd.concat([DVFI_F, DVFI_M, DVFI, DVFI2])
-                    .groupby("station", as_index=False)
-                    .last()
+                    pd.concat([DVFI_F, DVFI_M, DVFI, DVFI2]).groupby("station").last()
                 )
 
             else:
@@ -291,7 +289,10 @@ class Water_Quality:
             dfLinkage = pd.read_csv("linkage\\" + self.linkage[j][0])
 
             # Convert station ID to integers
-            dfLinkage["station"] = dfLinkage["station_id"].str.slice(7).astype(int)
+            dfLinkage = dfLinkage.copy()  #  to avoid SettingWithCopyWarning
+            dfLinkage.loc[:, "station"] = (
+                dfLinkage["station_id"].str.slice(7).astype(int)
+            )
 
             # Merge longitudinal DataFrame with linkage table for water bodies in VP3
             df = long.merge(dfLinkage[["station", "ov_id"]], how="left", on="station")
@@ -300,10 +301,11 @@ class Water_Quality:
             link = df.dropna(subset=["ov_id"])
 
             # Convert water body ID (wb) to integers
+            link = link.copy()  #  to avoid SettingWithCopyWarning
             if j == "lakes":
-                link["wb"] = link["ov_id"].str.slice(6).astype(int)
+                link.loc[:, "wb"] = link["ov_id"].str.slice(6).astype(int)
             else:
-                link["wb"] = link["ov_id"].str.slice(7).astype(int)
+                link.loc[:, "wb"] = link["ov_id"].str.slice(7).astype(int)
 
             # Stations not covered by the linkage table for VP3
             noLink = df[df["ov_id"].isna()].drop(columns=["ov_id"])
@@ -404,10 +406,11 @@ class Water_Quality:
             join = pd.DataFrame(stations, columns=fieldsJ)
 
             # Convert water body ID (wb) to integers
+            join = join.copy()  #  to avoid SettingWithCopyWarning
             if j == "lakes":
-                join["wb"] = join["ov_id"].str.slice(6).astype(int)
+                join.loc[:, "wb"] = join["ov_id"].str.slice(6).astype(int)
             else:
-                join["wb"] = join["ov_id"].str.slice(7).astype(int)
+                join.loc[:, "wb"] = join["ov_id"].str.slice(7).astype(int)
 
             if j == "streams":
                 # Capitalize water body names
@@ -464,10 +467,11 @@ class Water_Quality:
                 dfVP = dfVP[dfVP["ov_id"] != "DKCOAST205"]
 
             # Convert water body ID (wb) to integers
+            dfVP = dfVP.copy()  #  to avoid SettingWithCopyWarning
             if j == "lakes":
-                dfVP["wb"] = dfVP["ov_id"].str.slice(6).astype(int)
+                dfVP.loc[:, "wb"] = dfVP["ov_id"].str.slice(6).astype(int)
             else:
-                dfVP["wb"] = dfVP["ov_id"].str.slice(7).astype(int)
+                dfVP.loc[:, "wb"] = dfVP["ov_id"].str.slice(7).astype(int)
 
             # Sort by water body ID (wb, ascending)
             dfVP = dfVP.set_index("wb").sort_index()
@@ -558,7 +562,8 @@ class Water_Quality:
             # Rename the station ID column and make it the index of df
             df = df.set_index("ObservationsStedNr").rename_axis("station")
             # Create 'Year' column from the date column
-            df["year"] = df[d].astype(str).str.slice(0, 4).astype(int)
+            df = df.copy()  #  to avoid SettingWithCopyWarning
+            df.loc[:, "year"] = df[d].astype(str).str.slice(0, 4).astype(int)
             if parameterCol != 0:
                 # Subset the data to only contain the relevant parameter
                 df = df[df[parameterCol] == parameter]
@@ -937,7 +942,8 @@ class Water_Quality:
             dfCatch = pd.DataFrame(dataCatch, columns=fields)
 
             # Convert water body ID (wb) and coastal catchment area ID to integers
-            dfCatch["wb"] = dfCatch["ov_id"].str.slice(7).astype(int)
+            dfCatch = dfCatch.copy()  #  to avoid SettingWithCopyWarning
+            dfCatch.loc[:, "wb"] = dfCatch["ov_id"].str.slice(7).astype(int)
             dfCatch["v"] = dfCatch["op_id"]
 
             # Specify columns, water body ID as index, sort by coastal catchment area ID

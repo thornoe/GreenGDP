@@ -99,7 +99,7 @@ wfs_fc = {
     "streams": "vp3e2022_vandloeb_samlet",
 }
 
-# Specifications specific to streams
+# Specification specific to category
 j = "lakes"
 
 ########################################################################################
@@ -175,7 +175,8 @@ df = pd.read_excel("data\\" + f)
 # Rename the station ID column and make it the index of df
 df = df.set_index("ObservationsStedNr").rename_axis("station")
 # Create 'Year' column from the date column
-df["year"] = df[d].astype(str).str.slice(0, 4).astype(int)
+df = df.copy()  #  to avoid SettingWithCopyWarning
+df.loc[:, "year"] = df[d].astype(str).str.slice(0, 4).astype(int)
 if parameterCol != 0:
     # Subset the data to only contain the relevant parameter
     df = df[df[parameterCol] == parameter]
@@ -195,16 +196,11 @@ else:  # Lakes and coastal waters
     df[d] = pd.to_datetime(df[d].astype(str), format="%Y%m%d")  #  convert
     df = df[[x, y, d, "year", valueCol]]  #  subset to relevant columns
     df.columns = cols + ["date", "year", "ind"]  #  shorten column names
-    df.set_index("date", append=True, inplace=True)  #  add 'date' to index
-
+    df.set_index("date", append=True, inplace=True)  #  add 'date' to ind
 # Replace 0-values with missing in 'x' and 'y' columns
 df[["x", "y"]] = df[["x", "y"]].replace(0, np.nan)
-df.describe()
-df.groupby("year")["x"].apply(lambda x: x.isna().sum())
-
 # Set up a longitudinal df with every station and its last non-null entry
-long = df[cols].groupby(level="station").last()
-
+long = df[cols].groupby(level="station").last
 # For each year t, add a column with observations for the indicator
 for t in df["year"].unique():
     # Subset to year t
@@ -284,11 +280,7 @@ if j == "streams":
     stations.set_index("station", inplace=True)
     DVFI2[["x", "y"]] = DVFI2[["x", "y"]].combine_first(stations)
     # Group by station; keep last non-missing entry each year, DVFI>MIB>felt
-    long = (
-        pd.concat([DVFI_F, DVFI_M, DVFI, DVFI2])
-        .groupby("station", as_index=False)
-        .last()
-    )
+    long = pd.concat([DVFI_F, DVFI_M, DVFI, DVFI2]).groupby("station").last()
 else:
     # Create longitudinal df for stations in lakes and coastal waters
     long = c.longitudinal(
@@ -305,26 +297,27 @@ else:
         stations.columns = ["station", "x", "y"]
         stations.set_index("station", inplace=True)
         long[["x", "y"]] = long[["x", "y"]].combine_first(stations)
-long.describe()
 # Read the linkage table
 dfLinkage = pd.read_csv("linkage\\" + c.linkage[j][0])
-# Convert station-ID to integers
-dfLinkage["station"] = dfLinkage["station_id"].str.slice(7).astype(int)
+# Convert station ID to integers
+dfLinkage = dfLinkage.copy()  #  to avoid SettingWithCopyWarning
+dfLinkage.loc[:, "station"] = dfLinkage["station_id"].str.slice(7).astype(int)
 # Merge longitudinal DataFrame with linkage table for water bodies in VP3
 df = long.merge(dfLinkage[["station", "ov_id"]], how="left", on="station")
 # Stations covered by the linkage tabel for the third water body plan VP3
 link = df.dropna(subset=["ov_id"])
 # Convert water body ID (wb) to integers
+link = link.copy()  #  to avoid SettingWithCopyWarning
 if j == "lakes":
-    link["wb"] = link["ov_id"].str.slice(6).astype(int)
+    link.loc[:, "wb"] = link["ov_id"].str.slice(6).astype(int)
 else:
-    link["wb"] = link["ov_id"].str.slice(7).astype(int)
+    link.loc[:, "wb"] = link["ov_id"].str.slice(7).astype(int)
 # Stations not covered by the linkage table for VP3
 noLink = df[df["ov_id"].isna()].drop(columns=["ov_id"])
-# Create a spatial reference object with the same geographical coordinate system
+# Create a spatial reference object with same geographical coordinate system
 spatialRef = arcpy.SpatialReference("ETRS 1989 UTM Zone 32N")
 # Specify name of feature class for stations (points)
-fcStations = j + "_station"
+fcStations = j + "_stations"
 # Create new feature class shapefile (will overwrite if it already exists)
 arcpy.CreateFeatureclass_management(
     c.arcPath, fcStations, "POINT", spatial_reference=spatialRef
@@ -474,7 +467,7 @@ dataCatch = [row for row in arcpy.da.SearchCursor(jCatch, fields)]
 dfCatch = pd.DataFrame(dataCatch, columns=fields)
 
 # Convert water body ID (wb) and coastal catchment area ID to integers
-dfCatch["wb"] = dfCatch["ov_id"].str.slice(7).astype(int)
+dfCatch.loc[:, "wb"] = dfCatch["ov_id"].str.slice(7).astype(int)
 dfCatch["v"] = dfCatch["op_id"]
 
 # Specify columns, water body ID as index, sort by coastal catchment area ID (ascending)

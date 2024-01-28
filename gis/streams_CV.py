@@ -47,18 +47,18 @@ plt.rcParams["figure.figsize"] = [12, 6]  #  wide format (appendix with wide mar
 
 # Function for score
 def AccuracyScore(y_true, y_pred):
-    """Convert DVFI fauna index for streams to index of ecological status and return accuracy score, i.e., the share of observed streams each year where predicted ecological status matches the true ecological status (which LOO-CV omits)."""
+    """Convert DVFI fauna index for streams to categorical index of ecological status and return accuracy score, i.e., the share of observed streams each year where predicted ecological status matches the true ecological status (which LOO-CV omits from the dataset before applying imputation)."""
     eco_true, eco_pred = [], []  #  empy lists for storing transformed observations
     for a, b in zip([y_true, y_pred], [eco_true, eco_pred]):
         # Categorical variable for ecological status: Bad, Poor, Moderate, Good, High
         conditions = [
-            a < 1.5,
-            (a >= 1.5) & (a < 3.5),
-            (a >= 3.5) & (a < 4.5),
-            (a >= 4.5) & (a < 6.5),
-            a >= 6.5,
+            a < 1.5,  # Bad
+            (a >= 1.5) & (a < 3.5),  #  Poor
+            (a >= 3.5) & (a < 4.5),  #  Moderate
+            (a >= 4.5) & (a < 6.5),  #  Good
+            a >= 6.5,  #  High
         ]
-        b.append(np.select(conditions, [0, 1, 2, 3, 4], default=np.nan))
+        b.append(np.select(conditions, [0, 1, 2, 3, 4], default=np.nan))  #  add to list
     return accuracy_score(eco_true[0], eco_pred[0])
 
 
@@ -114,7 +114,7 @@ d.to_csv("output/streams_VP_stats.csv")
 ########################################################################################
 #   2. Multivariate feature imputation (note: LOO-CV takes ≤ 23 hours for each model)
 ########################################################################################
-# Iterative imputer using the BayesianRidge() estimator with increased tolerance
+# Iterative imputer using the default BayesianRidge() estimator with increased tolerance
 imputer = IterativeImputer(random_state=0, tol=1e-1)
 
 # Example data for testing LOO-CV below (takes ~3 seconds rather than ~3 days to run)
@@ -138,6 +138,8 @@ scores = pd.DataFrame(dfIndObs.count(), index=years, columns=["n"]).astype(int)
 
 # DataFrame for storing ecological status by year and calculating weighted average
 status = pd.DataFrame(dfIndObs.count(), index=dfIndObs.columns, columns=["n"])
+
+# Mean ecological status by year for the n observations that don'nt have missing values
 status["Obs"] = (dfIndObs < 4.5).sum() / status["n"]  #  ecological status < good
 status.loc["Total", "Obs"] = (status["Obs"] * status["n"]).sum() / status["n"].sum()
 
@@ -146,15 +148,14 @@ dfIndObs.name = "No dummies"  #  name model without any dummies
 dfTypology.name = "Typology"  #  name model with dummies for typology
 dfDistrict.name = "Typology & DK2"  #  name model with dummies for typology and district
 for df in (dfIndObs, dfTypology, dfDistrict):  #  LOO-CV using different dummies
-    # Estimate share with less than good ecological status
+    # Impute missing values based on all observations (without cross-validation)
     df_imp = pd.DataFrame(
         imputer.fit_transform(np.array(df)), index=df.index, columns=df.columns
     )
-
-    # Store predicted share with less than good ecological status
+    # From imputed data, store estimated share with less than good ecological status
     status[df.name] = (df_imp[dfIndObs.columns] < 4.5).sum() / len(df)
 
-    # loop over each year t
+    # For each year t, apply leave-one-out cross-validation
     print(df.name, "used for imputation. LOO-CV of observed streams each year:")
     for t in tqdm.tqdm(years):  #  time each model and report its progress in years
         y = df[df[t].notnull()].index  #  index for observed values at year t

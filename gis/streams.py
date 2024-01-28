@@ -99,7 +99,7 @@ wfs_fc = {
     "streams": "vp3e2022_vandloeb_samlet",
 }
 
-# Specifications specific to streams
+# Specification specific to category
 j = "streams"
 
 ########################################################################################
@@ -174,7 +174,8 @@ df = pd.read_excel("data\\" + f)
 # Rename the station ID column and make it the index of df
 df = df.set_index("ObservationsStedNr").rename_axis("station")
 # Create 'Year' column from the date column
-df["year"] = df[d].astype(str).str.slice(0, 4).astype(int)
+df = df.copy()  #  to avoid SettingWithCopyWarning
+df.loc[:, "year"] = df[d].astype(str).str.slice(0, 4).astype(int)
 if parameterCol != 0:
     # Subset the data to only contain the relevant parameter
     df = df[df[parameterCol] == parameter]
@@ -194,14 +195,11 @@ else:  # Lakes and coastal waters
     df[d] = pd.to_datetime(df[d].astype(str), format="%Y%m%d")  #  convert
     df = df[[x, y, d, "year", valueCol]]  #  subset to relevant columns
     df.columns = cols + ["date", "year", "ind"]  #  shorten column names
-    df.set_index("date", append=True, inplace=True)  #  add 'date' to index
-
+    df.set_index("date", append=True, inplace=True)  #  add 'date' to ind
 # Replace 0-values with missing in 'x' and 'y' columns
 df[["x", "y"]] = df[["x", "y"]].replace(0, np.nan)
-
 # Set up a longitudinal df with every station and its last non-null entry
-long = df[cols].groupby(level="station").last()
-
+long = df[cols].groupby(level="station").last
 # For each year t, add a column with observations for the indicator
 for t in df["year"].unique():
     # Subset to year t
@@ -252,87 +250,77 @@ for t in df["year"].unique():
 Assign monitoring stations to water bodies in water body plan via linkage table.
 For monitoring stations not included in the linkage table: Assign a station to a waterbody if the station's coordinates are located within said waterbody. For streams, if the station is within a radius of 15 meters of a stream where the name of the stream matches the location name attached to the monitoring station).
 Finally, construct the longitudinal DataFrame of observed biophysical indicator by year for all water bodies in the current water body plan. Separately, save the water body ID, typology, district ID, and shore length of each water body in VP3 using the feature classes collected via the get_fc_from_WFS() function."""
-radius = 50
-# Create longitudinal df for stations in streams by monitoring version
-kwargs = dict(
-    f=c.data[j][1],
-    d="Dato",
-    x="Xutm_Euref89_Zone32",
-    y="Yutm_Euref89_Zone32",
-    valueCol="Indeks",
-    parameterCol="Indekstype",
-)
-DVFI_F = c.longitudinal(j, parameter="Faunaklasse, felt", **kwargs)
-DVFI_M = c.longitudinal(j, parameter="DVFI, MIB", **kwargs)
-DVFI = c.longitudinal(j, parameter="DVFI", **kwargs)
-# Create df for observations after 2020 (after ODA database update Jan 2024)
-DVFI2 = c.longitudinal(
-    j,
-    f=c.data[j][0],
-    d="Dato",
-    x="Målested X-UTM",
-    y="Målested Y-UTM)",
-    valueCol="Indeks",
-)
-# Obtain some of the missing coordinates
-stations = pd.read_csv("linkage\\" + c.linkage[j][1]).astype(int)
-stations.columns = ["station", "x", "y"]
-stations.set_index("station", inplace=True)
-DVFI2[["x", "y"]] = DVFI2[["x", "y"]].combine_first(stations)
-# Group by station; keep last non-missing entry each year, DVFI>MIB>felt
-long = (
-    pd.concat([DVFI_F, DVFI_M, DVFI, DVFI2]).groupby("station", as_index=False).last()
-)
+radius = 15
+if j == "streams":
+    # Create longitudinal df for stations in streams by monitoring version
+    kwargs = dict(
+        f=c.data[j][1],
+        d="Dato",
+        x="Xutm_Euref89_Zone32",
+        y="Yutm_Euref89_Zone32",
+        valueCol="Indeks",
+        parameterCol="Indekstype",
+    )
+    DVFI_F = c.longitudinal(j, parameter="Faunaklasse, felt", **kwargs)
+    DVFI_M = c.longitudinal(j, parameter="DVFI, MIB", **kwargs)
+    DVFI = c.longitudinal(j, parameter="DVFI", **kwargs)
+    # Observations after 2020 (publiced after ODA database update Jan 2024)
+    DVFI2 = c.longitudinal(
+        j,
+        f=c.data[j][0],
+        d="Dato",
+        x="Målested X-UTM",
+        y="Målested Y-UTM)",
+        valueCol="Indeks",
+    )
+    # Obtain some of the missing coordinates
+    stations = pd.read_csv("linkage\\" + c.linkage[j][1]).astype(int)
+    stations.columns = ["station", "x", "y"]
+    stations.set_index("station", inplace=True)
+    DVFI2[["x", "y"]] = DVFI2[["x", "y"]].combine_first(stations)
+    # Group by station; keep last non-missing entry each year, DVFI>MIB>felt
+    long = pd.concat([DVFI_F, DVFI_M, DVFI, DVFI2]).groupby("station").last()
+else:
+    # Create longitudinal df for stations in lakes and coastal waters
+    long = c.longitudinal(
+        j,
+        f=c.data[j][0],
+        d="Startdato",
+        x="X_UTM32",
+        y="Y_UTM32",
+        valueCol="Resultat",
+    )
+    if j == "lakes":
+        # Obtain the few missing coordinates
+        stations = pd.read_csv("linkage\\" + c.linkage[j][1]).astype(int)
+        stations.columns = ["station", "x", "y"]
+        stations.set_index("station", inplace=True)
+        long[["x", "y"]] = long[["x", "y"]].combine_first(stations)
 # Read the linkage table
 dfLinkage = pd.read_csv("linkage\\" + c.linkage[j][0])
-# Convert station-ID to integers
-dfLinkage["station"] = dfLinkage["station_id"].str.slice(7).astype(int)
+# Convert station ID to integers
+dfLinkage = dfLinkage.copy()  #  to avoid SettingWithCopyWarning
+dfLinkage.loc[:, "station"] = dfLinkage["station_id"].str.slice(7).astype(int)
 # Merge longitudinal DataFrame with linkage table for water bodies in VP3
 df = long.merge(dfLinkage[["station", "ov_id"]], how="left", on="station")
 # Stations covered by the linkage tabel for the third water body plan VP3
 link = df.dropna(subset=["ov_id"])
 # Convert water body ID (wb) to integers
-link["wb"] = link["ov_id"].str.slice(7).astype(int)
+link = link.copy()  #  to avoid SettingWithCopyWarning
+if j == "lakes":
+    link.loc[:, "wb"] = link["ov_id"].str.slice(6).astype(int)
+else:
+    link.loc[:, "wb"] = link["ov_id"].str.slice(7).astype(int)
 # Stations not covered by the linkage table for VP3
 noLink = df[df["ov_id"].isna()].drop(columns=["ov_id"])
-# Create a spatial reference object with the same geographical coordinate system
+# Create a spatial reference object with same geographical coordinate system
 spatialRef = arcpy.SpatialReference("ETRS 1989 UTM Zone 32N")
 # Specify name of feature class for stations (points)
-fcStations = j + "_station"
+fcStations = j + "_stations"
 # Create new feature class shapefile (will overwrite if it already exists)
 arcpy.CreateFeatureclass_management(
     c.arcPath, fcStations, "POINT", spatial_reference=spatialRef
 )
-# Number of stations matched to water body by radius threshold
-for r in (0.5, 1, 2, 5, 10, 15, 20, 30, 50):
-    r
-    len(j[j.Distance <= r])
-    len(j[(j.Distance <= r) & j.match == True])
-    len(jClosest[jClosest.Distance <= r])
-
-len(link), len(noLink), len(jClosest), len(allMatches), len(waterbodies), len(allVP)
-
-# def observed_indicator(self, j):
-"""Based on the type of water body, set up a longitudinal DataFrame
-with the observed indicators for all water bodies."""
-# Create longitudinal df and use linkage table to assign stations to water bodies
-df = c.observed_indicator(j)
-df = c.stations_to_streams(j, fileName=c.data[j][0])
-
-# def indicator_to_status(self, j, df):
-"""Convert biophysical indicators to ecological status."""
-df = df_ind_obs
-# Convert DVFI fauna index for streams to index of ecological status
-for i in c.years:
-    # Categorical variable for ecological status: Bad, Poor, Moderate, Good, High
-    conditions = [
-        df[i] < 1.5,
-        (df[i] >= 1.5) & (df[i] < 3.5),
-        (df[i] >= 3.5) & (df[i] < 4.5),
-        (df[i] >= 4.5) & (df[i] < 6.5),
-        df[i] >= 6.5,
-    ]
-    df[i] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
 
 # def ecological_status(self, j, dfIndicator, dfVP, suffix):
 """Based on the type of water body, convert the longitudinal DataFrame to the EU index of ecological status, i.e., from 1-5 for Bad, Poor, Moderate, Good, and High water quality respectively.
@@ -477,8 +465,9 @@ dataCatch = [row for row in arcpy.da.SearchCursor(jCatch, fields)]
 dfCatch = pd.DataFrame(dataCatch, columns=fields)
 
 # Convert water body ID (wb) and coastal catchment area ID to integers
-dfCatch["wb"] = dfCatch["ov_id"].str.slice(7).astype(int)
-dfCatch["v"] = dfCatch["op_id"]
+dfCatch = dfCatch.copy()  #  to avoid SettingWithCopyWarning
+dfCatch.loc[:, "wb"] = dfCatch["ov_id"].str.slice(7).astype(int)
+dfCatch.loc[:, "v"] = dfCatch["op_id"]
 
 # Specify columns, water body ID as index, sort by coastal catchment area ID (ascending)
 dfCatch = dfCatch[["wb", "v"]].set_index("wb").sort_values(by="v")

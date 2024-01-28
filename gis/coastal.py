@@ -172,7 +172,7 @@ df = pd.read_excel("data\\" + f)
 # Rename the station ID column and make it the index of df
 df = df.set_index("ObservationsStedNr").rename_axis("station")
 # Create 'Year' column from the date column
-df["year"] = df[d].astype(str).str.slice(0, 4).astype(int)
+df.loc[:, "year"] = df[d].astype(str).str.slice(0, 4).astype(int)
 if parameterCol != 0:
     # Subset the data to only contain the relevant parameter
     df = df[df[parameterCol] == parameter]
@@ -303,16 +303,16 @@ else:
 # Read the linkage table
 dfLinkage = pd.read_csv("linkage\\" + c.linkage[j][0])
 # Convert station-ID to integers
-dfLinkage["station"] = dfLinkage["station_id"].str.slice(7).astype(int)
+dfLinkage.loc[:, "station"] = dfLinkage["station_id"].str.slice(7).astype(int)
 # Merge longitudinal DataFrame with linkage table for water bodies in VP3
 df = long.merge(dfLinkage[["station", "ov_id"]], how="left", on="station")
 # Stations covered by the linkage tabel for the third water body plan VP3
 link = df.dropna(subset=["ov_id"])
 # Convert water body ID (wb) to integers
 if j == "lakes":
-    link["wb"] = link["ov_id"].str.slice(6).astype(int)
+    link.loc[:, "wb"] = link["ov_id"].str.slice(6).astype(int)
 else:
-    link["wb"] = link["ov_id"].str.slice(7).astype(int)
+    link.loc[:, "wb"] = link["ov_id"].str.slice(7).astype(int)
 # Stations not covered by the linkage table for VP3
 noLink = df[df["ov_id"].isna()].drop(columns=["ov_id"])
 # Create a spatial reference object with the same geographical coordinate system
@@ -474,7 +474,7 @@ dataCatch = [row for row in arcpy.da.SearchCursor(jCatch, fields)]
 dfCatch = pd.DataFrame(dataCatch, columns=fields)
 
 # Convert water body ID (wb) and coastal catchment area ID to integers
-dfCatch["wb"] = dfCatch["ov_id"].str.slice(7).astype(int)
+dfCatch.loc[:, "wb"] = dfCatch["ov_id"].str.slice(7).astype(int)
 dfCatch["v"] = dfCatch["op_id"]
 
 # Specify columns, water body ID as index, sort by coastal catchment area ID (ascending)
