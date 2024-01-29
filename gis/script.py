@@ -175,13 +175,12 @@ f2 = (
 )
 f2.savefig("output\\all_cost_real.pdf", bbox_inches="tight")
 
-# Investment value of increase (decrease) in water quality
-IV = c.valuation(df_BT, real=False, investment=True)
-IV.to_csv("output\\all_investment.csv")  #  save to csv for chain linking
-
 ########################################################################################
 #   4.c Marginal willingness to pay (MWTP) for investments in water quality
 ########################################################################################
+# Investment value of increase (decrease) in water quality
+IV = c.valuation(df_BT, real=False, investment=True)
+IV.to_csv("output\\all_investment.csv")  #  save to csv for chain linking
 
 
 ########################################################################################

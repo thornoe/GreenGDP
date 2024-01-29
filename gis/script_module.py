@@ -657,6 +657,9 @@ class Water_Quality:
         """Impute ecological status for all water bodies from the observed indicator."""
         try:
             if j == "streams":
+                # Impute biophysical indicator, i.e., use the bottom fauna index directly
+                dfObs = dfIndObs.copy()
+
                 # Create dummies for typology
                 typ = pd.get_dummies(dfVP["ov_typ"]).astype(int)
                 typ["softBottom"] = typ["RW4"] + typ["RW5"]
@@ -672,6 +675,9 @@ class Water_Quality:
                 col = ["small", "medium", "large", "softBottom"]
 
             elif j == "lakes":
+                # Convert biophysical indicator to ecological status before imputing
+                dfObs = self.indicator_to_status(j, dfIndObs, dfVP)
+
                 # Convert typology to integers
                 typ = dfVP[["ov_typ"]].copy()
                 typ.loc[:, "type"] = typ["ov_typ"].str.slice(6).astype(int)
@@ -696,6 +702,9 @@ class Water_Quality:
                 col = ["alkalinity", "brown", "saline", "deep"]
 
             else:  #  coastal
+                # Convert biophysical indicator to ecological status before imputing
+                dfObs = self.indicator_to_status(j, dfIndObs, dfVP)
+
                 # Convert typology to integers
                 typ = dfVP[["ov_typ"]].copy()
                 typ.loc[:, "type"] = typ["ov_typ"].str.slice(6).astype(int)
@@ -710,20 +719,20 @@ class Water_Quality:
             dummies = typ[col].merge(district["DK2"], how="inner", on="wb")
 
             # Merge DataFrames for observed biophysical indicator and dummies
-            dfIndObsDum = dfIndObs.merge(dummies, how="inner", on="wb")
+            dfObsDum = dfObs.merge(dummies, how="inner", on="wb")
 
             # Iterative imputer using BayesianRidge() estimator with increased tolerance
             imputer = IterativeImputer(tol=1e-1, random_state=0)
 
             # Fit imputer, transform data iteratively, and limit to years of interest
-            dfIndImp = pd.DataFrame(
-                imputer.fit_transform(np.array(dfIndObsDum)),
-                index=dfIndObsDum.index,
-                columns=dfIndObsDum.columns,
+            dfImp = pd.DataFrame(
+                imputer.fit_transform(np.array(dfObsDum)),
+                index=dfObsDum.index,
+                columns=dfObsDum.columns,
             )[self.years]
 
             # Convert imputed biophysical indicator to ecological status
-            dfEcoImp, impStats = self.ecological_status(j, dfIndImp, dfVP, "imp", index)
+            dfEcoImp, impStats = self.ecological_status(j, dfImp, dfVP, "imp", index)
 
             return dfEcoImp, impStats
 
@@ -747,8 +756,29 @@ class Water_Quality:
 
         Print the shore length and share of water bodies observed at least once."""
         try:
-            # Convert index of indicators to index of ecological status
-            dfEco = self.indicator_to_status(j, dfIndicator, dfVP)
+            if suffix == "obs":
+                # Convert observed biophysical indicator to ecological status
+                dfEco = self.indicator_to_status(j, dfIndicator, dfVP)
+
+            elif j == "streams":
+                # Convert imputed biophysical indicator to ecological status for streams
+                dfEco = self.indicator_to_status(j, dfIndicator, dfVP)
+
+            else:  #  lakes and coastal waters
+                # Ecological status was imputed directly but at a continuous scale
+                dfEco = dfIndicator.copy()
+
+                # Convert predicted ecological status to its ordinal scale
+                for t in dfEco.columns:
+                    conditions = [
+                        dfEco[t] < 0.5,  # Bad
+                        (dfEco[t] >= 0.5) & (dfEco[t] < 1.5),  #  Poor
+                        (dfEco[t] >= 1.5) & (dfEco[t] < 2.5),  #  Moderate
+                        (dfEco[t] >= 2.5) & (dfEco[t] < 3.5),  #  Good
+                        dfEco[t] >= 3.5,  #  High
+                    ]
+                    # Ecological status as a categorical index from Bad to High quality
+                    dfEco[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
 
             # Create missing values graph (heatmap of missing observations by year):
             indexSorted = self.missing_values_graph(j, dfEco, suffix, index)
@@ -860,24 +890,26 @@ class Water_Quality:
     def indicator_to_status(self, j, dfIndicator, dfVP):
         """Convert biophysical indicators to ecological status."""
         try:
-            # Copy DataFrame for the biophysical indicator
-            df = dfIndicator.copy()
-
             if j == "streams":
+                # Copy DataFrame for the biophysical indicator
+                df = dfIndicator.copy()
+
                 # Convert DVFI fauna index for streams to index of ecological status
                 for t in df.columns:
-                    # Categorical variable for ecological status: Bad, Poor, Moderate, Good, High
+                    # Set conditions given the official guidelines for conversion
                     conditions = [
-                        df[t] < 1.5,
-                        (df[t] >= 1.5) & (df[t] < 3.5),
-                        (df[t] >= 3.5) & (df[t] < 4.5),
-                        (df[t] >= 4.5) & (df[t] < 6.5),
-                        df[t] >= 6.5,
+                        df[t] < 1.5,  # Bad
+                        (df[t] >= 1.5) & (df[t] < 3.5),  #  Poor
+                        (df[t] >= 3.5) & (df[t] < 4.5),  #  Moderate
+                        (df[t] >= 4.5) & (df[t] < 6.5),  #  Good
+                        df[t] >= 6.5,  #  High
                     ]
-                    # Ecological status: Bad, Poor, Moderate, Good, High
+                    # Ecological status as a categorical scale from Bad to High quality
                     df[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
 
-            else:  # j == "lakes":
+                return df
+
+            elif j == "lakes":
                 # Merge df for biophysical indicator with df for typology
                 df = dfIndicator.merge(dfVP[["ov_typ"]], how="inner", on="wb")
 
@@ -901,24 +933,24 @@ class Water_Quality:
                             }
                         )
 
-                # Save series of thresholds relative to High ecological status
+                # For df, add the series of thresholds relative to High ecological status
                 df[["bad", "poor", "moderate", "good"]] = df.apply(SetThreshold, axis=1)
 
-                # Convert mean chlorophyll concentrations to index of ecological status
-                for t in dfIndicator.columns:
-                    # Set conditions given the threshold for the typology of each lake
-                    conditions = [
-                        df[t] >= df["bad"],
-                        (df[t] < df["bad"]) & (df[t] >= df["poor"]),
-                        (df[t] < df["poor"]) & (df[t] >= df["moderate"]),
-                        (df[t] < df["moderate"]) & (df[t] >= df["good"]),
-                        df[t] < df["good"],
-                    ]
-                    # Categorical variable for ecological status: Bad, Poor, Moderate, Good, High
-                    df[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
+            # Convert mean chlorophyll concentrations to index of ecological status
+            for t in dfIndicator.columns:
+                # Set conditions given the threshold for the typology of each lake
+                conditions = [
+                    df[t] >= df["bad"],
+                    (df[t] < df["bad"]) & (df[t] >= df["poor"]),
+                    (df[t] < df["poor"]) & (df[t] >= df["moderate"]),
+                    (df[t] < df["moderate"]) & (df[t] >= df["good"]),
+                    df[t] < df["good"],
+                ]
+                # Ordinal scale of ecological status: Bad, Poor, Moderate, Good, High
+                df[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
 
-                # Drop columns with typology and limit values
-                df = df.drop(columns=["ov_typ", "bad", "poor", "moderate", "good"])
+            # Drop columns with typology and limit values
+            df = df.drop(columns=["ov_typ", "bad", "poor", "moderate", "good"])
 
             return df
 
@@ -946,19 +978,29 @@ class Water_Quality:
                 # Save index to reuse the order after imputing the missing values
                 index = df.index
 
+                # Specify heatmap to show missing values as gray
+                colors = ["grey", "red", "orange", "yellow", "green", "blue"]
+                uniqueValues = [-1, 0, 1, 2, 3, 4]
+                description = "Missing value (gray), Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
+
             else:
                 # Sort water bodies by number of missing values prior to imputation
                 df = frame.copy().reindex(index)
 
+                # Specify heatmap without missing values
+                colors = ["red", "orange", "yellow", "green", "blue"]
+                uniqueValues = [0, 1, 2, 3, 4]
+                description = "Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
+
             # Plot heatmap
             df.fillna(-1, inplace=True)
-            cm = sns.xkcd_palette(["grey", "red", "orange", "yellow", "green", "blue"])
+            cm = sns.xkcd_palette(colors)
             plt.figure(figsize=(12, 12))
             ax = sns.heatmap(
                 df,
                 cmap=cm,
                 cbar=False,
-                cbar_kws={"ticks": [-1, 0, 1, 2, 3, 4]},
+                cbar_kws={"ticks": uniqueValues},
             )
             ax.set(yticklabels=[])
             plt.ylabel(
@@ -967,12 +1009,7 @@ class Water_Quality:
             )
             plt.xlabel("")
             plt.title(
-                (
-                    "Ecological status of "
-                    + j
-                    + ":"
-                    + "\nMissing value (gray), Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
-                ),
+                ("Ecological status of " + j + "\n" + description),
                 fontsize=14,
             )
             plt.tight_layout()
@@ -1028,10 +1065,14 @@ class Water_Quality:
             # Specify columns, water body ID as index, sort by coastal catchment area ID
             dfCatch = dfCatch[["wb", "v"]].set_index("wb").sort_values(by="v")
 
+            # Assign unjoined water bodies to their relevant coastal catchment area
             if j == "streams":
-                # Assign unjoined water bodies to their relevant coastal catchment area
                 dfCatch.loc[3024, "v"] = "113"  #  assign Kruså to Inner Flensborg Fjord
                 dfCatch.loc[8504, "v"] = "233"  #  assign outlet from Kilen to Venø Bugt
+            elif j == "lakes":
+                dfCatch.loc[342, "v"] = "233"  #  assign Nørskov Vig to Venø Bugt
+                dfCatch.loc[11206, "v"] = "80"  #  assign Gamborg Nor to Gamborg Fjord
+                dfCatch.loc[11506, "v"] = "136"  #  Lille Langesø to Indre Randers Fjord
 
             # Merge df for imputed ecological status w. coastal catchment area and length
             dfEcoImpCatch = dfEcoImp.merge(dfCatch, how="inner", on="wb").astype(int)
@@ -1085,23 +1126,20 @@ class Water_Quality:
             Geo.index.name = "v"
             Geo = Geo.loc[j_present].sort_index()
 
-            # For each year t, create a DataFrame of variables needed for benefit transfer
-            frames_t = (
-                {}
-            )  # create empty dictionary to store a DataFrame for each year t
+            # For each year t, create a df of variables needed for benefit transfer
+            frames_t = {}  #  create empty dictionary to store a df for each year t
 
             # DataFrame for water quality truncated from above at Good ecological status
-            Q = dfEco.mask(dfEco == 4, 3)
+            Q = dfEco.copy()
+            Q[self.years] = Q[self.years].where(Q < 3, 3)
 
             # Create DataFrames with dummy for less than good ecological status
             SL = Q.copy()
-            SL[t_new] = SL[t_new].mask(SL[t_new] < 3, 1).mask(SL[t_new] == 3, 0)
+            SL[self.years] = SL[self.years].mask(SL < 3, 1).mask(SL >= 3, 0)
 
             for t in self.years:
-                df = (
-                    pd.DataFrame()
-                )  #  empty DataFrame for values by coastal catchment area
-                # \bar{Q}: mean ecological status of water bodies weighted by shore length
+                df = pd.DataFrame()  #  empty df for values by coastal catchment area
+                # Q is mean ecological status of water bodies weighted by shore length
                 Q[t] = Q[t] * Q["length"]  #  ecological status × shore length
                 df["Q"] = df["Q"] = Q[["v", t]].groupby("v").sum()[t] / shores_v
                 if t > 1989:

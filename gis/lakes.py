@@ -23,6 +23,7 @@ import os
 import arcpy
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 # To use the experimental imputation feature, we must explicitly ask for it:
 from matplotlib import pyplot as plt
@@ -130,19 +131,22 @@ c.get_fc_from_WFS(j)
 
 # Create a DataFrame with observed biophysical indicator by year
 # df_ind_obs, df_VP = c.observed_indicator(j)
-df_ind_obs = pd.read_csv("output\\" + j + "_ind_obs.csv", index_col="wb")
-df_ind_obs.columns = df_ind_obs.columns.astype(int)
-df_VP = pd.read_csv("output\\" + j + "_VP.csv", index_col="wb")
-df_ind_obs.describe()
+# df_ind_obs = pd.read_csv("output\\" + j + "_ind_obs.csv", index_col="wb")
+# df_ind_obs.columns = df_ind_obs.columns.astype(int)
+# df_VP = pd.read_csv("output\\" + j + "_VP.csv", index_col="wb")
+
 # Report ecological status based on observed biophysical indicator
-df_eco_obs, obs_stats, index_sorted = c.ecological_status(j, df_ind_obs, df_VP)
-df_eco_obs.describe()
+# df_eco_obs, obs_stats, index_sorted = c.ecological_status(j, df_ind_obs, df_VP)
+
 # if j == 'streams':
 #     # Create a map book with yearly maps of observed ecological status
 #     c.map_book(j, df_eco_obs)
 
 # Impute missing values for biophysical indicator and return ecological status
-df_eco_imp, stats_j[j] = c.impute_missing(j, df_ind_obs, df_VP, index_sorted)
+# df_eco_imp, stats_j[j] = c.impute_missing(j, df_ind_obs, df_VP, index_sorted)
+df_eco_imp = pd.read_csv("output\\" + j + "_ind_obs.csv", index_col="wb")
+df_eco_imp.columns = df_eco_imp.columns.astype(int)
+df_VP = pd.read_csv("output\\" + j + "_VP.csv", index_col="wb")
 
 # Set up df with variables by coastal catchment area for the Benefit Transfer equation
 frames_j[j], shores_j[j] = c.values_by_catchment_area(j, df_eco_imp, df_VP)
@@ -326,22 +330,23 @@ arcpy.CreateFeatureclass_management(
 # def indicator_to_status(self, j, dfIndicator, df_VP):
 """Convert biophysical indicators to ecological status."""
 dfIndicator, dfVP = df_ind_obs, df_VP
-# Copy DataFrame for the biophysical indicator
 if j == "streams":
+    # Copy DataFrame for the biophysical indicator
     df = dfIndicator.copy()
     # Convert DVFI fauna index for streams to index of ecological status
     for t in df.columns:
-        # Categorical variable for ecological status: Bad, Poor, Moderate, Good, High
+        # Set conditions given the official guidelines for conversion
         conditions = [
-            df[t] < 1.5,
-            (df[t] >= 1.5) & (df[t] < 3.5),
-            (df[t] >= 3.5) & (df[t] < 4.5),
-            (df[t] >= 4.5) & (df[t] < 6.5),
-            df[t] >= 6.5,
+            df[t] < 1.5,  # Bad
+            (df[t] >= 1.5) & (df[t] < 3.5),  #  Poor
+            (df[t] >= 3.5) & (df[t] < 4.5),  #  Moderate
+            (df[t] >= 4.5) & (df[t] < 6.5),  #  Good
+            df[t] >= 6.5,  #  High
         ]
+        # Ecological status as a categorical scale from Bad to High quality
         df[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
-
-else:  # j == "lakes":
+    return df
+elif j == "lakes":
     # Merge df for biophysical indicator with df for typology
     df = dfIndicator.merge(dfVP[["ov_typ"]], how="inner", on="wb")
 
@@ -365,24 +370,23 @@ else:  # j == "lakes":
                 }
             )
 
-    # Save series of thresholds relative to High ecological status
+    # For df, add the series of thresholds relative to High ecological status
     df[["bad", "poor", "moderate", "good"]] = df.apply(SetThreshold, axis=1)
+# Convert mean chlorophyll concentrations to index of ecological status
+for t in dfIndicator.columns:
+    # Set conditions given the threshold for the typology of each lake
+    conditions = [
+        df[t] >= df["bad"],
+        (df[t] < df["bad"]) & (df[t] >= df["poor"]),
+        (df[t] < df["poor"]) & (df[t] >= df["moderate"]),
+        (df[t] < df["moderate"]) & (df[t] >= df["good"]),
+        df[t] < df["good"],
+    ]
+    # Ordinal scale of ecological status: Bad, Poor, Moderate, Good, High
+    df[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
+# Drop columns with typology and limit values
+df = df.drop(columns=["ov_typ", "bad", "poor", "moderate", "good"])
 
-    # Convert mean chlorophyll concentrations to index of ecological status
-    for t in dfIndicator.columns:
-        # Set conditions given the threshold for the typology of each lake
-        conditions = [
-            df[t] >= df["bad"],
-            (df[t] < df["bad"]) & (df[t] >= df["poor"]),
-            (df[t] < df["poor"]) & (df[t] >= df["moderate"]),
-            (df[t] < df["moderate"]) & (df[t] >= df["good"]),
-            df[t] < df["good"],
-        ]
-        # Categorical variable for ecological status: Bad, Poor, Moderate, Good, High
-        df[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
-
-    # Drop columns with typology and limit values
-    df = df.drop(columns=["ov_typ", "bad", "poor", "moderate", "good"])
 
 # def ecological_status(self, j, dfIndicator, dfTyp, suffix="obs", index=None):
 """Call indicator_to_status() to convert the longitudinal DataFrame to the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality based on the category and typology of each water body.
@@ -390,8 +394,26 @@ Also call missing_values_graph() to map missing observations by year.
 Create a table of statistics and export it as an html table.
 Print the shore length and share of water bodies observed at least once."""
 dfIndicator, dfVP, suffix, index = df_ind_obs, df_VP, "obs", None
-# Convert index of indicators to index of ecological status
-dfEco = c.indicator_to_status(j, dfIndicator, dfVP)
+if suffix == "obs":
+    # Convert observed biophysical indicator to ecological status
+    dfEco = self.indicator_to_status(j, dfIndicator, dfVP)
+elif j == "streams":
+    # Convert imputed biophysical indicator to ecological status for streams
+    dfEco = self.indicator_to_status(j, dfIndicator, dfVP)
+else:  #  lakes and coastal waters
+    # Ecological status was imputed directly but at a continuous scale
+    dfEco = dfIndicator.copy()
+    # Convert predicted ecological status to its ordinal scale
+    for t in dfEco.columns:
+        conditions = [
+            dfEco[t] < 0.5,  # Bad
+            (dfEco[t] >= 0.5) & (dfEco[t] < 1.5),  #  Poor
+            (dfEco[t] >= 1.5) & (dfEco[t] < 2.5),  #  Moderate
+            (dfEco[t] >= 2.5) & (dfEco[t] < 3.5),  #  Good
+            dfEco[t] >= 3.5,  #  High
+        ]
+        # Ecological status as a categorical index from Bad to High quality
+        dfEco[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
 # Create missing values graph (heatmap of missing observations by year):
 indexSorted = c.missing_values_graph(j, dfEco, suffix, index)
 # Merge df for observed ecological status with df for characteristics
@@ -467,6 +489,7 @@ if suffix == "obs":
     # Save statistics as Markdown for online presentation
     stats.astype(int).to_html("output\\" + j + "_eco_obs_stats.md")
 
+
 # def impute_missing_values(self, dfIndicator, dfVP, index):
 """Impute ecological status for all water bodies from the observed indicator."""
 # DataFrames for observed biophysical indicator and typology
@@ -510,8 +533,60 @@ dfIndImp = pd.DataFrame(
 
 # Convert imputed biophysical indicator to ecological status
 dfEcoImp, impStats = c.ecological_status(j, dfIndImp, dfVP, "imp", index)
-dfIndImp.describe()
 dfEcoImp.describe()
+
+
+# def missing_values_graph(self, j, frame, suffix="obs", index=None):
+"""Heatmap visualizing observations of ecological status as either missing or using the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality respectively.
+Saves a figure of the heatmap."""
+frame, suffix, index = dfEcoImp, "imp", index_sorted
+if index is None:
+    # Sort water bodies by number of missing values across years of interest
+    df = frame.copy()
+    df["nan"] = df.shape[1] - df.count(axis=1)
+    df = df.sort_values(["nan"], ascending=False)[c.years]
+    # Save index to reuse the order after imputing the missing values
+    index = df.index
+    # Specify heatmap to show missing values as gray
+    colors = ["grey", "red", "orange", "yellow", "green", "blue"]
+    uniqueValues = [-1, 0, 1, 2, 3, 4]
+    description = "Missing value (gray), Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
+else:
+    # Sort water bodies by number of missing values prior to imputation
+    df = frame.copy().reindex(index)
+
+    # Specify heatmap without missing values
+    colors = ["red", "orange", "yellow", "green", "blue"]
+    uniqueValues = [0, 1, 2, 3, 4]
+    description = (
+        "Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
+    )
+# Plot heatmap
+df.fillna(-1, inplace=True)
+cm = sns.xkcd_palette(colors)
+plt.figure(figsize=(12, 12))
+ax = sns.heatmap(
+    df,
+    cmap=cm,
+    cbar=False,
+    cbar_kws={"ticks": uniqueValues},
+)
+ax.set(yticklabels=[])
+plt.ylabel(
+    str(len(df)) + " " + j + " ordered by number of missing values",
+    fontsize=14,
+)
+plt.xlabel("")
+plt.title(
+    ("Ecological status of " + j + "\n" + description),
+    fontsize=14,
+)
+plt.tight_layout()
+plt.savefig(
+    "output\\" + j + "_eco_" + suffix + ".pdf",
+    bbox_inches="tight",
+)
+
 
 # def values_by_catchment_area(self, j, dfEcoImp, dfVP):
 """Assign water bodies to coastal catchment areas and calculate the weighted arithmetic mean of ecological status after truncating from above at Good status.
@@ -548,14 +623,18 @@ dfCatch["v"] = dfCatch["op_id"]
 # Specify columns, water body ID as index, sort by coastal catchment area ID (ascending)
 dfCatch = dfCatch[["wb", "v"]].set_index("wb").sort_values(by="v")
 
+# Assign unjoined water bodies to their relevant coastal catchment area
 if j == "streams":
-    # Assign unjoined water bodies to their relevant coastal catchment area
     dfCatch.loc[3024, "v"] = "113"  #  assign Kruså to Inner Flensborg Fjord
     dfCatch.loc[8504, "v"] = "233"  #  assign outlet from Kilen to Venø Bugt
+elif j == "lakes":
+    dfCatch.loc[342, "v"] = "233"  #  assign Nørskov Vig to Venø Bugt
+    dfCatch.loc[11206, "v"] = "80"  #  assign Gamborg Nor to Gamborg Fjord
+    dfCatch.loc[11506, "v"] = "136"  #  Lille Langesø to Indre Randers Fjord
 
 # Merge df for imputed ecological status w. coastal catchment area and length
 dfEcoImpCatch = dfEcoImp.merge(dfCatch, how="inner", on="wb").astype(int)
-dfEco = dfEcoImpCatch.merge(dfVP[["length"]], how="inner", on="wb")
+dfEco = dfEcoImpCatch.merge(dfVP[["length"]], how="inner", on="wb")  #  length
 
 # List of coastal catchment areas where category j is present
 j_present = list(dfEco["v"].unique())
@@ -598,19 +677,20 @@ Geo = pd.read_excel("data\\" + c.data["shared"][2], index_col=0)
 Geo.index.name = "v"
 Geo = Geo.loc[j_present].sort_index()
 
-# For each year t, create a DataFrame of variables needed for benefit transfer
-frames_t = {}  # create empty dictionary to store a DataFrame for each year t
+# For each year t, create a df of variables needed for benefit transfer
+frames_t = {}  #  create empty dictionary to store a df for each year t
 
 # DataFrame for water quality truncated from above at Good ecological status
-Q = dfEco.mask(dfEco == 4, 3)
+Q = dfEco.copy()
+Q[c.years] = Q[c.years].where(Q < 3, 3)
 
 # Create DataFrames with dummy for less than good ecological status
 SL = Q.copy()
-SL[t_new] = SL[t_new].mask(SL[t_new] < 3, 1).mask(SL[t_new] == 3, 0)
+SL[c.years] = SL[c.years].mask(SL < 3, 1).mask(SL >= 3, 0)
 
 for t in c.years:
-    df = pd.DataFrame()  #  empty DataFrame for values by coastal catchment area
-    # \bar{Q}: mean ecological status of water bodies weighted by shore length
+    df = pd.DataFrame()  #  empty df for values by coastal catchment area
+    # Q is mean ecological status of water bodies weighted by shore length
     Q[t] = Q[t] * Q["length"]  #  ecological status × shore length
     df["Q"] = Q[["v", t]].groupby("v").sum()[t] / shores_v
     if t > 1989:

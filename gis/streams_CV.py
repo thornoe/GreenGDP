@@ -55,10 +55,9 @@ def AccuracyScore(y_true, y_pred):
             a < 1.5,  # Bad
             (a >= 1.5) & (a < 3.5),  #  Poor
             (a >= 3.5) & (a < 4.5),  #  Moderate
-            (a >= 4.5) & (a < 6.5),  #  Good
-            a >= 6.5,  #  High
+            a >= 4.5,  #  Good or High
         ]
-        b.append(np.select(conditions, [0, 1, 2, 3, 4], default=np.nan))  #  add to list
+        b.append(np.select(conditions, [0, 1, 2, 3], default=np.nan))  #  add to list
     return accuracy_score(eco_true[0], eco_pred[0])
 
 
@@ -115,23 +114,23 @@ d.to_csv("output/streams_VP_stats.csv")
 #   2. Multivariate feature imputation (note: LOO-CV takes ≤ 23 hours for each model)
 ########################################################################################
 # Iterative imputer using the default BayesianRidge() estimator with increased tolerance
-imputer = IterativeImputer(random_state=0, tol=1e-1)
+imputer = IterativeImputer(tol=1e-1, random_state=0)
 
 # Example data for testing LOO-CV below (takes ~3 seconds rather than ~3 days to run)
-dfIndObs = pd.DataFrame(
-    {
-        1988: [2.5, 3.0, 3.5, 4.0, np.nan],
-        1989: [2.6, 3.1, 3.6, np.nan, 4.6],
-        1990: [2.7, 3.2, np.nan, 4.2, 4.7],
-        1991: [2.8, np.nan, 3.8, 4.3, 4.8],
-        1992: [np.nan, 3.4, 3.9, 4.4, 4.9],
-    }
-)
-dfTypology = dfIndObs.copy()
-dfTypology["small"] = [1, 1, 0, 0, 0]
-dfDistrict = dfTypology.copy()
-dfDistrict["DK2"] = [1, 0, 1, 0, 0]
-years = list(range(1989, 1992 + 1))
+# dfIndObs = pd.DataFrame(
+#     {
+#         1988: [2.5, 3.0, 3.5, 4.0, np.nan],
+#         1989: [2.6, 3.1, 3.6, np.nan, 4.6],
+#         1990: [2.7, 3.2, np.nan, 4.2, 4.7],
+#         1991: [2.8, np.nan, 3.8, 4.3, 4.8],
+#         1992: [np.nan, 3.4, 3.9, 4.4, 4.9],
+#     }
+# )
+# dfTypology = dfIndObs.copy()
+# dfTypology["small"] = [1, 1, 0, 0, 0]
+# dfDistrict = dfTypology.copy()
+# dfDistrict["DK2"] = [1, 0, 1, 0, 0]
+# years = list(range(1989, 1992 + 1))
 
 # DataFrame for storing accuracy scores by year and calculating weighted average
 scores = pd.DataFrame(dfIndObs.count(), index=years, columns=["n"]).astype(int)
@@ -212,7 +211,7 @@ f2 = sta.plot(
 f2.savefig("output/streams_eco_imp_not good.pdf", bbox_inches="tight")
 
 # Bar plot share of streams with less than good ecological status
-f3 = sta.plot(
-    kind="bar", ylabel="Share of streams with less than good ecological status"
-).get_figure()
-f3.savefig("output/streams_eco_imp_not good_bar.pdf", bbox_inches="tight")
+# f3 = sta.plot(
+#     kind="bar", ylabel="Share of streams with less than good ecological status"
+# ).get_figure()
+# f3.savefig("output/streams_eco_imp_not good_bar.pdf", bbox_inches="tight")
