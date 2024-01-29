@@ -129,7 +129,7 @@ stats_j = {}
 c.get_fc_from_WFS(j)
 
 # Create a DataFrame with observed biophysical indicator by year
-df_ind_obs, df_VP = c.observed_indicator(j)
+# df_ind_obs, df_VP = c.observed_indicator(j)
 df_ind_obs = pd.read_csv("output\\" + j + "_ind_obs.csv", index_col="wb")
 df_ind_obs.columns = df_ind_obs.columns.astype(int)
 df_VP = pd.read_csv("output\\" + j + "_VP.csv", index_col="wb")
@@ -323,12 +323,12 @@ arcpy.CreateFeatureclass_management(
 )
 
 # def ecological_status(self, j, dfIndicator, dfVP, suffix):
-"""Based on the type of water body, convert the longitudinal DataFrame to the EU index of ecological status, i.e., from 1-5 for Bad, Poor, Moderate, Good, and High water quality respectively.
+"""Based on the type of water body, convert the longitudinal DataFrame to the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality respectively.
 Create a table of statistics and export it as an html table.
 Print the length and share of water bodies observed at least once."""
 dfIndicator, dfVP, suffix, index = df_ind_obs, df_VP, "obs", None
 # Convert index of indicators to index of ecological status
-dfEco = c.indicator_to_status(j, dfIndicator)
+dfEco = c.indicator_to_status(j, dfIndicator, dfVP)
 # Create missing values graph (heatmap of missing observations by year):
 indexSorted = c.missing_values_graph(j, dfEco, suffix, index)
 # Merge df for observed ecological status with df for characteristics
@@ -361,7 +361,7 @@ for t in c.years:
         100 * y["not good"].sum() / knownLength,
         100 * knownLength / totalLength,
     ]
-stats
+
 # For imputed ecological status, convert to integers and drop 'known' column
 if suffix != "obs":
     dfEco = dfEco.astype(int)
@@ -379,13 +379,13 @@ if suffix == "obs":
     )
     # Report length and share of water bodies observed at least once.
     msg = "{0} km is the total shore length of {1} included in VP3, of which {2}% of {1} representing {3} km ({4}% of total shore length of {1}) have been assessed at least once. On average, {5}% of {1} representing {6} km ({7}% of total shore length of {1}) are assessed each year.\n".format(
-        round(totalLength * 10 ** (-3)),
+        round(totalLength),
         j,
         round(100 * len(observed) / len(df)),
-        round(observed["length"].sum() * 10 ** (-3)),
+        round(observed["length"].sum()),
         round(100 * observed["length"].sum() / totalLength),
-        round(100 * np.mean(dfEco.count() / len(df))),
-        round(stats["known"].mean() / 100 * totalLength * 10 ** (-3)),
+        round(100 * np.mean(dfEco[c.years].count() / len(df))),
+        round(stats["known"].mean() / 100 * totalLength),
         round(stats["known"].mean()),
     )
     # print(msg)  # print statistics in Python
@@ -587,11 +587,11 @@ df_BT.to_csv("output\\all_eco_imp.csv")  #  save to csv
 df_BT = pd.read_csv("output\\all_eco_imp.csv", index_col=[0, 1, 2]).sort_index()
 
 # Costs of pollution in prices of current year, and preceding year respectively
-CWP = c.valuation(df_BT)
+CWP = c.valuation(df_BT, real=False)
 CWP.to_csv("output\\all_cost.csv")  #  save to csv for chain linking
 
 # Costs of pollution in real values (million DKK, 2018 prices)
-RWP_v = c.valuation(df_BT, real=True)
+RWP_v = c.valuation(df_BT)
 RWP = RWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
 RWP.rename_axis([None, None], axis=1).to_csv("output\\all_cost_real.csv")
 f2 = (
@@ -603,7 +603,7 @@ f2 = (
 f2.savefig("output\\all_cost_real.pdf", bbox_inches="tight")
 
 # Investment value of increase (decrease) in water quality
-IV = c.valuation(df_BT, investment=True)
+IV = c.valuation(df_BT, real=False, investment=True)
 IV.to_csv("output\\all_investment.csv")  #  save to csv for chain linking
 
 # def valuation(self, dfBT, real=False, investment=False):

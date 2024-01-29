@@ -99,7 +99,7 @@ shores_j = {}
 stats_j = {}
 
 # Loop over each category j ∈ {coastal, lakes, streams}
-for j in linkage.keys():
+for j in ["lakes", "streams"]:  # linkage.keys():
     # Get the feature class from the WFS service
     c.get_fc_from_WFS(j)
 
@@ -160,11 +160,11 @@ df_BT.index.names = ["j", "t", "v"]
 df_BT.to_csv("output\\all_eco_imp.csv")  #  save to csv
 
 # Costs of pollution in prices of current year, and preceding year respectively
-CWP = c.valuation(df_BT)
+CWP = c.valuation(df_BT, real=False)
 CWP.to_csv("output\\all_cost.csv")  #  save to csv for chain linking
 
 # Costs of pollution in real values (million DKK, 2018 prices)
-RWP_v = c.valuation(df_BT, real=True)
+RWP_v = c.valuation(df_BT)
 RWP = RWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
 RWP.rename_axis([None, None], axis=1).to_csv("output\\all_cost_real.csv")
 f2 = (
@@ -176,7 +176,7 @@ f2 = (
 f2.savefig("output\\all_cost_real.pdf", bbox_inches="tight")
 
 # Investment value of increase (decrease) in water quality
-IV = c.valuation(df_BT, investment=True)
+IV = c.valuation(df_BT, real=False, investment=True)
 IV.to_csv("output\\all_investment.csv")  #  save to csv for chain linking
 
 ########################################################################################

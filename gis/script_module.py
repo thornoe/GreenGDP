@@ -481,11 +481,11 @@ class Water_Quality:
                 # Shore length is counted on both sides of the stream; convert to km
                 dfVP[["length"]] = dfVP[["Shape_Length"]] * 2 / 1000
 
-            if j == "lakes":
+            elif j == "lakes":
                 # Shore length is the circumference, i.e. Shape_Length; convert to km
                 dfVP[["length"]] = dfVP[["Shape_Length"]] / 1000
 
-            else:  #  for coastal waters
+            else:  #  coastal waters
                 # Coastline by Zandersen et al.(2022) based on Corine Land Cover 2018
                 Geo = pd.read_excel("data\\" + self.data["shared"][2], index_col=0)
                 Geo.index.name = "wb"
@@ -658,9 +658,9 @@ class Water_Quality:
         try:
             if j == "streams":
                 # Create dummies for typology
-                typology = pd.get_dummies(dfVP["ov_typ"]).astype(int)
-                typology["softBottom"] = typology["RW4"] + typology["RW5"]
-                typology.columns = [
+                typ = pd.get_dummies(dfVP["ov_typ"]).astype(int)
+                typ["softBottom"] = typ["RW4"] + typ["RW5"]
+                typ.columns = [
                     "small",
                     "medium",
                     "large",
@@ -668,22 +668,52 @@ class Water_Quality:
                     "mediumSoftBottom",
                     "softBottom",
                 ]
-
-                # Create dummy for the district DK2 (Sealand, Lolland, Falster, and Møn)
-                district = pd.get_dummies(dfVP["distr_id"]).astype(int)
-
-                # Merge dummies for typology and water body district DK2
+                # List dummies for typology
                 col = ["small", "medium", "large", "softBottom"]
-                dummies = typology[col].merge(district["DK2"], how="inner", on="wb")
 
-                # Merge DataFrames for observed biophysical indicator and dummies
-                dfIndObsDum = dfIndObs.merge(dummies, how="inner", on="wb")
+            elif j == "lakes":
+                # Convert typology to integers
+                typ = dfVP[["ov_typ"]].copy()
+                typ.loc[:, "type"] = typ["ov_typ"].str.slice(6).astype(int)
 
-            else:
-                dfIndObsDum = dfIndObs.copy()
+                # Create dummies for high alkalinity, brown, saline, and deep lakes
+                cond1 = [(typ["type"] >= 9) & (typ["type"] <= 16), typ["type"] == 17]
+                typ["alkalinity"] = np.select(cond1, [1, np.nan], default=0)
+                cond2 = [
+                    typ["type"].isin([5, 6, 7, 8, 13, 14, 15, 16]),
+                    typ["type"] == 17,
+                ]
+                typ["brown"] = np.select(cond2, [1, np.nan], default=0)
+                cond3 = [
+                    typ["type"].isin([2, 3, 7, 8, 11, 12, 15, 16]),
+                    typ["type"] == 17,
+                ]
+                typ["saline"] = np.select(cond3, [1, np.nan], default=0)
+                cond4 = [typ["type"].isin(np.arange(2, 17, 2)), typ["type"] == 17]
+                typ["deep"] = np.select(cond4, [1, np.nan], default=0)
+
+                # List dummies for typology
+                col = ["alkalinity", "brown", "saline", "deep"]
+
+            else:  #  coastal
+                # Convert typology to integers
+                typ = dfVP[["ov_typ"]].copy()
+                typ.loc[:, "type"] = typ["ov_typ"].str.slice(6).astype(int)
+
+                # List dummies for typology
+                col = []
+
+            # Create dummy for the district DK2 (Sealand, Lolland, Falster, and Møn)
+            district = pd.get_dummies(dfVP["distr_id"]).astype(int)
+
+            # Merge dummies for typology and water body district DK2
+            dummies = typ[col].merge(district["DK2"], how="inner", on="wb")
+
+            # Merge DataFrames for observed biophysical indicator and dummies
+            dfIndObsDum = dfIndObs.merge(dummies, how="inner", on="wb")
 
             # Iterative imputer using BayesianRidge() estimator with increased tolerance
-            imputer = IterativeImputer(random_state=0, tol=1e-1)
+            imputer = IterativeImputer(tol=1e-1, random_state=0)
 
             # Fit imputer, transform data iteratively, and limit to years of interest
             dfIndImp = pd.DataFrame(
@@ -709,14 +739,16 @@ class Water_Quality:
             sys.exit(1)
 
     def ecological_status(self, j, dfIndicator, dfVP, suffix="obs", index=None):
-        """Based on the type of water body, convert the longitudinal DataFrame to the EU index of ecological status, i.e. from 1-5 for Bad, Poor, Moderate, Good, and High water quality respectively.
+        """Call indicator_to_status() to convert the longitudinal DataFrame to the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality based on the category and typology of each water body.
+
+        Also call missing_values_graph() to map missing observations by year.
 
         Create a table of statistics and export it as an html table.
 
-        Print the length and share of water bodies observed at least once."""
+        Print the shore length and share of water bodies observed at least once."""
         try:
             # Convert index of indicators to index of ecological status
-            dfEco = self.indicator_to_status(j, dfIndicator)
+            dfEco = self.indicator_to_status(j, dfIndicator, dfVP)
 
             # Create missing values graph (heatmap of missing observations by year):
             indexSorted = self.missing_values_graph(j, dfEco, suffix, index)
@@ -784,13 +816,13 @@ class Water_Quality:
 
                 # Report length and share of water bodies observed at least once.
                 msg = "{0} km is the total shore length of {1} included in VP3, of which {2}% of {1} representing {3} km ({4}% of total shore length of {1}) have been assessed at least once. On average, {5}% of {1} representing {6} km ({7}% of total shore length of {1}) are assessed each year.\n".format(
-                    round(totalLength * 10 ** (-3)),
+                    round(totalLength),
                     j,
                     round(100 * len(observed) / len(df)),
-                    round(observed["length"].sum() * 10 ** (-3)),
+                    round(observed["length"].sum()),
                     round(100 * observed["length"].sum() / totalLength),
-                    round(100 * np.mean(dfEco.count() / len(df))),
-                    round(stats["known"].mean() / 100 * totalLength * 10 ** (-3)),
+                    round(100 * np.mean(dfEco[self.years].count() / len(df))),
+                    round(stats["known"].mean() / 100 * totalLength),
                     round(stats["known"].mean()),
                 )
                 # print(msg)  # print statistics in Python
@@ -825,7 +857,7 @@ class Water_Quality:
             arcpy.AddError(msg)  # return error message in ArcGIS
             sys.exit(1)
 
-    def indicator_to_status(self, j, dfIndicator):
+    def indicator_to_status(self, j, dfIndicator, dfVP):
         """Convert biophysical indicators to ecological status."""
         try:
             # Copy DataFrame for the biophysical indicator
@@ -842,7 +874,51 @@ class Water_Quality:
                         (df[t] >= 4.5) & (df[t] < 6.5),
                         df[t] >= 6.5,
                     ]
+                    # Ecological status: Bad, Poor, Moderate, Good, High
                     df[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
+
+            else:  # j == "lakes":
+                # Merge df for biophysical indicator with df for typology
+                df = dfIndicator.merge(dfVP[["ov_typ"]], how="inner", on="wb")
+
+                def SetThreshold(row):
+                    if row["ov_typ"] in ["LWTYPE9", "LWTYPE11", "LWTYPE13", "LWTYPE15"]:
+                        return pd.Series(
+                            {
+                                "bad": 90,
+                                "poor": 56,
+                                "moderate": 25,
+                                "good": 11.7,
+                            }
+                        )
+                    else:
+                        return pd.Series(
+                            {
+                                "bad": 56,
+                                "poor": 27,
+                                "moderate": 12,
+                                "good": 7,
+                            }
+                        )
+
+                # Save series of thresholds relative to High ecological status
+                df[["bad", "poor", "moderate", "good"]] = df.apply(SetThreshold, axis=1)
+
+                # Convert mean chlorophyll concentrations to index of ecological status
+                for t in dfIndicator.columns:
+                    # Set conditions given the threshold for the typology of each lake
+                    conditions = [
+                        df[t] >= df["bad"],
+                        (df[t] < df["bad"]) & (df[t] >= df["poor"]),
+                        (df[t] < df["poor"]) & (df[t] >= df["moderate"]),
+                        (df[t] < df["moderate"]) & (df[t] >= df["good"]),
+                        df[t] < df["good"],
+                    ]
+                    # Categorical variable for ecological status: Bad, Poor, Moderate, Good, High
+                    df[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
+
+                # Drop columns with typology and limit values
+                df = df.drop(columns=["ov_typ", "bad", "poor", "moderate", "good"])
 
             return df
 
@@ -858,7 +934,7 @@ class Water_Quality:
             sys.exit(1)
 
     def missing_values_graph(self, j, frame, suffix="obs", index=None):
-        """Heatmap visualizing observations of ecological status as either missing or using the EU index of ecological status, i.e., from 1-5 for Bad, Poor, Moderate, Good, and High water quality respectively.
+        """Heatmap visualizing observations of ecological status as either missing or using the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality respectively.
         Saves a figure of the heatmap."""
         try:
             if index is None:
@@ -943,7 +1019,10 @@ class Water_Quality:
 
             # Convert water body ID (wb) and coastal catchment area ID to integers
             dfCatch = dfCatch.copy()  #  to avoid SettingWithCopyWarning
-            dfCatch.loc[:, "wb"] = dfCatch["ov_id"].str.slice(7).astype(int)
+            if j == "lakes":
+                dfCatch.loc[:, "wb"] = dfCatch["ov_id"].str.slice(6).astype(int)
+            else:
+                dfCatch.loc[:, "wb"] = dfCatch["ov_id"].str.slice(7).astype(int)
             dfCatch["v"] = dfCatch["op_id"]
 
             # Specify columns, water body ID as index, sort by coastal catchment area ID
@@ -1058,7 +1137,7 @@ class Water_Quality:
             arcpy.AddError(msg)  # return error message in ArcGIS
             sys.exit(1)
 
-    def valuation(self, dfBT, real=False, investment=False):
+    def valuation(self, dfBT, real=True, investment=False):
         """Valuation of water quality as either current costs or investment value (IV).
         If not set to return real values (2018 prices), instead returns values in the prices of both the current year and the preceding year (for chain linking).
         """
