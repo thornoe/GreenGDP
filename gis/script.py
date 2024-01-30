@@ -141,7 +141,7 @@ shores.to_csv("output\\all_VP_shore length.csv")  #  save to csv
 
 # Set up DataFrame of statistics for each category j ∈ {coastal, lakes, streams}
 stats = pd.DataFrame(stats_j)
-stats.to_csv("output\\all_eco_imp_not good.csv")  #  save to csv
+stats.to_csv("output\\all_eco_imp_LessThanGood.csv")  #  save to csv
 
 # Plot water bodies by category (mean ecological status weighted by length)
 f1 = (
@@ -149,7 +149,7 @@ f1 = (
     .plot(ylabel="Share of category with less than good ecological status")
     .get_figure()
 )
-f1.savefig("output\\all_eco_imp_not good.pdf", bbox_inches="tight")
+f1.savefig("output\\all_eco_imp_LessThanGood.pdf", bbox_inches="tight")
 
 ########################################################################################
 #   4.b Marginal willingness to pay (MWTP) for improvement of water quality to "Good"
@@ -159,18 +159,18 @@ df_BT = pd.concat(frames_j)
 df_BT.index.names = ["j", "t", "v"]
 df_BT.to_csv("output\\all_eco_imp.csv")  #  save to csv
 
-# Costs of pollution in prices of current year, and preceding year respectively
-CWP = c.valuation(df_BT, real=False)
-CWP.to_csv("output\\all_cost.csv")  #  save to csv for chain linking
+# Nominal cost of pollution in prices of current year, and preceding year respectively
+CWPn = c.valuation(df_BT, real=False)
+CWPn.to_csv("output\\all_cost.csv")  #  save to csv for chain linking
 
-# Costs of pollution in real values (million DKK, 2018 prices)
-RWP_v = c.valuation(df_BT)
-RWP = RWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
-RWP.rename_axis([None, None], axis=1).to_csv("output\\all_cost_real.csv")
+# Costs of pollution in real terms (million DKK, 2018 prices)
+CWP_v = c.valuation(df_BT)
+CWP = CWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
+CWP.rename_axis([None, None], axis=1).to_csv("output\\all_cost_real.csv")
 f2 = (
-    RWP.loc[:, "RWP"]
+    CWP.loc[:, "CWP"]
     .rename_axis(None, axis=1)
-    .plot(ylabel="Costs of current water pollution (million DKK, 2018 prices)")
+    .plot(ylabel="Cost of current water pollution (million DKK, 2018 prices)")
     .get_figure()
 )
 f2.savefig("output\\all_cost_real.pdf", bbox_inches="tight")
@@ -178,9 +178,24 @@ f2.savefig("output\\all_cost_real.pdf", bbox_inches="tight")
 ########################################################################################
 #   4.c Marginal willingness to pay (MWTP) for investments in water quality
 ########################################################################################
-# Investment value of increase (decrease) in water quality
-IV = c.valuation(df_BT, real=False, investment=True)
-IV.to_csv("output\\all_investment.csv")  #  save to csv for chain linking
+# Nominal Investment value of increase (decrease) in water quality
+IVn = c.valuation(df_BT, real=False, investment=True)
+IVn.to_csv("output\\all_investment.csv")  #  save to csv for chain linking
+
+# Investment value in real terms (million DKK, 2018 prices)
+IV_v = c.valuation(df_BT, investment=True)
+IV = IV_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
+IV.rename_axis([None, None], axis=1).to_csv("output\\all_investment_real.csv")
+f2 = (
+    IV.loc[:, "IV"]
+    .rename_axis(None, axis=1)
+    .plot(
+        kind="bar",
+        ylabel="Investment in water quality improvement (million DKK, 2018 prices)",
+    )
+    .get_figure()
+)
+f2.savefig("output\\all_investment_real.pdf", bbox_inches="tight")
 
 
 ########################################################################################

@@ -567,7 +567,7 @@ shores.to_csv("output\\all_VP_shore length.csv")  #  save to csv
 
 # Set up DataFrame of statistics for each category j ∈ {coastal, lakes, streams}
 stats = pd.DataFrame(stats_j)
-stats.to_csv("output\\all_eco_imp_not good.csv")  #  save to csv
+stats.to_csv("output\\all_eco_imp_LessThanGood.csv")  #  save to csv
 
 # Plot water bodies by category (mean ecological status weighted by length)
 f1 = (
@@ -575,7 +575,7 @@ f1 = (
     .plot(ylabel="Share of category with less than good ecological status")
     .get_figure()
 )
-f1.savefig("output\\all_eco_imp_not good.pdf", bbox_inches="tight")
+f1.savefig("output\\all_eco_imp_LessThanGood.pdf", bbox_inches="tight")
 
 ########################################################################################
 #   4.b Marginal willingness to pay (MWTP) for improvement of water quality to "Good"

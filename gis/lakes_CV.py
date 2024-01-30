@@ -47,7 +47,7 @@ plt.rcParams["figure.figsize"] = [12, 6]  #  wide format (appendix with wide mar
 
 # Function for score
 def AccuracyScore(y_true, y_pred):
-    """Convert continuous prediction of ecological status to categorical index and return accuracy score, i.e., the share of observed lakes each year where predicted ecological status matches the true ecological status (which LOO-CV omits)."""
+    """Convert continuous prediction of ecological status to categorical index and return accuracy score, i.e., the share of observed lakes each year where predicted ecological status matches the true ecological status (which LOO-CV omits from the dataset before applying imputation)."""
     eco_true, eco_pred = [], []  #  empy lists for storing transformed observations
     for a, b in zip([y_true, y_pred], [eco_true, eco_pred]):
         # Demarcation for categorical ecological status: Bad, Poor, Moderate, Good, High
@@ -116,10 +116,10 @@ d.to_csv("output/lakes_VP_stats.csv")
 
 
 ########################################################################################
-#   2. Multivariate feature imputation (note: LOO-CV takes ≤ 23 hours for each model)
+#   2. Multivariate feature imputation (note: LOO-CV takes ≤ 1 hour for each model)
 ########################################################################################
 # Iterative imputer using the BayesianRidge() estimator with increased tolerance
-imputer = IterativeImputer(tol=1e-1, random_state=0)
+imputer = IterativeImputer(tol=1e-1, max_iter=50, random_state=0)
 
 # Example data for testing LOO-CV below (takes ~3 seconds rather than ~3 days to run)
 # dfEcoObs = pd.DataFrame(
@@ -184,6 +184,10 @@ for df in (dfEcoObs, dfTypology, dfDistrict):  #  LOO-CV using different dummies
     for s in (scores, status):
         s.loc["Total", df.name] = (s[df.name] * s["n"]).sum() / s["n"].sum()
 
+    # Save accuracy scores and share with less than good ecological status to CSV
+    scores.to_csv("output/lakes_eco_imp_accuracy_" + df.name + ".csv")
+    status.to_csv("output/lakes_eco_imp_LessThanGood.csv")
+
 # Total observations used for LOO-CV
 for s in (scores, status):
     s.loc["Total", "n"] = s["n"].sum()
@@ -192,15 +196,15 @@ status
 
 # Save accuracy scores and share with less than good ecological status to CSV
 scores.to_csv("output/lakes_eco_imp_accuracy.csv")
-status.to_csv("output/lakes_eco_imp_not good.csv")
+status.to_csv("output/lakes_eco_imp_LessThanGood.csv")
 
 ########################################################################################
 #   3. Visualization: Accuracy and share with less than good ecological status by year
 ########################################################################################
 # Read accuracy scores and share with less than good ecological status from CSV
-scores = pd.read_csv("output/lakes_eco_imp_accuracy.csv", index_col=0)
+# scores = pd.read_csv("output/lakes_eco_imp_accuracy.csv", index_col=0)
 sco = scores.drop(columns="n").drop("Total")
-status = pd.read_csv("output/lakes_eco_imp_not good.csv", index_col=0)
+# status = pd.read_csv("output/lakes_eco_imp_LessThanGood.csv", index_col=0)
 sta = status[["No dummies", "Typology", "Typology & DK2", "Obs"]].drop("Total")
 sta.columns = ["No dummies", "Typology", "Typology & DK2", "Observed"]  #  rename 'Obs'
 
@@ -214,10 +218,10 @@ f1.savefig("output/lakes_eco_imp_accuracy.pdf", bbox_inches="tight")
 f2 = sta.plot(
     ylabel="Share of lakes with less than good ecological status"
 ).get_figure()
-f2.savefig("output/lakes_eco_imp_not good.pdf", bbox_inches="tight")
+f2.savefig("output/lakes_eco_imp_LessThanGood.pdf", bbox_inches="tight")
 
 # Bar plot share of lakes with less than good ecological status
 # f3 = sta.plot(
 #     kind="bar", ylabel="Share of lakes with less than good ecological status"
 # ).get_figure()
-# f3.savefig("output/lakes_eco_imp_not good_bar.pdf", bbox_inches="tight")
+# f3.savefig("output/lakes_eco_imp_LessThanGood_bar.pdf", bbox_inches="tight")

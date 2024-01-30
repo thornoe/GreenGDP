@@ -186,7 +186,7 @@ for s in (scores, status):
 
 # Save accuracy scores and share with less than good ecological status to CSV
 scores.to_csv("output/streams_eco_imp_accuracy.csv")
-status.to_csv("output/streams_eco_imp_not good.csv")
+status.to_csv("output/streams_eco_imp_LessThanGood.csv")
 
 ########################################################################################
 #   3. Visualization: Accuracy and share with less than good ecological status by year
@@ -194,7 +194,7 @@ status.to_csv("output/streams_eco_imp_not good.csv")
 # Read accuracy scores and share with less than good ecological status from CSV
 scores = pd.read_csv("output/streams_eco_imp_accuracy.csv", index_col=0)
 sco = scores.drop(columns="n").drop("Total")
-status = pd.read_csv("output/streams_eco_imp_not good.csv", index_col=0)
+status = pd.read_csv("output/streams_eco_imp_LessThanGood.csv", index_col=0)
 sta = status[["No dummies", "Typology", "Typology & DK2", "Obs"]].drop("Total")
 sta.columns = ["No dummies", "Typology", "Typology & DK2", "Observed"]  #  rename 'Obs'
 
@@ -208,10 +208,10 @@ f1.savefig("output/streams_eco_imp_accuracy.pdf", bbox_inches="tight")
 f2 = sta.plot(
     ylabel="Share of streams with less than good ecological status"
 ).get_figure()
-f2.savefig("output/streams_eco_imp_not good.pdf", bbox_inches="tight")
+f2.savefig("output/streams_eco_imp_LessThanGood.pdf", bbox_inches="tight")
 
 # Bar plot share of streams with less than good ecological status
 # f3 = sta.plot(
 #     kind="bar", ylabel="Share of streams with less than good ecological status"
 # ).get_figure()
-# f3.savefig("output/streams_eco_imp_not good_bar.pdf", bbox_inches="tight")
+# f3.savefig("output/streams_eco_imp_LessThanGood_bar.pdf", bbox_inches="tight")

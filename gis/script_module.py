@@ -1226,33 +1226,32 @@ class Water_Quality:
             df2["MWTP"] = df2["unityMWTP"] * df2["factor"] * df2["nonzero"]
 
             # Aggregate real MWTP per hh over households in coastal catchment area
-            df2["RWP"] = df2["MWTP"] * df2["N"] / 1e06  #  million DKK (2018 prices)
+            df2["CWP"] = df2["MWTP"] * df2["N"] / 1e06  #  million DKK (2018 prices)
 
             if investment is True:
                 # Apply net present value (NPV) factor
-                df2["RWP"] = df2["RWP"] * df2["NPV"]
+                df2["CWP"] = df2["CWP"] * df2["NPV"]
 
                 # Switch MWTP to negative if actual change is negative
                 cond = [df2["neg"] == 1]
-                df2["RWP"] = np.select(cond, [-df2["RWP"]], default=df2["RWP"])
+                df2["CWP"] = np.select(cond, [-df2["CWP"]], default=df2["CWP"])
 
                 if real is True:
-                    df2["IV"] = df2["RWP"]
-                    return df2[["IV"]]
+                    df2["IV"] = df2["CWP"]  #  rename CWP to IV
+                    return df2[["IV"]]  #  return complete dataset
 
-            if real is True:
-                # Return complete dataset
-                return df2[["RWP"]]
+            if real is True:  #  Real cost of water pollution (million DKK, 2018 prices)
+                return df2[["CWP"]]  #  return complete dataset
 
             # Aggregate nominal MWTP per hh over households in coastal catchment area
-            df2["CWP"] = df2["RWP"] * df2["CPI"] / CPI.loc[2018, "CPI"]  #  million DKK
+            df2["CWPn"] = df2["CWP"] * df2["CPI"] / CPI.loc[2018, "CPI"]  #  million DKK
 
             # CWP in the prices of the preceding year (for year-by-year chain linking)
-            df2["D"] = df2["CWP"] * df2["CPI t-1"] / df2["CPI"]  #  million DKK
+            df2["D"] = df2["CWPn"] * df2["CPI t-1"] / df2["CPI"]  #  million DKK
 
             # Aggregate over coastal catchment areas
             grouped = (
-                df2[["CWP", "D"]]
+                df2[["CWPn", "D"]]
                 .groupby(["j", "t"])
                 .sum()
                 .unstack(level=0)
@@ -1260,9 +1259,8 @@ class Water_Quality:
                 .rename_axis([None, None], axis=1)
             )
 
-            if investment is True:
-                # Rename CWP to IV
-                grouped.columns = grouped.columns.set_levels(["IV", "D"], level=0)
+            if investment is True:  #  rename CWP nominal to IV nominal
+                grouped.columns = grouped.columns.set_levels(["IVn", "D"], level=0)
 
             return grouped
 
@@ -1291,8 +1289,8 @@ class Water_Quality:
                 - 0.005 * df["SL"]
                 - 0.378 * df["D lake"]
             )
-            # Real MWTP per household (DKK, 2018 prices) using variances from meta study
-            MWTP = np.exp(lnMWTP + (0.136 + 0.098) / 2)
+            # Real MWTP per household (DKK, 2018 prices) using the meta study variance
+            MWTP = np.exp(lnMWTP + (0.136 + 0.098) / 2)  #  variance components
             return MWTP
 
         except:
