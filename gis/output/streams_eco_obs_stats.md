@@ -15,7 +15,7 @@
     <tr>
       <th>1989</th>
       <td>2</td>
-      <td>35</td>
+      <td>36</td>
       <td>46</td>
       <td>12</td>
       <td>2</td>
@@ -39,7 +39,7 @@
       <td>42</td>
       <td>13</td>
       <td>2</td>
-      <td>59</td>
+      <td>58</td>
       <td>9</td>
     </tr>
     <tr>
@@ -190,13 +190,13 @@
       <td>6</td>
       <td>0</td>
       <td>46</td>
-      <td>31</td>
+      <td>30</td>
     </tr>
     <tr>
       <th>2007</th>
       <td>9</td>
       <td>41</td>
-      <td>41</td>
+      <td>40</td>
       <td>8</td>
       <td>0</td>
       <td>49</td>
@@ -249,7 +249,7 @@
       <td>33</td>
       <td>7</td>
       <td>0</td>
-      <td>41</td>
+      <td>42</td>
       <td>28</td>
     </tr>
     <tr>
@@ -300,7 +300,7 @@
       <td>6</td>
       <td>0</td>
       <td>37</td>
-      <td>29</td>
+      <td>28</td>
     </tr>
     <tr>
       <th>2018</th>

@@ -1,5 +1,5 @@
 """
-Name:       imputation.py
+Name:       lakes_CV.py
 
 Label:      Impute missing values in longitudinal data on ecological status of lakes.
 
@@ -70,10 +70,36 @@ os.chdir(r"C:\Users\au687527\GitHub\GreenGDP\gis")
 # Limit LOO-CV to loop over years used directly for the natural capital account
 years = list(range(1989, 2020 + 1))
 
-# Read DataFrames for observed biophysical indicator and typology
+# Read DataFrames for observed ecological status and typology
 dfEcoObs = pd.read_csv("output/lakes_eco_obs.csv", index_col="wb")
 dfEcoObs.columns = dfEcoObs.columns.astype(int)
 dfVP = pd.read_csv("output\\lakes_VP.csv", index_col="wb")
+
+# Include ecological status as assessed in basis analysis for VP3
+basis = dfVP[["til_oko_fy"]].copy()  #  phytoplankton measured as chlorophyll
+
+# Define a dictionary to map the Danish strings to an ordinal scale
+status_dict = {
+    "Dårlig økologisk tilstand": 0,
+    "Ringe økologisk tilstand": 1,
+    "Moderat økologisk tilstand": 2,
+    "God økologisk tilstand": 3,
+    "Høj økologisk tilstand": 4,
+    "Dårligt økologisk potentiale": 0,
+    "Ringe økologisk potentiale": 1,
+    "Moderat økologisk potentiale": 2,
+    "Godt økologisk potentiale": 3,
+    "Maksimalt økologisk potentiale": 4,
+    "Ukendt": np.nan,
+}
+
+# Replace the Danish strings in the DataFrame with the corresponding ordinal values
+basis.replace(status_dict, inplace=True)
+basis.columns = ["basis"]
+basis["basis"].unique()
+
+# Merge DataFrames for ecological status (observed and basis analysis for VP3)
+dfObs = dfEcoObs.merge(basis, on="wb")
 
 # Convert typology to integers
 typ = dfVP[["ov_typ"]].copy()
@@ -90,28 +116,26 @@ cond4 = [typ["type"].isin(np.arange(2, 17, 2)), typ["type"] == 17]
 typ["deep"] = np.select(cond4, [1, np.nan], default=0)
 
 # List dummies for typology
-col = ["alkalinity", "brown", "saline", "deep"]
+cols = ["alkalinity", "brown", "saline", "deep"]
 
-# Merge DataFrames for typology and observed biophysical indicator
-dfTypology = dfEcoObs.merge(typ[col], how="inner", on="wb")
+# Merge DataFrames for typology and observed ecological status
+dfTypology = dfObs.merge(typ[cols], on="wb")
 
 # Create dummies for water body districts
 distr = pd.get_dummies(dfVP["distr_id"]).astype(int)
 
 # Extend dfTypology with dummy for district DK2 (Sealand, Lolland, Falster, and Møn)
-dfDistrict = dfTypology.merge(distr["DK2"], how="inner", on="wb")
-col.append("DK2")
+dfDistrict = dfTypology.merge(distr["DK2"], on="wb")
+cols.append("DK2")
 
 # DataFrame for storing number of observed lakes and yearly distribution by dummies
 d = pd.DataFrame(dfEcoObs.count(), index=dfEcoObs.columns, columns=["n"]).astype(int)
 
 # Yearly distribution of observed lakes by typology and district
-for c in col:
+for c in cols:
     d[c] = 100 * dfDistrict[dfDistrict[c] == 1].count() / dfDistrict.count()
-    d.loc["All VP3 lakes", c] = (
-        100 * len(dfDistrict[dfDistrict[c] == 1]) / len(dfDistrict)
-    )
-d.loc["All VP3 lakes", "n"] = len(dfDistrict)
+    d.loc["All VP3", c] = 100 * len(dfDistrict[dfDistrict[c] == 1]) / len(dfDistrict)
+d.loc["All VP3", "n"] = len(dfDistrict)
 d.to_csv("output/lakes_VP_stats.csv")
 
 
@@ -122,7 +146,7 @@ d.to_csv("output/lakes_VP_stats.csv")
 imputer = IterativeImputer(tol=1e-1, max_iter=50, random_state=0)
 
 # Example data for testing LOO-CV below (takes ~3 seconds rather than ~3 days to run)
-# dfEcoObs = pd.DataFrame(
+# dfEco = pd.DataFrame(
 #     {
 #         1988: [0.5, 1.0, 1.5, 2.0, np.nan],
 #         1989: [0.6, 1.1, 1.6, np.nan, 2.6],
@@ -131,7 +155,7 @@ imputer = IterativeImputer(tol=1e-1, max_iter=50, random_state=0)
 #         1992: [np.nan, 1.4, 1.9, 2.4, 2.9],
 #     }
 # )
-# dfTypology = dfEcoObs.copy()
+# dfTypology = dfEco.copy()
 # dfTypology["brown"] = [1, 1, 0, 0, 0]
 # dfDistrict = dfTypology.copy()
 # dfDistrict["DK2"] = [1, 0, 1, 0, 0]
@@ -146,10 +170,10 @@ status["Obs"] = (dfEcoObs < 2.5).sum() / status["n"]  #  ecological status < goo
 status.loc["Total", "Obs"] = (status["Obs"] * status["n"]).sum() / status["n"].sum()
 
 # Leave-one-out cross-validation (LOO-CV) loop over every observed stream and year
-dfEcoObs.name = "No dummies"  #  name model without any dummies
+dfObs.name = "No dummies"  #  name model without any dummies
 dfTypology.name = "Typology"  #  name model with dummies for typology
 dfDistrict.name = "Typology & DK2"  #  name model with dummies for typology and district
-for df in (dfEcoObs, dfTypology, dfDistrict):  #  LOO-CV using different dummies
+for df in (dfObs, dfTypology, dfDistrict):  #  LOO-CV using different dummies
     # Estimate share with less than good ecological status
     df_imp = pd.DataFrame(
         imputer.fit_transform(np.array(df)), index=df.index, columns=df.columns
@@ -174,7 +198,7 @@ for df in (dfEcoObs, dfTypology, dfDistrict):  #  LOO-CV using different dummies
             )
             Y.loc[i, "pred"] = X_imp.loc[i, t]  #  store predicted value
 
-        # Accuracy of ecological status after converting DVFI fauna index for lakes
+        # Accuracy of predicted ecological status
         accuracy = AccuracyScore(Y["true"], Y["pred"])
 
         # Save accuracy score each year to DataFrame for scores
@@ -187,6 +211,10 @@ for df in (dfEcoObs, dfTypology, dfDistrict):  #  LOO-CV using different dummies
     # Save accuracy scores and share with less than good ecological status to CSV
     scores.to_csv("output/lakes_eco_imp_accuracy_" + df.name + ".csv")
     status.to_csv("output/lakes_eco_imp_LessThanGood.csv")
+
+# Change in accuracy or predicted status due to dummy (difference from "No dummies")
+scores.loc["Change", :] = scores.loc["Total", :] - scores.loc["Total", "No dummies"]
+scores.loc["Change", :] * 100  #  report in percentage points
 
 # Total observations used for LOO-CV
 for s in (scores, status):

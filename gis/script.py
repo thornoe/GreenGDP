@@ -61,7 +61,7 @@ data = {
 linkage = {
     "coastal": ["coastal_stations_VP3.csv", "coastal_chlorophyll_limits.csv"],
     "lakes": ["lakes_stations_VP3.csv", "lakes_stations_XY.csv"],
-    "streams": ["streams_stations_VP3.csv", "streams_stations_XY.csv"],
+    "streams": ["streams_stations_VP3.csv"],
 }
 
 # WFS service URL for the current water body plan (VP2 is for 2015-2021)
@@ -74,6 +74,17 @@ wfs_fc = {
     "lakes": "vp3e2022_soe_samlet",
     "streams": "vp3e2022_vandloeb_samlet",
 }
+
+# For the WFS, specify the names of relevant fields for each type of water body
+wfs_fields = {
+    "catch": ["op_id", "op_navn"],
+    "coastal": ["distr_id", "ov_id", "ov_navn", "ov_typ", "til_oko_fy"],
+    "lakes": ["distr_id", "ov_id", "ov_navn", "ov_typ", "til_oko_fy"],
+    "streams": ["distr_id", "ov_id", "ov_navn", "ov_typ", "til_oko_bb", "na_kun_stm"],
+}
+
+# Specification specific to category
+j = "coastal"
 
 ########################################################################################
 #   3. Import module and run the functions
@@ -89,6 +100,7 @@ c = script_module.Water_Quality(
     linkage,
     wfs_service,
     wfs_fc,
+    wfs_fields,
     wfs_replace,
     keep_gdb,
 )
@@ -99,7 +111,7 @@ shores_j = {}
 stats_j = {}
 
 # Loop over each category j ∈ {coastal, lakes, streams}
-for j in ["lakes", "streams"]:  # linkage.keys():
+for j in ("coastal", "lakes", "streams"):
     # Get the feature class from the WFS service
     c.get_fc_from_WFS(j)
 

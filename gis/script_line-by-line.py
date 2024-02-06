@@ -1,14 +1,14 @@
 """
-Name:       lakes.py
+Name:       script_line-by-line.py
 
-Label:      Construct and map longitudinal data of ecological status of lakes.
+Label:      Construct and map longitudinal data of ecological status of water bodies.
 
 Summary:    ThorNoe.GitHub.io/GreenGDP explains the overall approach and methodology.
 
 Rqmts:      ArcGIS Pro must be installed on the system and be up to date.
 
 Usage:      This sandbox is line-by-line implementation of the script supporting 
-            WaterbodiesScriptTool in the gis.tbx toolbox, however, for lakes only.
+            WaterbodiesScriptTool in the gis.tbx toolbox.
             See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
 
 License:    MIT Copyright (c) 2024
@@ -47,7 +47,7 @@ ColorCycle = {
 # Set the default color map and figure size for pyplots
 plt.rcParams["axes.prop_cycle"] = plt.cycler("color", list(ColorCycle.values()))
 plt.rcParams["figure.figsize"] = [10, 6.18]  #  golden ratio (paper with narrow margins)
-
+a
 ########################################################################################
 #   1. Setup
 ########################################################################################
@@ -100,8 +100,18 @@ wfs_fc = {
     "streams": "vp3e2022_vandloeb_samlet",
 }
 
-# Specification specific to category
-j = "lakes"
+# For the WFS, specify the names of relevant fields for each type of water body
+wfs_fields = {
+    "catch": ["op_id", "op_navn"],
+    "coastal": ["distr_id", "ov_id", "ov_navn", "ov_typ", "til_oko_fy"],
+    "lakes": ["distr_id", "ov_id", "ov_navn", "ov_typ", "til_oko_fy"],
+    "streams": ["distr_id", "ov_id", "ov_navn", "ov_typ", "til_oko_bb", "na_kun_stm"],
+}
+
+# Specify a single category
+j = "coastal"
+# j = "lakes"
+# j = "streams"
 
 ########################################################################################
 #   3. Import module and run the functions
@@ -117,6 +127,7 @@ c = script_module.Water_Quality(
     linkage,
     wfs_service,
     wfs_fc,
+    wfs_fields,
     wfs_replace,
     keep_gdb,
 )
@@ -131,22 +142,21 @@ c.get_fc_from_WFS(j)
 
 # Create a DataFrame with observed biophysical indicator by year
 # df_ind_obs, df_VP = c.observed_indicator(j)
-# df_ind_obs = pd.read_csv("output\\" + j + "_ind_obs.csv", index_col="wb")
-# df_ind_obs.columns = df_ind_obs.columns.astype(int)
-# df_VP = pd.read_csv("output\\" + j + "_VP.csv", index_col="wb")
+df_ind_obs = pd.read_csv("output\\" + j + "_ind_obs.csv", index_col="wb")
+df_ind_obs.columns = df_ind_obs.columns.astype(int)
+df_VP = pd.read_csv("output\\" + j + "_VP.csv", index_col="wb")
 
 # Report ecological status based on observed biophysical indicator
-# df_eco_obs, obs_stats, index_sorted = c.ecological_status(j, df_ind_obs, df_VP)
+df_eco_obs, obs_stats, index_sorted = c.ecological_status(j, df_ind_obs, df_VP)
 
 # if j == 'streams':
 #     # Create a map book with yearly maps of observed ecological status
 #     c.map_book(j, df_eco_obs)
 
 # Impute missing values for biophysical indicator and return ecological status
-# df_eco_imp, stats_j[j] = c.impute_missing(j, df_ind_obs, df_VP, index_sorted)
+df_eco_imp, stats_j[j] = c.impute_missing(j, df_ind_obs, df_VP, index_sorted)
 df_eco_imp = pd.read_csv("output\\" + j + "_ind_obs.csv", index_col="wb")
 df_eco_imp.columns = df_eco_imp.columns.astype(int)
-df_VP = pd.read_csv("output\\" + j + "_VP.csv", index_col="wb")
 
 # Set up df with variables by coastal catchment area for the Benefit Transfer equation
 frames_j[j], shores_j[j] = c.values_by_catchment_area(j, df_eco_imp, df_VP)
@@ -157,11 +167,15 @@ frames_j[j], shores_j[j] = c.values_by_catchment_area(j, df_eco_imp, df_VP)
 ########################################################################################
 arcpy.ListFeatureClasses()
 for fc in arcpy.ListFeatureClasses():
+    fc
+    for field in arcpy.ListFields(fc):
+        field.name, field.type, field.length
+for fc in arcpy.ListFeatureClasses():
     arcpy.Delete_management(fc)
 arcpy.Exists(fcStations)
-for field in arcpy.ListFields(fcStations):
+for field in arcpy.ListFields(j):
     field.name, field.type, field.length
-arcpy.Delete_management(fcStations)
+arcpy.Delete_management(j)
 
 # def longitudinal(self, j, f, d, x, y, valueCol, parameterCol=0, parameter=0):
 """Set up a longitudinal DataFrame for all stations in category j by year t.
@@ -174,7 +188,7 @@ y = "Y_UTM32"
 valueCol = "Resultat"
 parameterCol = 0
 parameter = 0
-# Read the data for biophysical indicator (source: https://ODAforalle.au.dk)
+# Read the data for biophysical indicator (source: ODAforalle.au.dk)
 df = pd.read_excel("data\\" + f)
 # Rename the station ID column and make it the index of df
 df = df.set_index("ObservationsStedNr").rename_axis("station")
@@ -204,7 +218,7 @@ else:  #  Lakes and coastal waters
 # Replace 0-values with missing in 'x' and 'y' columns
 df[["x", "y"]] = df[["x", "y"]].replace(0, np.nan)
 # Set up a longitudinal df with every station and its last non-null entry
-long = df[cols].groupby(level="station").last
+long = df[cols].groupby(level="station").last()
 # For each year t, add a column with observations for the indicator
 for t in df["year"].unique():
     # Subset to year t
@@ -326,10 +340,26 @@ fcStations = j + "_stations"
 arcpy.CreateFeatureclass_management(
     c.arcPath, fcStations, "POINT", spatial_reference=spatialRef
 )
+# (...)
+# Specify shore length for each category j
+if j == "streams":
+    # Shore length is counted on both sides of the stream; convert to km
+    dfVP[["length"]] = dfVP[["Shape_Length"]] * 2 / 1000
+elif j == "lakes":
+    # Shore length is the circumference, i.e. Shape_Length; convert to km
+    dfVP[["length"]] = dfVP[["Shape_Length"]] / 1000
+else:  #  coastal waters
+    # Coastline by Zandersen et al.(2022) based on Corine Land Cover 2018
+    Geo = pd.read_excel("data\\" + c.data["shared"][2], index_col=0)
+    Geo.index.name = "wb"
+    # Merge with df for all water bodies in VP3
+    dfVP[["length"]] = Geo[["shore coastal"]]
+
 
 # def indicator_to_status(self, j, dfIndicator, df_VP):
 """Convert biophysical indicators to ecological status."""
 dfIndicator, dfVP = df_ind_obs, df_VP
+cols = ["bad", "poor", "moderate", "good"]
 if j == "streams":
     # Copy DataFrame for the biophysical indicator
     df = dfIndicator.copy()
@@ -345,10 +375,10 @@ if j == "streams":
         ]
         # Ecological status as a categorical scale from Bad to High quality
         df[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
-    return df
+    # return df
 elif j == "lakes":
     # Merge df for biophysical indicator with df for typology
-    df = dfIndicator.merge(dfVP[["ov_typ"]], how="inner", on="wb")
+    df = dfIndicator.merge(dfVP[["ov_typ"]], on="wb")
 
     def SetThreshold(row):
         if row["ov_typ"] in ["LWTYPE9", "LWTYPE11", "LWTYPE13", "LWTYPE15"]:
@@ -371,7 +401,16 @@ elif j == "lakes":
             )
 
     # For df, add the series of thresholds relative to High ecological status
-    df[["bad", "poor", "moderate", "good"]] = df.apply(SetThreshold, axis=1)
+    df[cols] = df.apply(SetThreshold, axis=1)
+    df = df.drop(columns=["ov_typ"])  #  drop typology column
+
+else:  #  coastal waters
+    # Read table of thresholds of chlorophyll for each coastal water body
+    thresholds = pd.read_csv("linkage\\" + c.linkage[j][1], index_col=0).astype(int)
+
+    # Merge df for biophysical indicator with df for thresholds
+    df = dfIndicator.merge(thresholds[cols], on="wb")
+
 # Convert mean chlorophyll concentrations to index of ecological status
 for t in dfIndicator.columns:
     # Set conditions given the threshold for the typology of each lake
@@ -384,8 +423,9 @@ for t in dfIndicator.columns:
     ]
     # Ordinal scale of ecological status: Bad, Poor, Moderate, Good, High
     df[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
-# Drop columns with typology and limit values
-df = df.drop(columns=["ov_typ", "bad", "poor", "moderate", "good"])
+
+# Drop columns with thresholds
+df = df.drop(columns=cols)
 
 
 # def ecological_status(self, j, dfIndicator, dfTyp, suffix="obs", index=None):
@@ -396,10 +436,10 @@ Print the shore length and share of water bodies observed at least once."""
 dfIndicator, dfVP, suffix, index = df_ind_obs, df_VP, "obs", None
 if suffix == "obs":
     # Convert observed biophysical indicator to ecological status
-    dfEco = self.indicator_to_status(j, dfIndicator, dfVP)
+    dfEco = c.indicator_to_status(j, dfIndicator, dfVP)
 elif j == "streams":
     # Convert imputed biophysical indicator to ecological status for streams
-    dfEco = self.indicator_to_status(j, dfIndicator, dfVP)
+    dfEco = c.indicator_to_status(j, dfIndicator, dfVP)
 else:  #  lakes and coastal waters
     # Ecological status was imputed directly but at a continuous scale
     dfEco = dfIndicator.copy()
@@ -417,7 +457,7 @@ else:  #  lakes and coastal waters
 # Create missing values graph (heatmap of missing observations by year):
 indexSorted = c.missing_values_graph(j, dfEco, suffix, index)
 # Merge df for observed ecological status with df for characteristics
-df = dfEco.merge(dfVP[["length"]], how="inner", on="wb")
+df = dfEco.merge(dfVP[["length"]], on="wb")
 # Calculate total length of all water bodies in current water body plan (VP2)
 totalLength = df["length"].sum()
 # Create an empty df for statistics
@@ -495,46 +535,112 @@ if suffix == "obs":
 # DataFrames for observed biophysical indicator and typology
 dfIndObs, dfVP, stats_j, index = df_ind_obs, df_VP, {}, index_sorted
 
-# Convert typology to integers
+# Specify the biophysical indicator for the current category
+if j == "streams":
+    indicator = "til_oko_bb"  #  bottom fauna measured as DVFI index
+else:  #  lakes and coastal waters
+    indicator = "til_oko_fy"  #  phytoplankton measured as chlorophyll
+
+# Include ecological status as assessed in basis analysis for VP3
+basis = dfVP[[indicator]].copy()
+# Define a dictionary to map the Danish strings to an ordinal scale
+status_dict = {
+    "Dårlig økologisk tilstand": 0,
+    "Ringe økologisk tilstand": 1,
+    "Moderat økologisk tilstand": 2,
+    "God økologisk tilstand": 3,
+    "Høj økologisk tilstand": 4,
+    "Dårligt økologisk potentiale": 0,
+    "Ringe økologisk potentiale": 1,
+    "Moderat økologisk potentiale": 2,
+    "Godt økologisk potentiale": 3,
+    "Maksimalt økologisk potentiale": 4,
+    "Ukendt": np.nan,
+}
+# Replace Danish strings in the df with the corresponding ordinal values
+basis.replace(status_dict, inplace=True)
+basis.columns = ["basis"]
+
+# Convert biophysical indicator to ecological status before imputing
+dfObs = c.indicator_to_status(j, dfIndObs, dfVP).merge(basis, on="wb")
+
+# Get typology
 typ = dfVP[["ov_typ"]].copy()
-typ.loc[:, "type"] = typ["ov_typ"].str.slice(6).astype(int)
 
-# Create dummies for high alkalinity, brown, saline, and deep lakes
-cond1 = [(typ["type"] >= 9) & (typ["type"] <= 16), typ["type"] == 17]
-typ["alkalinity"] = np.select(cond1, [1, np.nan], default=0)
-cond2 = [typ["type"].isin([5, 6, 7, 8, 13, 14, 15, 16]), typ["type"] == 17]
-typ["brown"] = np.select(cond2, [1, np.nan], default=0)
-cond3 = [typ["type"].isin([2, 3, 7, 8, 11, 12, 15, 16]), typ["type"] == 17]
-typ["saline"] = np.select(cond3, [1, np.nan], default=0)
-cond4 = [typ["type"].isin(np.arange(2, 17, 2)), typ["type"] == 17]
-typ["deep"] = np.select(cond4, [1, np.nan], default=0)
+# Define the dictionaries
+dict1 = {
+    "Nordsø": "No",
+    "Kattegat": "K",
+    "Bælthav": "B",
+    "Østersøen": "Ø",
+    "Fjord": "Fj",
+    "Vesterhavsfjord": "Vf",
+}
+dict2 = {
+    "water exchange": "Vu",
+    "freshwater inflow": "F",
+    "water depth": "D",
+    "stratification": "L",
+    "sediment": "Se",
+    "salinity": "Sa",
+    "tide": "T",
+}
 
-# List dummies for typology
-col = ["alkalinity", "brown", "saline", "deep"]
+# Reverse the dictionaries so the abbreviations are the keys
+dict1 = {v: k for k, v in dict1.items()}
+dict2 = {v: k for k, v in dict2.items()}
 
-# Create dummy for the district DK2 (Sealand, Lolland, Falster, and Møn)
-district = pd.get_dummies(dfVP["distr_id"]).astype(int)
+# Combine the dictionaries
+dicts = {**dict1, **dict2}
 
-# Merge dummies for typology and water body district DK2
-dummies = typ[col].merge(district["DK2"], how="inner", on="wb")
 
-# Merge DataFrames for observed biophysical indicator and dummies
-dfIndObsDum = dfIndObs.merge(dummies, how="inner", on="wb")
+# Define a function to process each string
+def process_string(s):
+    # Drop the hyphen and everything following it
+    s = s.split("-")[0]
+
+    # Create a dictionary with the relevant abbreviations as keys and 1s as values
+    dummies = {}
+
+    # Check for abbreviations from dict1 first
+    for abbr in dict1:
+        if abbr in s:
+            dummies[abbr] = 1
+            s = s.replace(abbr, "")  # Remove the matched abbreviation from the string
+
+    # Then check for abbreviations from dict2
+    for abbr in dict2:
+        if abbr in s:
+            dummies[abbr] = 1
+
+    return dummies
+
+
+# Apply the function to typ["ov_typ"] to create a new DataFrame with the dummy variables
+dummies = typ["ov_typ"].apply(process_string).apply(pd.Series)
+
+# Replace NaN values with 0
+dummies = dummies.fillna(0).astype(int)
+
+# Dummies for typology that improves prediction accuracy (omit fjords as reference)
+cols = ["No", "K", "B", "Ø", "Vf", "Vu", "D", "L", "Se", "T"]
+
+# Merge DataFrame for observed values with DataFrame for dummies
+dfObsDum = dfObs.merge(dummies[cols], on="wb")
 
 # Iterative imputer using BayesianRidge() estimator with increased tolerance
-imputer = IterativeImputer(tol=1e-1, random_state=0)
+imputer = IterativeImputer(tol=1e-1, max_iter=50, random_state=0)
 
 # Fit imputer, transform data iteratively, and limit to years of interest
-dfIndImp = pd.DataFrame(
-    imputer.fit_transform(np.array(dfIndObsDum)),
-    index=dfIndObsDum.index,
-    columns=dfIndObsDum.columns,
+dfImp = pd.DataFrame(
+    imputer.fit_transform(np.array(dfObsDum)),
+    index=dfObsDum.index,
+    columns=dfObsDum.columns,
 )[c.years]
 
 # Convert imputed biophysical indicator to ecological status
-dfEcoImp, impStats = c.ecological_status(j, dfIndImp, dfVP, "imp", index)
+dfEcoImp, impStats = c.ecological_status(j, dfImp, dfVP, "imp", index)
 dfEcoImp.describe()
-
 
 # def missing_values_graph(self, j, frame, suffix="obs", index=None):
 """Heatmap visualizing observations of ecological status as either missing or using the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality respectively.
@@ -593,48 +699,57 @@ plt.savefig(
 For each year t, set up df with variables for the Benefit Transfer equation."""
 dfEcoImp, dfVP, frames_j = df_eco_imp, df_VP, {}
 
-# Specify name of joined feature class (polygons)
-jCatch = j + "_catch"
+if j == "coastal":  #  ID shared between coastal waters and catchment areas
+    dfEcoImpCatch = dfEcoImp.copy()
 
-# Join water bodies with the coastal catchment area they have their center in
-arcpy.SpatialJoin_analysis(
-    target_features=j,
-    join_features="catch",
-    out_feature_class=jCatch,  #  will overwrite if it already exists
-    join_operation="JOIN_ONE_TO_MANY",
-    match_option="HAVE_THEIR_CENTER_IN",
-)
+else:  #  streams and lakes to coastal catchment areas
+    # Specify name of joined feature class (polygons)
+    jCatch = j + "_catch"
 
-# Fields in fc that contain coastal catchment area ID and water body ID
-fields = ["op_id", "ov_id"]
+    # Join water bodies with the catchment area they have their center in
+    arcpy.SpatialJoin_analysis(
+        target_features=j,
+        join_features="catch",
+        out_feature_class=jCatch,  #  will overwrite if it already exists
+        join_operation="JOIN_ONE_TO_MANY",
+        match_option="HAVE_THEIR_CENTER_IN",
+    )
 
-# Create DataFrame from jCatch of water bodies in each coastal catchment area
-dataCatch = [row for row in arcpy.da.SearchCursor(jCatch, fields)]
-dfCatch = pd.DataFrame(dataCatch, columns=fields)
+    # Fields in fc that contain coastal catchment area ID and water body ID
+    fields = ["op_id", "ov_id"]
 
-# Convert water body ID (wb) and coastal catchment area ID to integers
-dfCatch = dfCatch.copy()  #  to avoid SettingWithCopyWarning
-if j == "lakes":
-    dfCatch.loc[:, "wb"] = dfCatch["ov_id"].str.slice(6).astype(int)
-else:
-    dfCatch.loc[:, "wb"] = dfCatch["ov_id"].str.slice(7).astype(int)
-dfCatch["v"] = dfCatch["op_id"]
+    # Create DataFrame from jCatch of water bodies in each catchment area
+    dataCatch = [row for row in arcpy.da.SearchCursor(jCatch, fields)]
+    dfCatch = pd.DataFrame(dataCatch, columns=fields)
 
-# Specify columns, water body ID as index, sort by coastal catchment area ID (ascending)
-dfCatch = dfCatch[["wb", "v"]].set_index("wb").sort_values(by="v")
+    # Convert water body ID (wb) and coastal catchment area ID to integers
+    dfCatch = dfCatch.copy()  #  to avoid SettingWithCopyWarning
+    if j == "lakes":
+        dfCatch.loc[:, "wb"] = dfCatch["ov_id"].str.slice(6).astype(int)
+    else:
+        dfCatch.loc[:, "wb"] = dfCatch["ov_id"].str.slice(7).astype(int)
+    dfCatch["v"] = dfCatch["op_id"]
 
-# Assign unjoined water bodies to their relevant coastal catchment area
-if j == "streams":
-    dfCatch.loc[3024, "v"] = "113"  #  assign Kruså to Inner Flensborg Fjord
-    dfCatch.loc[8504, "v"] = "233"  #  assign outlet from Kilen to Venø Bugt
-elif j == "lakes":
-    dfCatch.loc[342, "v"] = "233"  #  assign Nørskov Vig to Venø Bugt
-    dfCatch.loc[11206, "v"] = "80"  #  assign Gamborg Nor to Gamborg Fjord
-    dfCatch.loc[11506, "v"] = "136"  #  Lille Langesø to Indre Randers Fjord
+    # Subset to columns; water body ID as index; sort by catchment area ID
+    dfCatch = dfCatch[["wb", "v"]].set_index("wb").sort_values(by="v")
 
-# Merge df for imputed ecological status w. coastal catchment area and length
-dfEcoImpCatch = dfEcoImp.merge(dfCatch, how="inner", on="wb").astype(int)
-dfEco = dfEcoImpCatch.merge(dfVP[["length"]], how="inner", on="wb")  #  length
+    # Assign unjoined water bodies to their relevant coastal catchment area
+    if j == "streams":
+        dfCatch.loc[3024, "v"] = "113"  #  Kruså to Inner Flensborg Fjord
+        dfCatch.loc[8504, "v"] = "233"  #  outlet from Kilen to Venø Bugt
+    elif j == "lakes":
+        dfCatch.loc[342, "v"] = "233"  #  Nørskov Vig to Venø Bugt
+        dfCatch.loc[11206, "v"] = "80"  #  Gamborg Nor to Gamborg Fjord
+        dfCatch.loc[11506, "v"] = "136"  #  Lille Langesø to Indre Randers Fjord
+
+    # Merge df for imputed ecological status w. coastal catchment area
+    dfEcoImpCatch = dfEcoImp.merge(dfCatch, on="wb").astype(int)
+
+# Merge df for imputed ecological status w. shore length
+dfEco = dfEcoImpCatch.merge(dfVP[["length"]], on="wb")  #  length
+
+if j == "coastal":  # Coastal catchment area ID is the water body ID
+    dfEco["v"] = dfEco.index
 
 # List of coastal catchment areas where category j is present
 j_present = list(dfEco["v"].unique())
@@ -684,22 +799,26 @@ frames_t = {}  #  create empty dictionary to store a df for each year t
 Q = dfEco.copy()
 Q[c.years] = Q[c.years].where(Q < 3, 3)
 
-# Create DataFrames with dummy for less than good ecological status
+# DataFrames with dummy for less than good ecological status
 SL = Q.copy()
 SL[c.years] = SL[c.years].mask(SL < 3, 1).mask(SL >= 3, 0)
 
+# For each year t, create df by v for variables needed for benefit transfer
 for t in c.years:
     df = pd.DataFrame()  #  empty df for values by coastal catchment area
     # Q is mean ecological status of water bodies weighted by shore length
     Q[t] = Q[t] * Q["length"]  #  ecological status × shore length
     df["Q"] = Q[["v", t]].groupby("v").sum()[t] / shores_v
     if t > 1989:
-        df["ln y"] = Dem.loc[t, "ln y"]  #  log mean gross real household income
+        df["ln y"] = Dem.loc[t, "ln y"]  #  ln mean gross real household income
         df["D age"] = Dem.loc[t, "D age"]  #  dummy for mean age > 45 years
-        SL[t] = SL[t] * SL["length"]  #  shore length if ecological status <good
-        SL_not_good = SL[["v", t]].groupby("v").sum()  #  SL where status < good
-        df["ln PSL"] = SL_not_good[t] / Geo["shore all j"]  #  proportional SL
-        df["ln PSL"] = np.select([df["ln PSL"] != 0], [np.log(df["ln PSL"])])
+        SL[t] = SL[t] * SL["length"]  #  shore length if status < good
+        SL_not_good = SL[["v", t]].groupby("v").sum()  #  if status < good
+        df["ln PSL"] = SL_not_good[t] / Geo["shore all j"]  #  proportional
+        ln_PSL = np.log(df.loc[df["ln PSL"] > 0, "ln PSL"])  #  log PSL
+        ln_PSL_full = pd.Series(index=df.index)  #  empty series with index
+        ln_PSL_full[df["ln PSL"] != 0] = ln_PSL  #  fill with ln_PSL if > 0
+        df["ln PSL"] = np.where(df["ln PSL"] > 0, ln_PSL_full, df["ln PSL"])
         df["ln PAL"] = Geo["ln PAL"]  #  proportion arable land
         df["SL"] = SL_not_good / 1000  #  SL in 1,000 km
         if j == "lakes":
@@ -762,7 +881,7 @@ f2.savefig("output\\all_cost_real.pdf", bbox_inches="tight")
 IV = c.valuation(df_BT, real=False, investment=True)
 IV.to_csv("output\\all_investment.csv")  #  save to csv for chain linking
 
-# def valuation(self, dfBT, real=False, investment=False):
+# def valuation(self, dfBT, real=True, investment=False):
 """Valuation of water quality as either current costs or investment value (IV).
 If not set to return real values (2018 prices), instead returns values in the prices of both the current year and the preceding year (for year-by-year chain linking)."""
 # Copy DataFrame with the variables needed for the benefit transfer equation
@@ -775,7 +894,7 @@ if investment is False:
     d["nonzero"] = np.select([d["Q"] < 2.99], [1])  #  dummy
 
     # Distance from current to Good: convert mean Q to lnΔQ ≡ ln(Q good - Q)
-    d["Q"] = np.select([d["Q"] < 2.99], [np.log(3 - d["Q"])])
+    d["Q"] = np.where(d["Q"] < 2.99, np.log(3 - d["Q"]), d["Q"])
 
 else:
     # Actual change in ecological status since preceding year
@@ -789,9 +908,12 @@ else:
     # Mark if actual change is negative (used to switch MWTP to negative)
     d["neg"] = np.select([d["Q"] < 0], [1])  #  dummy
 
-    # Convert Q to the log of the actual change
-    conditions = [d["Q"] > 0, d["Q"] < 0]
-    d["Q"] = np.select(conditions, [np.log(d["Q"]), np.log(-d["Q"])])
+    # Convert Q to the log of the actual change using nested np.where()
+    d["Q"] = np.where(
+        d["Q"] > 0,  #  condition
+        np.log(d["Q"]),  #  if condition is met
+        np.where(d["Q"] < 0, np.log(-d["Q"]), d["Q"]),  #  else
+    )
 
 # Drop year 1989 and specify integer values
 d = d.drop(d[d.index.get_level_values("t") == 1989].index)
@@ -817,21 +939,28 @@ df2["RWP"] = df2["MWTP"] * df2["N"] / 1e06  #  million DKK (2018 prices)
 
 if investment is True:
     # Apply net present value (NPV) factor
-    df2["RWP"] = df2["RWP"] * df2["NPV"]
+    df2["CWP"] = df2["CWP"] * df2["NPV"]
 
     # Switch MWTP to negative if actual change is negative
     cond = [df2["neg"] == 1]
-    df2["RWP"] = np.select(cond, [-df2["RWP"]], default=df2["RWP"])
+    df2["CWP"] = np.select(cond, [-df2["CWP"]], default=df2["CWP"])
+
+    if real is True:
+        df2["IV"] = df2["CWP"]  #  rename CWP to IV
+        return df2[["IV"]]  #  return complete dataset
+
+if real is True:  #  Real cost of water pollution (million DKK, 2018 prices)
+    return df2[["CWP"]]  #  return complete dataset
 
 # Aggregate nominal MWTP per hh over households in coastal catchment area
-df2["CWP"] = df2["RWP"] * df2["CPI"] / CPI.loc[2018, "CPI"]  #  million DKK
+df2["CWPn"] = df2["CWP"] * df2["CPI"] / CPI.loc[2018, "CPI"]  #  million DKK
 
 # CWP in the prices of the preceding year (for year-by-year chain linking)
-df2["D"] = df2["CWP"] * df2["CPI t-1"] / df2["CPI"]  #  million DKK
+df2["D"] = df2["CWPn"] * df2["CPI t-1"] / df2["CPI"]  #  million DKK
 
 # Aggregate over coastal catchment areas
 grouped = (
-    df2[["CWP", "D"]]
+    df2[["CWPn", "D"]]
     .groupby(["j", "t"])
     .sum()
     .unstack(level=0)
@@ -840,15 +969,30 @@ grouped = (
 )
 
 if investment is True:
-    # Rename CWP to IV
-    grouped.columns = grouped.columns.set_levels(["IV", "D"], level=0)
+    # Rename CWP to IV  #  rename CWP nominal to IV nominal
+    grouped.columns = grouped.columns.set_levels(["IVn", "D"], level=0)
 
 ########################################################################################
 #   4.c Marginal willingness to pay (MWTP) for investments in water quality
 ########################################################################################
-# Concatenate DataFrames for each category j ∈ {coastal, lakes, streams}
-d = pd.concat(frames_j)
-d.index.names = ["j", "t", "v"]
+# Nominal Investment value of increase (decrease) in water quality
+IVn = c.valuation(df_BT, real=False, investment=True)
+IVn.to_csv("output\\all_investment.csv")  #  save to csv for chain linking
+
+# Investment value in real terms (million DKK, 2018 prices)
+IV_v = c.valuation(df_BT, investment=True)
+IV = IV_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
+IV.rename_axis([None, None], axis=1).to_csv("output\\all_investment_real.csv")
+f2 = (
+    IV.loc[:, "IV"]
+    .rename_axis(None, axis=1)
+    .plot(
+        kind="bar",
+        ylabel="Investment in water quality improvement (million DKK, 2018 prices)",
+    )
+    .get_figure()
+)
+f2.savefig("output\\all_investment_real.pdf", bbox_inches="tight")
 
 
 ########################################################################################

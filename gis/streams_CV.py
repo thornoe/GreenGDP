@@ -1,5 +1,5 @@
 """
-Name:       imputation.py
+Name:       streams_CV.py
 
 Label:      Impute missing values in longitudinal data on ecological status of streams.
 
@@ -32,8 +32,8 @@ ColorCycle = {
     "blue": "#377eb8",
     "orange": "#ff7f00",
     "green": "#4daf4a",
-    "gray": "#999999",  #  moved up
     "pink": "#f781bf",
+    "gray": "#999999",  #  moved up (but still below pink)
     "brown": "#a65628",
     "purple": "#984ea3",
     "yellow": "#dede00",
@@ -75,6 +75,32 @@ dfIndObs = pd.read_csv("output/streams_ind_obs.csv", index_col="wb")
 dfIndObs.columns = dfIndObs.columns.astype(int)
 dfVP = pd.read_csv("output\\streams_VP.csv", index_col="wb")
 
+# Include ecological status as assessed in basis analysis for VP3
+basis = dfVP[["til_oko_bb"]].copy()  #  bottom fauna measured as DVFI index
+
+# Define a dictionary to map the Danish strings to an ordinal scale
+status_dict = {
+    "Dårlig økologisk tilstand": 0,
+    "Ringe økologisk tilstand": 1,
+    "Moderat økologisk tilstand": 2,
+    "God økologisk tilstand": 3,
+    "Høj økologisk tilstand": 4,
+    "Dårligt økologisk potentiale": 0,
+    "Ringe økologisk potentiale": 1,
+    "Moderat økologisk potentiale": 2,
+    "Godt økologisk potentiale": 3,
+    "Maksimalt økologisk potentiale": 4,
+    "Ukendt": np.nan,
+}
+
+# Replace the Danish strings in the DataFrame with the corresponding ordinal values
+basis.replace(status_dict, inplace=True)
+basis.columns = ["basis"]
+basis["basis"].unique()
+
+# Merge DataFrames for typology and observed biophysical indicator
+dfObs = dfIndObs.merge(basis, on="wb")
+
 # Create dummies for typology
 typ = pd.get_dummies(dfVP["ov_typ"]).astype(int)
 typ["softBottom"] = typ["RW4"] + typ["RW5"]
@@ -87,31 +113,40 @@ typ.columns = [
     "softBottom",
 ]
 
+# List dummies for typology
+cols = ["small", "medium", "large", "softBottom"]
+
 # Merge DataFrames for typology and observed biophysical indicator
-col = ["small", "medium", "large", "softBottom"]
-dfTypology = dfIndObs.merge(typ[col], how="inner", on="wb")
+dfTypology = dfObs.merge(typ[cols], on="wb")
+
+# Create dummies for natural, artificial, and heavily modified water bodies
+natural = pd.get_dummies(dfVP["na_kun_stm"]).astype(int)
+natural.columns = ["artificial", "natural", "heavily modified"]
+
+# Merge DataFrames for typology and natural water bodies
+dfNatural = dfTypology.merge(natural["natural"], on="wb")
+cols.append("natural")  #  add to list of dummies
 
 # Create dummies for water body district
 distr = pd.get_dummies(dfVP["distr_id"]).astype(int)
 
-# Extend dfTypology with dummy for district DK2 (Sealand, Lolland, Falster, and Møn)
-dfDistrict = dfTypology.merge(distr["DK2"], how="inner", on="wb")
-col.append("DK2")
+# Extend dfNatural with dummy for district DK2 (Sealand, Lolland, Falster, and Møn)
+dfDistrict = dfNatural.merge(distr["DK2"], on="wb")
+cols.append("DK2")  #  add to list of dummies
 
 # DataFrame for storing number of observed streams and yearly distribution by dummies
 d = pd.DataFrame(dfIndObs.count(), index=dfIndObs.columns, columns=["n"]).astype(int)
 
 # Yearly distribution of observed streams by typology and district
-for c in col:
+for c in cols:
     d[c] = 100 * dfDistrict[dfDistrict[c] == 1].count() / dfDistrict.count()
-    d.loc["All VP3 streams", c] = (
-        100 * len(dfDistrict[dfDistrict[c] == 1]) / len(dfDistrict)
-    )
-d.loc["All VP3 streams", "n"] = len(dfDistrict)
+    d.loc["All VP3", c] = 100 * len(dfDistrict[dfDistrict[c] == 1]) / len(dfDistrict)
+d.loc["All VP3", "n"] = len(dfDistrict)
 d.to_csv("output/streams_VP_stats.csv")
+d.loc["All VP3", :]
 
 ########################################################################################
-#   2. Multivariate feature imputation (note: LOO-CV takes ≤ 23 hours for each model)
+#   2. Multivariate feature imputation (note: LOO-CV takes ≤ 24 hours for each model)
 ########################################################################################
 # Iterative imputer using the default BayesianRidge() estimator with increased tolerance
 imputer = IterativeImputer(tol=1e-1, random_state=0)
@@ -126,9 +161,12 @@ imputer = IterativeImputer(tol=1e-1, random_state=0)
 #         1992: [np.nan, 3.4, 3.9, 4.4, 4.9],
 #     }
 # )
-# dfTypology = dfIndObs.copy()
+# dfObs = dfIndObs.copy()
+# dfTypology = dfObs.copy()
 # dfTypology["small"] = [1, 1, 0, 0, 0]
-# dfDistrict = dfTypology.copy()
+# dfNatural = dfTypology.copy()
+# dfNatural["natural"] = [0, 1, 1, 0, 0]
+# dfDistrict = dfNatural.copy()
 # dfDistrict["DK2"] = [1, 0, 1, 0, 0]
 # years = list(range(1989, 1992 + 1))
 
@@ -143,10 +181,11 @@ status["Obs"] = (dfIndObs < 4.5).sum() / status["n"]  #  ecological status < goo
 status.loc["Total", "Obs"] = (status["Obs"] * status["n"]).sum() / status["n"].sum()
 
 # Leave-one-out cross-validation (LOO-CV) loop over every observed stream and year
-dfIndObs.name = "No dummies"  #  name model without any dummies
+dfObs.name = "No dummies"  #  name model without any dummies
 dfTypology.name = "Typology"  #  name model with dummies for typology
-dfDistrict.name = "Typology & DK2"  #  name model with dummies for typology and district
-for df in (dfIndObs, dfTypology, dfDistrict):  #  LOO-CV using different dummies
+dfNatural.name = "Typ & natural"  #  name model with dummies for typology and natural
+dfDistrict.name = "Typ, nat, & DK2"  #  name model with dummies for typ, nat, & district
+for df in (dfObs, dfTypology, dfNatural, dfDistrict):  #  LOO-CV w. different dummies
     # Impute missing values based on all observations (without cross-validation)
     df_imp = pd.DataFrame(
         imputer.fit_transform(np.array(df)), index=df.index, columns=df.columns
@@ -180,7 +219,15 @@ for df in (dfIndObs, dfTypology, dfDistrict):  #  LOO-CV using different dummies
     for s in (scores, status):
         s.loc["Total", df.name] = (s[df.name] * s["n"]).sum() / s["n"].sum()
 
-# Total observations used for LOO-CV
+    # Save accuracy scores and share with less than good ecological status to CSV
+    scores.to_csv("output/streams_eco_imp_accuracy_" + df.name + ".csv")
+    status.to_csv("output/streams_eco_imp_LessThanGood_" + df.name + ".csv")
+
+# Change in accuracy or predicted status due to dummy (difference from "No dummies")
+scores.loc["Change", :] = scores.loc["Total", :] - scores.loc["Total", "No dummies"]
+scores.loc["Change", :] * 100  #  report in percentage points
+
+# Total number of observations that LOO-CV was performed over
 for s in (scores, status):
     s.loc["Total", "n"] = s["n"].sum()
 
@@ -192,11 +239,14 @@ status.to_csv("output/streams_eco_imp_LessThanGood.csv")
 #   3. Visualization: Accuracy and share with less than good ecological status by year
 ########################################################################################
 # Read accuracy scores and share with less than good ecological status from CSV
-scores = pd.read_csv("output/streams_eco_imp_accuracy.csv", index_col=0)
-sco = scores.drop(columns="n").drop("Total")
-status = pd.read_csv("output/streams_eco_imp_LessThanGood.csv", index_col=0)
-sta = status[["No dummies", "Typology", "Typology & DK2", "Obs"]].drop("Total")
-sta.columns = ["No dummies", "Typology", "Typology & DK2", "Observed"]  #  rename 'Obs'
+# scores = pd.read_csv("output/streams_eco_imp_accuracy.csv", index_col=0)
+sco = scores.drop(columns="n").drop(["Total", "Change"])
+# status = pd.read_csv("output/streams_eco_imp_LessThanGood.csv", index_col=0)
+# Reorder and rename 'Obs' to 'Observed'
+sta = status[
+    ["No dummies", "Typology", "Typ & natural", "Typ, nat, & DK2", "Obs"]
+].drop("Total")
+sta.columns = ["No dummies", "Typology", "Typ & natural", "Typ, nat, & DK2", "Observed"]
 
 # Bar plot accuracy scores
 f1 = sco.plot(
@@ -209,9 +259,3 @@ f2 = sta.plot(
     ylabel="Share of streams with less than good ecological status"
 ).get_figure()
 f2.savefig("output/streams_eco_imp_LessThanGood.pdf", bbox_inches="tight")
-
-# Bar plot share of streams with less than good ecological status
-# f3 = sta.plot(
-#     kind="bar", ylabel="Share of streams with less than good ecological status"
-# ).get_figure()
-# f3.savefig("output/streams_eco_imp_LessThanGood_bar.pdf", bbox_inches="tight")
