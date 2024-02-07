@@ -103,11 +103,8 @@ dfVP = pd.read_csv("output\\coastal_VP.csv", index_col="wb")
 # Share of water bodies by number of non-missing values
 for n in range(0, len(dfEcoObs.columns) + 1):
     n, round(100 * sum(dfEcoObs.notna().sum(axis=1) == n) / len(dfEcoObs), 2)  # percent
+dfEcoObs.count().count()
 
-# Subset of rows where 1-15 values are non-missing
-sparse = dfEcoObs[dfEcoObs.notna().sum(axis=1).isin(list(range(1, 15 + 1)))]
-sparse.count()  #  lowest number of non-missing values with support in all years
-sparse.count().sum()  #  302 non-missing values in total to loop over with LOO-CV
 
 # Include ecological status as assessed in basis analysis for VP3
 basis = dfVP[["til_oko_fy"]].copy()  #  phytoplankton measured as chlorophyll
@@ -139,21 +136,21 @@ typ = dfVP[["ov_typ"]].copy()
 
 # Define the dictionaries
 dict1 = {
-    "Nordsø": "No",
-    "Kattegat": "K",
-    "Bælthav": "B",
-    "Østersøen": "Ø",
-    "Fjord": "Fj",
-    "Vesterhavsfjord": "Vf",
+    "North Sea": "No",  # Nordsø
+    "Kattegat": "K",  # Kattegat
+    "Belt Sea": "B",  # Bælthav
+    "Baltic Sea": "Ø",  # Østersøen
+    "Fjord": "Fj",  # Fjord
+    "North Sea fjord": "Vf",  # Vesterhavsfjord
 }
 dict2 = {
-    "water exchange": "Vu",
-    "freshwater inflow": "F",
-    "water depth": "D",
-    "stratification": "L",
-    "sediment": "Se",
-    "salinity": "Sa",
-    "tide": "T",
+    "water exchange": "Vu",  # vandudveksling
+    "freshwater inflow": "F",  # ferskvandspåvirkning
+    "depth": "D",  # vanddybde
+    "stratification": "L",  # lagdeling
+    "sediment": "Se",  # sediment
+    "salinity": "Sa",  # salinitet
+    "tide": "T",  # tidevand
 }
 
 # Reverse the dictionaries so the abbreviations are the keys
@@ -171,31 +168,26 @@ cols = ["No", "K", "B", "Ø", "Fj", "Vf", "Vu", "F", "D", "L", "Se", "Sa", "T"]
 
 # Merge DataFrames for typology and observed ecological status
 dfTypology = dfObs.merge(dummies[cols], on="wb")
-dfSparse = dfTypology.merge(sparse[[]], on="wb")  #  sparse subset of dfTypology
 
-# Empty DataFrame for storing distribution of typology in
-VPstats = pd.DataFrame(columns=["All VP3", "Sparse"])
+# Subset dfTypology to water bodies where ecological status is observed at least once
+obs = dfTypology.loc[dfEcoObs.notna().any(axis=1)]
+
+# df for storing number of observed coastal waters and yearly distribution by dummies
+d = pd.DataFrame(dfEcoObs.count(), index=dfEcoObs.columns, columns=["n"]).astype(int)
 
 # Yearly distribution of observed coastal waters by typology and district
-for a, b in zip([dfEcoObs, sparse], [dfTypology, dfSparse]):
-    # df for storing number of observed coastal waters and yearly distribution by dummies
-    d = pd.DataFrame(a.count(), index=a.columns, columns=["n"]).astype(int)
+for c in cols:
+    d[c] = 100 * obs[obs[c] == 1].count() / obs.count()
+    d.loc["Obs of n", c] = 100 * len(obs[obs[c] == 1]) / len(obs)
+    d.loc["Obs of all", c] = 100 * len(obs[obs[c] == 1]) / len(dummies)
+    d.loc["All VP3", c] = 100 * len(dummies[dummies[c] == 1]) / len(dummies)
+d.loc["Obs of n", "n"] = len(obs)
+d.loc["Obs of all", "n"] = len(dummies)
+d.loc["All VP3", "n"] = len(dummies)
+d = d.rename(columns=dicts)  #  rename columns to full names
+d.to_csv("output/coastal_VP_stats.csv")  #  save distributions to csv
+d.loc[("Obs of n", "Obs of all", "All VP3"), :].T  #  report in percent
 
-    # Yearly distribution of observed coastal waters by typology and district
-    for c in cols:
-        d[c] = 100 * b[b[c] == 1].count() / b.count()
-        d.loc["All VP3", c] = 100 * len(b[b[c] == 1]) / len(b)
-    d.loc["All VP3", "n"] = len(b)
-
-    # Rename columns to the full names of dummies
-    d = d.rename(columns=dicts)
-
-    if b is dfSparse:
-        VPstats["Sparse"] = d.loc["All VP3", :]  #  save distribution
-    else:
-        VPstats["All VP3"] = d.loc["All VP3", :]  #  save distribution
-        d.to_excel("output/coastal_VP_stats.xlsx")
-VPstats  #  report distribution - sparse only includes Fjords and Bælthav (inner straits)
 
 ########################################################################################
 #   2. Multivariate feature imputation
