@@ -33,7 +33,7 @@ ColorCycle = {
     "orange": "#ff7f00",
     "green": "#4daf4a",
     "pink": "#f781bf",
-    "gray": "#999999",  #  moved up (but still below pink)
+    "gray": "#999999",  #  moved up (yet below pink)
     "brown": "#a65628",
     "purple": "#984ea3",
     "yellow": "#dede00",
@@ -42,7 +42,7 @@ ColorCycle = {
 
 # Set the default color map and figure size for pyplots
 plt.rcParams["axes.prop_cycle"] = plt.cycler("color", list(ColorCycle.values()))
-plt.rcParams["figure.figsize"] = [12, 6]  #  wide format (appendix with wide margins)
+plt.rcParams["figure.figsize"] = [12, 7.4]  #  wide format (appendix with wide margins)
 
 
 # Function for score
@@ -61,6 +61,9 @@ def AccuracyScore(y_true, y_pred):
     return accuracy_score(eco_true[0], eco_pred[0])
 
 
+# Iterative imputer using the BayesianRidge() estimator with increased tolerance
+imputer = IterativeImputer(tol=1e-1, max_iter=50, random_state=0)
+
 ########################################################################################
 #   1. Data setup
 ########################################################################################
@@ -74,6 +77,15 @@ years = list(range(1989, 2020 + 1))
 dfIndObs = pd.read_csv("output/streams_ind_obs.csv", index_col="wb")
 dfIndObs.columns = dfIndObs.columns.astype(int)
 dfVP = pd.read_csv("output\\streams_VP.csv", index_col="wb")
+
+# Share of water bodies by number of non-missing values
+for n in range(0, len(dfIndObs.columns) + 1):
+    n, round(100 * sum(dfIndObs.notna().sum(axis=1) == n) / len(dfIndObs), 2)  # percent
+
+# Subset of rows where only 1-3 values are non-missing
+sparse = dfIndObs[dfIndObs.notna().sum(axis=1).isin([1, 2])]
+sparse.count()  #  lowest number of non-missing values with support in all years
+sparse.count().sum()  #  5453 non-missing values in total to loop over with LOO-CV
 
 # Include ecological status as assessed in basis analysis for VP3
 basis = dfVP[["til_oko_bb"]].copy()  #  bottom fauna measured as DVFI index
@@ -98,7 +110,7 @@ basis.replace(status_dict, inplace=True)
 basis.columns = ["basis"]
 basis["basis"].unique()
 
-# Merge DataFrames for typology and observed biophysical indicator
+# Merge DataFrames for observed biophysical indicator with basis analysis for VP 3
 dfObs = dfIndObs.merge(basis, on="wb")
 
 # Create dummies for typology
@@ -145,12 +157,14 @@ d.loc["All VP3", "n"] = len(dfDistrict)
 d.to_csv("output/streams_VP_stats.csv")
 d.loc["All VP3", :]
 
+# Drop large column from all data frames (keep out as reference category)
+dfTypology = dfTypology.drop(columns="large")
+dfNatural = dfTypology.drop(columns="large")
+dfDistrict = dfDistrict.drop(columns=["large", "natural"])  #  drop natural as well
+
 ########################################################################################
 #   2. Multivariate feature imputation (note: LOO-CV takes ≤ 24 hours for each model)
 ########################################################################################
-# Iterative imputer using the default BayesianRidge() estimator with increased tolerance
-imputer = IterativeImputer(tol=1e-1, random_state=0)
-
 # Example data for testing LOO-CV below (takes ~3 seconds rather than ~3 days to run)
 # dfIndObs = pd.DataFrame(
 #     {
@@ -179,13 +193,12 @@ status = pd.DataFrame(dfIndObs.count(), index=dfIndObs.columns, columns=["n"])
 # Mean ecological status by year for the n observations that don'nt have missing values
 status["Obs"] = (dfIndObs < 4.5).sum() / status["n"]  #  ecological status < good
 status.loc["Total", "Obs"] = (status["Obs"] * status["n"]).sum() / status["n"].sum()
-
 # Leave-one-out cross-validation (LOO-CV) loop over every observed stream and year
 dfObs.name = "No dummies"  #  name model without any dummies
 dfTypology.name = "Typology"  #  name model with dummies for typology
-dfNatural.name = "Typ & natural"  #  name model with dummies for typology and natural
-dfDistrict.name = "Typ, nat, & DK2"  #  name model with dummies for typ, nat, & district
-for df in (dfObs, dfTypology, dfNatural, dfDistrict):  #  LOO-CV w. different dummies
+dfDistrict.name = "Typology & DK2"  #  name model with dummies for typology & district
+dfNatural.name = "Typology & natural"  #  name model with dummies for typology & natural
+for df in (dfObs, dfTypology, dfNatural, dfDistrict):  #  LOO-CV with different dummies
     # Impute missing values based on all observations (without cross-validation)
     df_imp = pd.DataFrame(
         imputer.fit_transform(np.array(df)), index=df.index, columns=df.columns
@@ -243,10 +256,10 @@ status.to_csv("output/streams_eco_imp_LessThanGood.csv")
 sco = scores.drop(columns="n").drop(["Total", "Change"])
 # status = pd.read_csv("output/streams_eco_imp_LessThanGood.csv", index_col=0)
 # Reorder and rename 'Obs' to 'Observed'
-sta = status[
-    ["No dummies", "Typology", "Typ & natural", "Typ, nat, & DK2", "Obs"]
-].drop("Total")
-sta.columns = ["No dummies", "Typology", "Typ & natural", "Typ, nat, & DK2", "Observed"]
+sta = status[["No dummies", "Typology", "Typology & DK2", "Typ & natural", "Obs"]].drop(
+    "Total"
+)
+sta.columns = ["No dummies", "Typology", "Typology & DK2", "Typ & natural", "Observed"]
 
 # Bar plot accuracy scores
 f1 = sco.plot(

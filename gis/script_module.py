@@ -702,15 +702,16 @@ class Water_Quality:
                     "softBottom",
                 ]
 
-                # Dummies for natural, artificial, and heavily modified water bodies
-                natural = pd.get_dummies(dfVP["na_kun_stm"]).astype(int)
-                natural.columns = ["artificial", "natural", "heavily modified"]
-
-                # Merge DataFrames for typology and natural water bodies
-                typ = typ.merge(natural["natural"], on="wb")
-
                 # List dummies for typology and natural water bodies
-                cols = ["small", "medium", "large", "softBottom", "natural"]
+                cols = ["small", "medium", "large", "softBottom"]
+
+                # # Dummies for natural, artificial, and heavily modified water bodies
+                # natural = pd.get_dummies(dfVP["na_kun_stm"]).astype(int)
+                # natural.columns = ["artificial", "natural", "heavily modified"]
+
+                # # Merge DataFrames for typology and natural water bodies
+                # typ = typ.merge(natural["natural"], on="wb")
+                # cols.append("natural")
 
             elif j == "lakes":
                 # Convert biophysical indicator to ecological status before imputing
