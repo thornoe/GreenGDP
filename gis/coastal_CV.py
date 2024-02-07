@@ -176,16 +176,26 @@ dfSparse = dfTypology.merge(sparse[[]], on="wb")  #  sparse subset of dfTypology
 # Empty DataFrame for storing distribution of typology in
 VPstats = pd.DataFrame(columns=["All VP3", "Sparse"])
 
-# Df for storing number of observed coastal waters and yearly distribution by dummies
-d = pd.DataFrame(dfEcoObs.count(), index=dfEcoObs.columns, columns=["n"]).astype(int)
-
 # Yearly distribution of observed coastal waters by typology and district
-for c in cols:
-    d[c] = 100 * dfTypology[dfTypology[c] == 1].count() / dfTypology.count()
-    d.loc["All VP3", c] = 100 * len(dfTypology[dfTypology[c] == 1]) / len(dfTypology)
-d.loc["All VP3", "n"] = len(dfTypology)
-d.to_csv("output/coastal_VP_stats.csv")
-d.rename(columns=dicts).loc["All VP3", :]  #  report in percent
+for a, b in zip([dfEcoObs, sparse], [dfTypology, dfSparse]):
+    # df for storing number of observed coastal waters and yearly distribution by dummies
+    d = pd.DataFrame(a.count(), index=a.columns, columns=["n"]).astype(int)
+
+    # Yearly distribution of observed coastal waters by typology and district
+    for c in cols:
+        d[c] = 100 * b[b[c] == 1].count() / b.count()
+        d.loc["All VP3", c] = 100 * len(b[b[c] == 1]) / len(b)
+    d.loc["All VP3", "n"] = len(b)
+
+    # Rename columns to the full names of dummies
+    d = d.rename(columns=dicts)
+
+    if b is dfSparse:
+        VPstats["Sparse"] = d.loc["All VP3", :]  #  save distribution
+    else:
+        VPstats["All VP3"] = d.loc["All VP3", :]  #  save distribution
+        d.to_excel("output/coastal_VP_stats.xlsx")
+VPstats  #  report distribution - sparse only includes Fjords and Bælthav (inner straits)
 
 ########################################################################################
 #   2. Multivariate feature imputation
