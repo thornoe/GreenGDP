@@ -170,7 +170,7 @@ cols = ["No", "K", "B", "Ø", "Fj", "Vf", "Vu", "F", "D", "L", "Se", "Sa", "T"]
 dfTypology = dfObs.merge(dummies[cols], on="wb")
 
 # Subset dfTypology to water bodies where ecological status is observed at least once
-obs = dfTypology.loc[dfEcoObs.notna().any(axis=1)]
+obs = dfTypology.loc[dfEcoObs.notna().any(axis=1)]  #  96 out of 108 water bodies
 
 # df for storing number of observed coastal waters and yearly distribution by dummies
 d = pd.DataFrame(dfEcoObs.count(), index=dfEcoObs.columns, columns=["n"]).astype(int)

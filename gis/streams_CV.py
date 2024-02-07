@@ -146,18 +146,25 @@ distr = pd.get_dummies(dfVP["distr_id"]).astype(int)
 dfDistrict = dfNatural.merge(distr["DK2"], on="wb")
 cols.append("DK2")  #  add to list of dummies
 
+# Subset dfDistrict to water bodies where ecological status is observed at least once
+obs = dfDistrict.loc[dfIndObs.notna().any(axis=1)]  #  6151 out of 6703 water bodies
+
 # DataFrame for storing number of observed streams and yearly distribution by dummies
 d = pd.DataFrame(dfIndObs.count(), index=dfIndObs.columns, columns=["n"]).astype(int)
 
-# Yearly distribution of observed streams by typology and district
+# Yearly distribution of observed coastal waters by typology and district
 for c in cols:
-    d[c] = 100 * dfDistrict[dfDistrict[c] == 1].count() / dfDistrict.count()
+    d[c] = 100 * obs[obs[c] == 1].count() / obs.count()
+    d.loc["Obs of n", c] = 100 * len(obs[obs[c] == 1]) / len(obs)
+    d.loc["Obs of all", c] = 100 * len(obs[obs[c] == 1]) / len(dfDistrict)
     d.loc["All VP3", c] = 100 * len(dfDistrict[dfDistrict[c] == 1]) / len(dfDistrict)
+d.loc["Obs of n", "n"] = len(obs)
+d.loc["Obs of all", "n"] = len(dfDistrict)
 d.loc["All VP3", "n"] = len(dfDistrict)
-d.to_csv("output/streams_VP_stats.csv")
-d.loc["All VP3", :]
+d.to_csv("output/streams_VP_stats.csv")  #  save distributions to csv
+d.loc[("Obs of n", "Obs of all", "All VP3"), :]  #  report in percent
 
-# Drop large column from all data frames (keep out as reference category)
+# Drop "large" to avoid perfect multicollinearity (i.e., keep out as reference category)
 dfTypology = dfTypology.drop(columns="large")
 dfNatural = dfTypology.drop(columns="large")
 dfDistrict = dfDistrict.drop(columns=["large", "natural"])  #  drop natural as well
