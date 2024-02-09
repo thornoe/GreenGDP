@@ -157,10 +157,10 @@ for c in cols:
     d[c] = 100 * obs[obs[c] == 1].count() / obs.count()
     d.loc["Obs of n", c] = 100 * len(obs[obs[c] == 1]) / len(obs)
     d.loc["Obs of all", c] = 100 * len(obs[obs[c] == 1]) / len(dfDistrict)
-    d.loc["All VP3", c] = 100 * len(dfDistrict[dfDistrict[c] == 1]) / len(dfDistrict)
-d.loc["Obs of n", "n"] = len(obs)
-d.loc["Obs of all", "n"] = len(dfDistrict)
-d.loc["All VP3", "n"] = len(dfDistrict)
+    d.loc["All VP3", c] = 100 * len(dfDistrict[dfDistrict[c] == 1]) / len(dfVP)
+d.loc["Obs of n", "n"] = len(obs)  #  number of water bodies observed at least once
+d.loc["Obs of all", "n"] = len(dfVP)  #  number of water bodies in VP3
+d.loc["All VP3", "n"] = len(dfVP)  #  number of water bodies in VP3
 d.to_csv("output/streams_VP_stats.csv")  #  save distributions to csv
 d.loc[("Obs of n", "Obs of all", "All VP3"), :]  #  report in percent
 
@@ -189,7 +189,11 @@ dfDistrict = dfDistrict.drop(columns=["large", "natural"])  #  drop natural as w
 # dfNatural["natural"] = [0, 1, 1, 0, 0]
 # dfDistrict = dfNatural.copy()
 # dfDistrict["DK2"] = [1, 0, 1, 0, 0]
+# cols = ["small", "natural", "DK2"]
 # years = list(range(1989, 1992 + 1))
+
+
+selected, scores = stepwise_selection(subset=dfObs, predictors=selectedSparse)
 
 # DataFrame for storing accuracy scores by year and calculating weighted average
 scores = pd.DataFrame(dfIndObs.count(), index=years, columns=["n"]).astype(int)
@@ -267,6 +271,7 @@ sta = status[["No dummies", "Typology", "Typology & DK2", "Typ & natural", "Obs"
     "Total"
 )
 sta.columns = ["No dummies", "Typology", "Typology & DK2", "Typ & natural", "Observed"]
+
 
 # Bar plot accuracy scores
 f1 = sco.plot(

@@ -179,11 +179,11 @@ d = pd.DataFrame(dfEcoObs.count(), index=dfEcoObs.columns, columns=["n"]).astype
 for c in cols:
     d[c] = 100 * obs[obs[c] == 1].count() / obs.count()
     d.loc["Obs of n", c] = 100 * len(obs[obs[c] == 1]) / len(obs)
-    d.loc["Obs of all", c] = 100 * len(obs[obs[c] == 1]) / len(dummies)
-    d.loc["All VP3", c] = 100 * len(dummies[dummies[c] == 1]) / len(dummies)
-d.loc["Obs of n", "n"] = len(obs)
-d.loc["Obs of all", "n"] = len(dummies)
-d.loc["All VP3", "n"] = len(dummies)
+    d.loc["Obs of all", c] = 100 * len(obs[obs[c] == 1]) / len(dfVP)
+    d.loc["All VP3", c] = 100 * len(dummies[dummies[c] == 1]) / len(dfVP)
+d.loc["Obs of n", "n"] = len(obs)  #  number of water bodies observed at least once
+d.loc["Obs of all", "n"] = len(dfVP)  #  number of water bodies in VP3
+d.loc["All VP3", "n"] = len(dfVP)  #  number of water bodies in VP3
 d = d.rename(columns=dicts)  #  rename columns to full names
 d.to_csv("output/coastal_VP_stats.csv")  #  save distributions to csv
 d.loc[("Obs of n", "Obs of all", "All VP3"), :].T  #  report in percent
