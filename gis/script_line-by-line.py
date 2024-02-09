@@ -14,6 +14,7 @@ Usage:      This sandbox is line-by-line implementation of the script supporting
 License:    MIT Copyright (c) 2024
 Author:     Thor Donsby Noe
 """
+
 ########################################################################################
 #   0. Imports
 ########################################################################################
@@ -47,7 +48,7 @@ ColorCycle = {
 # Set the default color map and figure size for pyplots
 plt.rcParams["axes.prop_cycle"] = plt.cycler("color", list(ColorCycle.values()))
 plt.rcParams["figure.figsize"] = [10, 6.18]  #  golden ratio (paper with narrow margins)
-a
+
 ########################################################################################
 #   1. Setup
 ########################################################################################

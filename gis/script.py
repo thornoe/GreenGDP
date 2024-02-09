@@ -13,6 +13,7 @@ Usage:      This script supports WaterbodiesScriptTool in the gis.tbx toolbox.
 License:    MIT Copyright (c) 2024
 Author:     Thor Donsby Noe
 """
+
 ########################################################################################
 #   0. Imports
 ########################################################################################
@@ -164,17 +165,79 @@ f1 = (
 f1.savefig("output\\all_eco_imp_LessThanGood.pdf", bbox_inches="tight")
 
 ########################################################################################
-#   4.b Marginal willingness to pay (MWTP) for improvement of water quality to "Good"
+#   4.b Nominal cost of pollution and investment in water quality for national accounts
 ########################################################################################
 # Concatenate DataFrames for each category j ∈ {coastal, lakes, streams}
 df_BT = pd.concat(frames_j)
 df_BT.index.names = ["j", "t", "v"]
 df_BT.to_csv("output\\all_eco_imp.csv")  #  save to csv
 
-# Nominal cost of pollution in prices of current year, and preceding year respectively
+# Marginal willingness to pay (MWTP) for improvement of water quality to "Good"
 CWPn = c.valuation(df_BT, real=False)
-CWPn.to_csv("output\\all_cost.csv")  #  save to csv for chain linking
+# Nominal cost of pollution in prices of current year, and preceding year respectively
+CWPn.columns = CWPn.columns.set_levels(
+    [
+        "Cost (current year's prices, million DKK)",
+        "Cost (preceding year's prices, million DKK)",
+    ],
+    level=0,
+)
 
+# Investment in water quality (net present value of infinite stream of MWTP for change)
+IVn = c.valuation(df_BT, real=False, investment=True)
+# Nominal investment value in prices of current year, and preceding year respectively
+IVn.columns = IVn.columns.set_levels(
+    [
+        "Investment value (current year's prices, million DKK)",
+        "Investment value (preceding year's prices, million DKK)",
+    ],
+    level=0,
+)
+
+# Merge cost of pollution and investment value of increase (decrease) in water quality
+nominal = pd.concat([CWPn, IVn], axis=1)
+# Alternative to the code below, in case it doesn't behave
+# nominal.to_excel("output\\all_nominal.xlsx")  # manually left-align row 1 in Excel
+
+# Create a Pandas Excel writer using XlsxWriter as the engine
+writer = pd.ExcelWriter("output\\all_nominal.xlsx", engine="xlsxwriter")
+
+# Write the DataFrame data to the Excel file without the headers
+nominal.to_excel(writer, sheet_name="Sheet1", header=False, startrow=2)  # new start row
+
+# Get the XlsxWriter workbook and worksheet objects
+workbook = writer.book
+worksheet = writer.sheets["Sheet1"]
+
+# Create a format for left alignment
+left_align_format = workbook.add_format({"align": "left"})
+
+# Write the index with the defined format
+for row_num, value in enumerate(nominal.index):
+    worksheet.write(
+        row_num + 3, 0, value, left_align_format
+    )  # +3 to adjust for header rows
+
+# Write the column headers with the defined format
+for col_num, (level1, level2) in enumerate(nominal.columns):
+    # Write the first level of the MultiIndex every three columns
+    if col_num % 3 == 0:
+        worksheet.write(0, col_num + 1, level1, left_align_format)
+    # Write the second level of the MultiIndex every column
+    worksheet.write(1, col_num + 1, level2, left_align_format)
+
+# Close the Pandas Excel writer and output the Excel file
+writer.close()
+
+"""
+Ok, as the last command, this code needs to delete the empty third row.
+
+Remember that column names are a multiindex structure that I need to preserve. The first level only takes on a value every third column while the second level takes on a value every column.
+"""
+
+########################################################################################
+#   4.c
+########################################################################################
 # Costs of pollution in real terms (million DKK, 2018 prices)
 CWP_v = c.valuation(df_BT)
 CWP = CWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
@@ -186,13 +249,6 @@ f2 = (
     .get_figure()
 )
 f2.savefig("output\\all_cost_real.pdf", bbox_inches="tight")
-
-########################################################################################
-#   4.c Marginal willingness to pay (MWTP) for investments in water quality
-########################################################################################
-# Nominal Investment value of increase (decrease) in water quality
-IVn = c.valuation(df_BT, real=False, investment=True)
-IVn.to_csv("output\\all_investment.csv")  #  save to csv for chain linking
 
 # Investment value in real terms (million DKK, 2018 prices)
 IV_v = c.valuation(df_BT, investment=True)

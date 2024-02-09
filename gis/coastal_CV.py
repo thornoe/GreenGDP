@@ -19,30 +19,36 @@ Author:     Thor Donsby Noe
 ########################################################################################
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import tqdm
-from matplotlib import pyplot as plt
+from cycler import cycler
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
 from sklearn.metrics import accuracy_score
 
-# Color-blind-friendly ordinal scale, modified from: gist.github.com/thriveth/8560036
-ColorCycle = {
+# Iterative imputer using the BayesianRidge() estimator with increased tolerance
+imputer = IterativeImputer(tol=1e-1, max_iter=100, random_state=0)
+
+# Color-blind-friendly color cycle, modified from: gist.github.com/thriveth/8560036
+colors = {
     "blue": "#377eb8",
     "orange": "#ff7f00",
+    "gray": "#999999",  #  moved up to be used for ecological status of observed lakes
     "green": "#4daf4a",
-    "gray": "#999999",  #  moved up
     "pink": "#f781bf",
     "brown": "#a65628",
     "purple": "#984ea3",
     "yellow": "#dede00",
-    "red": "#e41a1c",  #  moved down
+    # "red": "#e41a1c",  #  moved down and out-commented to match length of linestyle
 }
 
-# Set the default color map and figure size for pyplots
-plt.rcParams["axes.prop_cycle"] = plt.cycler("color", list(ColorCycle.values()))
-plt.rcParams["figure.figsize"] = [12, 7.4]  #  wide format (appendix with wide margins)
+# Set the default property-cycle and figure size for pyplots
+color_cycler = cycler(color=list(colors.values()))
+linestyle_cycler = cycler(linestyle=["-", "--", ":", "-.", "-", "--", ":", "-."])
+plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
+plt.rc("figure", figsize=[12, 7.4])  #  golden ratio for appendix with wide margins
 
 
 # Define a function to process each string in typology
@@ -82,9 +88,6 @@ def AccuracyScore(y_true, y_pred):
         b.append(np.select(conditions, [0, 1, 2, 3], default=np.nan))  #  add to list
     return accuracy_score(eco_true[0], eco_pred[0])
 
-
-# Iterative imputer using the BayesianRidge() estimator with increased tolerance
-imputer = IterativeImputer(tol=1e-1, max_iter=50, random_state=0)
 
 ########################################################################################
 #   1. Data setup
@@ -364,7 +367,6 @@ status.to_csv("output/coastal_eco_imp_LessThanGood_single.csv")
 ########################################################################################
 # Dummies that improved prediction accuracy w. single inclusion (to skip section 2.a)
 cols_pos_single = ["alkalinity", "brown", "saline", "DK2"]
-imputer = IterativeImputer(tol=1e-1, max_iter=50, random_state=0)
 
 # Empty list for cols that improve accuracy w. additive inclusion
 cols_pos_additive = []
@@ -437,9 +439,6 @@ status.to_csv("output/coastal_eco_imp_LessThanGood_additive.csv")
 ########################################################################################
 #   2.c Comparison of models for illustrative figures
 ########################################################################################
-# Iterative imputer using the BayesianRidge() estimator with increased tolerance
-imputer = IterativeImputer(tol=1e-1, max_iter=50, random_state=0)
-
 # DataFrame for storing accuracy scores by year and calculating weighted average
 scores = pd.DataFrame(dfEcoObs.count(), index=years, columns=["n"]).astype(int)
 

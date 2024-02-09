@@ -36,7 +36,7 @@ For a mayor revision of the script tool, one will want to be able to run ArcPy c
 The version of Python used in ArcGIS Pro is systematically older than the most recent version, which causes several incompatibility issues for Python scripts. Thus, the simplest IDE solution is to [download](https://sourceforge.net/projects/pyscripter) and set up the [PyScripter](https://github.com/pyscripter/pyscripter/wiki) editor as explained [here](https://www.e-education.psu.edu/geog485/node/213).
 1. Within **ArcGIS Pro**, navigate to the **Package Manager**:
    1. In the **Environment Manager**, *Clone* the default Python environment and *Activate* arcgispro-py3-clone as your new environment.
-   2. Under **Add Packages**, *Search* for and *Install* [scikit-learn](https://scikit-learn.org/stable/index.html) for imputation of missing observations.
+   2. Under **Add Packages**, *Search* for and *Install* [scikit-learn](https://scikit-learn.org/stable/index.html) for imputation of missing observations and [xlsxwriter](https://xlsxwriter.readthedocs.io/index.html) to set up results in Excel.
    3. Under **Updates**, remember to *Update All* each time you update ArcGIS Pro to a new version.
 2. Within **PyScripter**:
    1. Under **Python Versions**, *Add* and *Activate* the cloned environment, e.g. `C:\Users\%USERNAME%\AppData\Local\ESRI\conda\envs\arcgispro-py3-clone`.

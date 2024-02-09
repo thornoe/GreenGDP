@@ -25,16 +25,18 @@ Functions:  The class in this module contains 10 functions of which some are nes
 License:    MIT Copyright (c) 2024
 Author:     Thor Donsby Noe
 """
+
 import os
 import sys
 import traceback
 import urllib.request
 
 import arcpy
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-from matplotlib import pyplot as plt
+from cycler import cycler
 from scipy import interpolate
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
@@ -68,8 +70,8 @@ class Water_Quality:
         self.path = os.getcwd()
         self.arcPath = self.path + "\\gis.gdb"
 
-        # Color-blind-friendly ordinal scale, modified: gist.github.com/thriveth/8560036
-        self.ColorCycle = {
+        # Color-blind-friendly colors, modified from: gist.github.com/thriveth/8560036
+        colors = {
             "blue": "#377eb8",
             "orange": "#ff7f00",
             "green": "#4daf4a",
@@ -77,15 +79,17 @@ class Water_Quality:
             "pink": "#f781bf",
             "brown": "#a65628",
             "purple": "#984ea3",
+            # "red": "#e41a1c",  #  out-commented to match length of linestyle
             "yellow": "#dede00",
-            "red": "#e41a1c",  #  moved down
         }
 
-        # Set the default color map and figure size for pyplots
-        plt.rcParams["axes.prop_cycle"] = plt.cycler(
-            "color", list(self.ColorCycle.values())
+        # Set the default property-cycle and figure size for pyplots
+        color_cycler = cycler(color=list(colors.values()))
+        linestyle_cycler = cycler(
+            linestyle=["-", "--", ":", "-.", "-", "--", ":", "-."]
         )
-        plt.rcParams["figure.figsize"] = [10, 6.18]  #  golden ratio
+        plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
+        plt.rc("figure", figsize=[10, 6.2])  #  golden ratio
 
         # Set the ArcPy workspace
         arcpy.env.workspace = self.arcPath
@@ -725,22 +729,22 @@ class Water_Quality:
 
                 # Create dummies for high alkalinity, brown, saline, and deep lakes
                 cond1 = [(typ["type"] >= 9) & (typ["type"] <= 16), typ["type"] == 17]
-                typ["alkalinity"] = np.select(cond1, [1, np.nan], default=0)
+                typ["Alkalinity"] = np.select(cond1, [1, np.nan], default=0)
                 cond2 = [
                     typ["type"].isin([5, 6, 7, 8, 13, 14, 15, 16]),
                     typ["type"] == 17,
                 ]
-                typ["brown"] = np.select(cond2, [1, np.nan], default=0)
+                typ["Brown"] = np.select(cond2, [1, np.nan], default=0)
                 cond3 = [
                     typ["type"].isin([2, 3, 7, 8, 11, 12, 15, 16]),
                     typ["type"] == 17,
                 ]
-                typ["saline"] = np.select(cond3, [1, np.nan], default=0)
+                typ["Saline"] = np.select(cond3, [1, np.nan], default=0)
                 cond4 = [typ["type"].isin(np.arange(2, 17, 2)), typ["type"] == 17]
-                typ["deep"] = np.select(cond4, [1, np.nan], default=0)
+                typ["Deep"] = np.select(cond4, [1, np.nan], default=0)
 
-                # List dummies for typology
-                cols = ["alkalinity", "brown", "saline", "deep"]
+                # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
+                cols = ["Saline"]
 
             else:  #  coastal
                 # Convert biophysical indicator to ecological status before imputing
@@ -806,7 +810,7 @@ class Water_Quality:
                 # Dummies that improves prediction accuracy (omit fjords as reference)
                 cols = ["No", "K", "B", "Ø", "Vf", "Vu", "D", "L", "Se", "T"]
 
-            if j != "coastal":  #  lakes and streams
+            if j == "streams":
                 # Create dummy for the district DK2 (Sealand, Lolland, Falster, and Møn)
                 district = pd.get_dummies(dfVP["distr_id"]).astype(int)
 
@@ -818,7 +822,7 @@ class Water_Quality:
             dfObsDum = dfObs.merge(typ[cols], on="wb")
 
             # Iterative imputer using BayesianRidge() estimator with increased tolerance
-            imputer = IterativeImputer(tol=1e-1, max_iter=50, random_state=0)
+            imputer = IterativeImputer(tol=1e-1, max_iter=100, random_state=0)
 
             # Fit imputer, transform data iteratively, and limit to years of interest
             dfImp = pd.DataFrame(
@@ -1129,7 +1133,7 @@ class Water_Quality:
             # Report severe error messages
             tb = sys.exc_info()[2]  # get traceback object for Python errors
             tbinfo = traceback.format_tb(tb)[0]
-            msg = "Could not create missing values graph (heatmap) for ecological status of {1}:\nTraceback info:\n{2}Error Info:\n{2}".format(
+            msg = "Could not create missing values graph (heatmap) for ecological status of {0}:\nTraceback info:\n{1}Error Info:\n{2}".format(
                 j, tbinfo, str(sys.exc_info()[1])
             )
             print(msg)  # print error message in Python

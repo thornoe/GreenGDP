@@ -29,7 +29,7 @@ from sklearn.impute import IterativeImputer
 from sklearn.metrics import accuracy_score
 
 # Iterative imputer using the BayesianRidge() estimator with increased tolerance
-imputer = IterativeImputer(tol=1e-1, max_iter=50, random_state=0)
+imputer = IterativeImputer(tol=1e-1, max_iter=100, random_state=0)
 
 # Color-blind-friendly color cycle, modified from: gist.github.com/thriveth/8560036
 colors = {
@@ -48,7 +48,7 @@ colors = {
 color_cycler = cycler(color=list(colors.values()))
 linestyle_cycler = cycler(linestyle=["-", "--", ":", "-.", "-", "--", ":", "-."])
 plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
-plt.rc("figure", figsize=[12, 7.4])  #  wide format (appendix with wide margins)
+plt.rc("figure", figsize=[12, 7.4])  #  golden ratio for appendix with wide margins
 
 
 # Function for score
