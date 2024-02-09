@@ -200,24 +200,24 @@ nominal.to_excel("output\\all_nominal.xlsx")  # manually left-align row 1 & dele
 
 
 ########################################################################################
-#   4.c
+#   4.c Real cost of pollution and investment in water quality for national accounts
 ########################################################################################
 # Costs of pollution in real terms (million DKK, 2018 prices)
 CWP_v = c.valuation(df_BT)
 CWP = CWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
-CWP.rename_axis([None, None], axis=1).to_csv("output\\all_cost_real.csv")
+CWP.rename_axis([None, None], axis=1).to_csv("output\\all_cost.csv")
 f2 = (
     CWP.loc[:, "CWP"]
     .rename_axis(None, axis=1)
     .plot(ylabel="Cost of current water pollution (million DKK, 2018 prices)")
     .get_figure()
 )
-f2.savefig("output\\all_cost_real.pdf", bbox_inches="tight")
+f2.savefig("output\\all_cost.pdf", bbox_inches="tight")
 
 # Investment value in real terms (million DKK, 2018 prices)
 IV_v = c.valuation(df_BT, investment=True)
 IV = IV_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
-IV.rename_axis([None, None], axis=1).to_csv("output\\all_investment_real.csv")
+IV.rename_axis([None, None], axis=1).to_csv("output\\all_investment.csv")
 f2 = (
     IV.loc[:, "IV"]
     .rename_axis(None, axis=1)
@@ -227,11 +227,11 @@ f2 = (
     )
     .get_figure()
 )
-f2.savefig("output\\all_investment_real.pdf", bbox_inches="tight")
+f2.savefig("output\\all_investment.pdf", bbox_inches="tight")
 
 
 ########################################################################################
-#   5. Decompose growth by holding everything else equal
+#   5. Decompose development by holding everything else equal
 ########################################################################################
 
 
