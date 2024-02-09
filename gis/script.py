@@ -196,44 +196,8 @@ IVn.columns = IVn.columns.set_levels(
 
 # Merge cost of pollution and investment value of increase (decrease) in water quality
 nominal = pd.concat([CWPn, IVn], axis=1)
-# Alternative to the code below, in case it doesn't behave
-# nominal.to_excel("output\\all_nominal.xlsx")  # manually left-align row 1 in Excel
+nominal.to_excel("output\\all_nominal.xlsx")  # manually left-align row 1 & delete row 3
 
-# Create a Pandas Excel writer using XlsxWriter as the engine
-writer = pd.ExcelWriter("output\\all_nominal.xlsx", engine="xlsxwriter")
-
-# Write the DataFrame data to the Excel file without the headers
-nominal.to_excel(writer, sheet_name="Sheet1", header=False, startrow=2)  # new start row
-
-# Get the XlsxWriter workbook and worksheet objects
-workbook = writer.book
-worksheet = writer.sheets["Sheet1"]
-
-# Create a format for left alignment
-left_align_format = workbook.add_format({"align": "left"})
-
-# Write the index with the defined format
-for row_num, value in enumerate(nominal.index):
-    worksheet.write(
-        row_num + 3, 0, value, left_align_format
-    )  # +3 to adjust for header rows
-
-# Write the column headers with the defined format
-for col_num, (level1, level2) in enumerate(nominal.columns):
-    # Write the first level of the MultiIndex every three columns
-    if col_num % 3 == 0:
-        worksheet.write(0, col_num + 1, level1, left_align_format)
-    # Write the second level of the MultiIndex every column
-    worksheet.write(1, col_num + 1, level2, left_align_format)
-
-# Close the Pandas Excel writer and output the Excel file
-writer.close()  #  manually delete the empty third row in Excel
-
-"""
-Ok, as the last command, this code needs to delete the empty third row.
-
-Remember that column names are a multiindex structure that I need to preserve. The first level only takes on a value every third column while the second level takes on a value every column.
-"""
 
 ########################################################################################
 #   4.c
