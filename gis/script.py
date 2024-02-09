@@ -227,7 +227,7 @@ for col_num, (level1, level2) in enumerate(nominal.columns):
     worksheet.write(1, col_num + 1, level2, left_align_format)
 
 # Close the Pandas Excel writer and output the Excel file
-writer.close()
+writer.close()  #  manually delete the empty third row in Excel
 
 """
 Ok, as the last command, this code needs to delete the empty third row.
