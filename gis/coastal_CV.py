@@ -31,22 +31,20 @@ from sklearn.metrics import accuracy_score
 # Iterative imputer using the BayesianRidge() estimator with increased tolerance
 imputer = IterativeImputer(tol=1e-1, max_iter=100, random_state=0)
 
-# Color-blind-friendly color cycle, modified from: gist.github.com/thriveth/8560036
+# Color-blind-friendly color scheme for qualitative data by Tol: personal.sron.nl/~pault
 colors = {
-    "blue": "#377eb8",
-    "orange": "#ff7f00",
-    "gray": "#999999",  #  moved up to be used for ecological status of observed lakes
-    "green": "#4daf4a",
-    "pink": "#f781bf",
-    "brown": "#a65628",
-    "purple": "#984ea3",
-    "yellow": "#dede00",
-    # "red": "#e41a1c",  #  moved down and out-commented to match length of linestyle
+    "blue": "#4477AA",
+    "cyan": "#66CCEE",
+    "green": "#228833",
+    "yellow": "#CCBB44",
+    "red": "#EE6677",
+    "purple": "#AA3377",
+    "grey": "#BBBBBB",  #  moved up to be used for eco status of observed coastal waters
 }
 
 # Set the default property-cycle and figure size for pyplots
-color_cycler = cycler(color=list(colors.values()))
-linestyle_cycler = cycler(linestyle=["-", "--", ":", "-.", "-", "--", ":", "-."])
+color_cycler = cycler(color=list(colors.values()))  #  color cycler with 7 colors
+linestyle_cycler = cycler(linestyle=["-", "--", ":", "-.", "-", "--", ":"])  #  7 styles
 plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
 plt.rc("figure", figsize=[12, 7.4])  #  golden ratio for appendix with wide margins
 
@@ -103,7 +101,7 @@ dfEcoObs = pd.read_csv("output/coastal_eco_obs.csv", index_col="wb")
 dfEcoObs.columns = dfEcoObs.columns.astype(int)
 dfVP = pd.read_csv("output\\coastal_VP.csv", index_col="wb")
 
-# Share of water bodies by number of non-missing values
+# Share of waterbodies by number of non-missing values
 for n in range(0, len(dfEcoObs.columns) + 1):
     n, round(100 * sum(dfEcoObs.notna().sum(axis=1) == n) / len(dfEcoObs), 2)  # percent
 dfEcoObs.count().count()
@@ -147,13 +145,13 @@ dict1 = {
     "North Sea fjord": "Vf",  # Vesterhavsfjord
 }
 dict2 = {
-    "water exchange": "Vu",  # vandudveksling
-    "freshwater inflow": "F",  # ferskvandspåvirkning
-    "depth": "D",  # vanddybde
-    "stratification": "L",  # lagdeling
-    "sediment": "Se",  # sediment
-    "salinity": "Sa",  # salinitet
-    "tide": "T",  # tidevand
+    "Water exchange": "Vu",  # vandudveksling
+    "Freshwater inflow": "F",  # ferskvandspåvirkning
+    "Deep": "D",  # vanddybde
+    "Stratified": "L",  # lagdeling
+    "Sediment": "Se",  # sediment
+    "Saline": "Sa",  # salinitet
+    "Tide": "T",  # tidevand
 }
 
 # Reverse the dictionaries so the abbreviations are the keys
@@ -172,8 +170,8 @@ cols = ["No", "K", "B", "Ø", "Fj", "Vf", "Vu", "F", "D", "L", "Se", "Sa", "T"]
 # Merge DataFrames for typology and observed ecological status
 dfTypology = dfObs.merge(dummies[cols], on="wb")
 
-# Subset dfTypology to water bodies where ecological status is observed at least once
-obs = dfTypology.loc[dfEcoObs.notna().any(axis=1)]  #  96 out of 108 water bodies
+# Subset dfTypology to waterbodies where ecological status is observed at least once
+obs = dfTypology.loc[dfEcoObs.notna().any(axis=1)]  #  96 out of 108 waterbodies
 
 # df for storing number of observed coastal waters and yearly distribution by dummies
 d = pd.DataFrame(dfEcoObs.count(), index=dfEcoObs.columns, columns=["n"]).astype(int)
@@ -184,9 +182,9 @@ for c in cols:
     d.loc["Obs of n", c] = 100 * len(obs[obs[c] == 1]) / len(obs)
     d.loc["Obs of all", c] = 100 * len(obs[obs[c] == 1]) / len(dfVP)
     d.loc["All VP3", c] = 100 * len(dummies[dummies[c] == 1]) / len(dfVP)
-d.loc["Obs of n", "n"] = len(obs)  #  number of water bodies observed at least once
-d.loc["Obs of all", "n"] = len(dfVP)  #  number of water bodies in VP3
-d.loc["All VP3", "n"] = len(dfVP)  #  number of water bodies in VP3
+d.loc["Obs of n", "n"] = len(obs)  #  number of waterbodies observed at least once
+d.loc["Obs of all", "n"] = len(dfVP)  #  number of waterbodies in VP3
+d.loc["All VP3", "n"] = len(dfVP)  #  number of waterbodies in VP3
 d = d.rename(columns=dicts)  #  rename columns to full names
 d.to_csv("output/coastal_VP_stats.csv")  #  save distributions to csv
 d.loc[("Obs of n", "Obs of all", "All VP3"), :].T  #  report in percent
@@ -502,13 +500,14 @@ status.to_csv("output/coastal_eco_imp_LessThanGood.csv")
 ########################################################################################
 #   3. Visualization: Accuracy and share with less than good ecological status by year
 ########################################################################################
-# Read accuracy scores and share with less than good ecological status from CSV
+# Skip step 2 by reading DataFrames of accuracy score and ecological status from CSV
 # scores = pd.read_csv("output/coastal_eco_imp_accuracy.csv", index_col=0)
 sco = scores.drop(columns="n").drop("Total")
 # status = pd.read_csv("output/coastal_eco_imp_LessThanGood.csv", index_col=0)
-# sta = status[["No dummies", "Typology", "Typology & DK2", "Obs"]].drop("Total")
-# sta.columns = ["No dummies", "Typology", "Typology & DK2", "Observed"]  #  rename 'Obs'
-sta = status.drop(columns="n").drop("Total")
+imp = status.drop(columns=["n", "Obs"]).drop("Total")  #  imputed status by predictors
+obs = status[["Obs"]].drop("Total")  #  df for eco status of observed costal waters
+obs.columns = ["Observed"]  #  rename 'Obs' to 'Observed'
+sta = imp.merge(obs, left_index=True, right_index=True)  #  add Observed as last column
 
 # Bar plot accuracy scores
 f1 = sco.plot(
@@ -521,9 +520,3 @@ f2 = sta.plot(
     ylabel="Share of coastal waters with less than good ecological status"
 ).get_figure()
 f2.savefig("output/coastal_eco_imp_LessThanGood.pdf", bbox_inches="tight")
-
-# Bar plot share of coastal waters with less than good ecological status
-# f3 = sta.plot(
-#     kind="bar", ylabel="Share of coastal waters with less than good ecological status"
-# ).get_figure()
-# f3.savefig("output/coastal_eco_imp_LessThanGood_bar.pdf", bbox_inches="tight")

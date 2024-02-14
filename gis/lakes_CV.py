@@ -31,22 +31,20 @@ from sklearn.metrics import accuracy_score
 # Iterative imputer using the BayesianRidge() estimator with increased tolerance
 imputer = IterativeImputer(tol=1e-1, max_iter=100, random_state=0)
 
-# Color-blind-friendly color cycle, modified from: gist.github.com/thriveth/8560036
+# Color-blind-friendly color scheme for qualitative data by Tol: personal.sron.nl/~pault
 colors = {
-    "blue": "#377eb8",
-    "orange": "#ff7f00",
-    "gray": "#999999",  #  moved up to be used for ecological status of observed lakes
-    "green": "#4daf4a",
-    "pink": "#f781bf",
-    "brown": "#a65628",
-    "purple": "#984ea3",
-    "yellow": "#dede00",
-    # "red": "#e41a1c",  #  moved down and out-commented to match length of linestyle
+    "blue": "#4477AA",
+    "cyan": "#66CCEE",
+    "grey": "#BBBBBB",  #  moved up to be used for ecological status of observed lakes
+    "green": "#228833",
+    "yellow": "#CCBB44",
+    "red": "#EE6677",
+    "purple": "#AA3377",
 }
 
 # Set the default property-cycle and figure size for pyplots
-color_cycler = cycler(color=list(colors.values()))
-linestyle_cycler = cycler(linestyle=["-", "--", ":", "-.", "-", "--", ":", "-."])
+color_cycler = cycler(color=list(colors.values()))  #  color cycler with 7 colors
+linestyle_cycler = cycler(linestyle=["-", "--", ":", "-.", "-", "--", ":"])  #  7 styles
 plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
 plt.rc("figure", figsize=[12, 7.4])  #  golden ratio for appendix with wide margins
 
@@ -67,7 +65,7 @@ def AccuracyScore(y_true, y_pred):
     return accuracy_score(eco_true[0], eco_pred[0])
 
 
-def stepwise_selection(data, subset, dummies, years):
+def stepwise_selection(subset, dummies, data, dfDummies, years):
     """Forward stepwise selection of predictors p to include in the model."""
     predictors = ["No dummies"] + dummies  #  list of possible predictors to include
     selected = []  #  empty list for storing selected predictors
@@ -94,8 +92,8 @@ def stepwise_selection(data, subset, dummies, years):
                 df.name = "No dummies"  #  name baseline model
             else:
                 predictors_used = selected + [p]  #  selected predictors remain in model
-                df = data.merge(dfDistrict[predictors_used], on="wb")
-                df.name = "".join(predictors_used)  #  name model after predictors used
+                df = data.merge(dfDummies[predictors_used], on="wb")
+                df.name = ", ".join(predictors_used)  #  name model after its predictors
             names.append(df.name)  #  add model name to list of model names
 
             # Estimate share with less than good ecological status
@@ -111,7 +109,7 @@ def stepwise_selection(data, subset, dummies, years):
             # Store predicted share with less than good ecological status
             sta[df.name] = (dfImpSubset[subset.columns] < 2.5).sum() / len(subset)
 
-            # loop over each year t and each water body i in (subset of) observed lakes
+            # loop over each year t and waterbody i in (subset of) observed waterbodies
             for t in tqdm.tqdm(years):  #  time each model and report progress in years
                 y = subset[subset[t].notnull()].index  #  index for LOO-CV at year t
                 Y = pd.DataFrame(index=y)  #  empty df for observed and predicted values
@@ -151,8 +149,7 @@ def stepwise_selection(data, subset, dummies, years):
 
             # Saves scores and status by year for the predictor with the new best score
             for a, b in zip([scores, status], [sco, sta]):
-                a[names[i]] = b[names[i]]
-            # scores[names[i]] = sco[names[i]]  #  save scores by year for best predictor
+                a[names[i]] = b[names[i]]  #  scores & status by year for best predictor
 
             # Move predictor with the best new score from "predictors" to "selected"
             selected.append(predictors.pop(i))
@@ -172,11 +169,11 @@ def stepwise_selection(data, subset, dummies, years):
 
     # Save accuracy scores and share with less than good ecological status to CSV
     if subset is sparse:
-        scores.to_csv("output/lakes_eco_imp_accuracy_sparse.csv")
-        status.to_csv("output/lakes_eco_imp_LessThanGood_sparse.csv")
+        scores.to_csv("output/waterbodies_eco_imp_accuracy_sparse.csv")
+        status.to_csv("output/waterbodies_eco_imp_LessThanGood_sparse.csv")
     else:
-        scores.to_csv("output/lakes_eco_imp_accuracy.csv")
-        status.to_csv("output/lakes_eco_imp_LessThanGood.csv")
+        scores.to_csv("output/waterbodies_eco_imp_accuracy.csv")
+        status.to_csv("output/waterbodies_eco_imp_LessThanGood.csv")
 
     return selected, scores, status  #  selected predictors; scores and stats by year
 
@@ -195,7 +192,7 @@ dfEcoObs = pd.read_csv("output/lakes_eco_obs.csv", index_col="wb")
 dfEcoObs.columns = dfEcoObs.columns.astype(int)
 dfVP = pd.read_csv("output\\lakes_VP.csv", index_col="wb")
 
-# Share of water bodies by number of non-missing values
+# Share of waterbodies by number of non-missing values
 for n in range(0, len(dfEcoObs.columns) + 1):
     n, round(100 * sum(dfEcoObs.notna().sum(axis=1) == n) / len(dfEcoObs), 2)  # percent
 
@@ -250,7 +247,7 @@ cols = ["Alkalinity", "Brown", "Saline", "Deep"]
 # Merge DataFrames for typology and observed ecological status
 dfTypology = dfObs.merge(typ[cols], on="wb")
 
-# Create dummies for water body districts
+# Create dummies for waterbody districts
 distr = pd.get_dummies(dfVP["distr_id"]).astype(int)
 
 # Extend dfTypology with dummy for district DK2 (Sealand, Lolland, Falster, and Møn)
@@ -258,69 +255,67 @@ dfDistrict = dfTypology.merge(distr["DK2"], on="wb")
 dfSparse = dfDistrict.merge(sparse[[]], on="wb")  #  subset w. status observed 1-4 times
 cols.append("DK2")
 
-# Empty DataFrame for storing distribution of typology in
-VPstats = pd.DataFrame(columns=["Obs", "Sparse", "All VP3"])
+# Empty DataFrame for storing total distribution by dummies
+VPstats = pd.DataFrame(columns=["Sparse subset", "Observed subset", "All in VP3"])
 
-# Yearly distribution of observed coastal waters by typology and district
+# Yearly distribution of observed lakes by typology and district
 for a, b in zip([dfEcoObs, sparse], [dfDistrict, dfSparse]):
-    # Subset dfDistrict to water bodies where ecological status is observed at least once
-    obs = b.loc[a.notna().any(axis=1)]  #  779 out of 986 water bodies in dfDistrict
+    # Subset dfDistrict to lakes where ecological status is observed at least once
+    obs = b.loc[a.notna().any(axis=1)]  #  779 out of 986 lakes in dfDistrict
 
-    # df for storing number of observed coastal waters and yearly distribution by dummies
+    # df for storing number of observed lakes and yearly distribution by dummies
     d = pd.DataFrame(a.count(), index=a.columns, columns=["n"]).astype(int)
 
-    # Yearly distribution of observed coastal waters by typology and district
+    # Yearly distribution of observed lakes by typology and district
     for c in cols:
         d[c] = 100 * b[b[c] == 1].count() / b.count()
         d.loc["Obs of n", c] = 100 * len(obs[obs[c] == 1]) / len(obs)
         d.loc["Obs of all", c] = 100 * len(obs[obs[c] == 1]) / len(dfVP)
-        d.loc["All VP3", c] = 100 * len(dfDistrict[dfDistrict[c] == 1]) / len(dfVP)
-    d.loc["Obs of n", "n"] = len(obs)  #  number of water bodies observed at least once
-    d.loc["Obs of all", "n"] = len(dfVP)  #  number of water bodies in VP3
-    d.loc["All VP3", "n"] = len(dfVP)  #  number of water bodies in VP3
+        d.loc["All in VP3", c] = 100 * len(dfDistrict[dfDistrict[c] == 1]) / len(dfVP)
+    d.loc["Obs of n", "n"] = len(obs)  #  number of lakes observed at least once
+    d.loc["Obs of all", "n"] = len(dfVP)  #  number of lakes in VP3
+    d.loc["All in VP3", "n"] = len(dfVP)  #  number of lakes in VP3
 
     if b is dfSparse:
-        VPstats["Sparse"] = d.loc["Obs of n", :]  #  save distribution of sparse df
+        VPstats["Sparse subset"] = d.loc["Obs of n", :]  #  distribution in sparse df
         d.to_csv("output/lakes_VP_stats_sparse.csv")  #  save to CSV
     else:
-        VPstats["Obs"] = d.loc["Obs of n", :]  #  save distribution of all observations
-        VPstats["All VP3"] = d.loc["All VP3", :]  #  save distribution of all in VP3
-        d.to_csv("output/lakes_VP_stats.csv")  #  save to CSV
+        VPstats["Observed subset"] = d.loc["Obs of n", :]  #  distribution of observed
+        VPstats["All in VP3"] = d.loc["All in VP3", :]  #  distribution of all in VP3
+        d.to_csv("output/lakes_VP_stats.csv")  #  save distributions to CSV
 VPstats  #  overrepresentation of Brown and Saline lakes in sparse (share is ~50% above)
 
-
 ########################################################################################
-#   2 Multivariate feature imputation (note: LOO-CV takes ≤ 1 hour for each model)
+#   2. Multivariate feature imputation (note: Forward Stepwise Selection takes ~6 hours)
 ########################################################################################
-# # Example data for testing LOO-CV (takes ~5 seconds rather than hours to run)
+# # Example data for testing Forward Stepwise Selection with LOO-CV (takes ~5 seconds)
 # dfEcoObs = pd.DataFrame(
 #     {
-#         1988: [0.5, 1.0, 1.5, 2.0, np.nan, 3.0, 3.5],
-#         1989: [0.6, 1.1, 1.6, np.nan, 2.6, 3.1, 3.6],
-#         1990: [0.7, 1.2, np.nan, 2.2, 2.7, 3.2, 3.7],
-#         1991: [0.8, np.nan, 1.8, 2.3, 2.8, 3.3, 3.8],
-#         1992: [np.nan, 1.4, 1.9, 2.4, 2.9, 3.4, 3.9],
-#         1993: [1.0, 1.3, 2.1, 2.4, 3.0, 3.5, 4.0],
+#         1988: [0.5, 1.0, 1.5, 2.0, np.nan, 3.0],
+#         1989: [0.6, 1.1, 1.6, np.nan, 2.6, 3.1],
+#         1990: [0.7, 1.2, np.nan, 2.2, 2.7, 3.2],
+#         1991: [0.8, np.nan, 1.8, 2.3, 2.8, 3.3],
+#         1992: [np.nan, 1.4, 1.9, 2.4, 2.9, 3.4],
+#         1993: [1.0, 1.5, 1.8, 2.4, 3.1, 3.5],
 #     }
 # )
 # dfEcoObs.index.name = "wb"
 # sparse = dfEcoObs[dfEcoObs.notna().sum(axis=1) == 5]
 # dfObs = dfEcoObs.copy()
 # dfTypology = dfObs.copy()
-# dfTypology["Brown"] = [0, 1, 0, 1, 0, 0, 0]  #  effect: 0.2 worse in 1993
+# dfTypology["Brown"] = [0, 0, 1, 1, 0, 0]  #  effect: 0.2 worse in 1993
 # dfDistrict = dfTypology.copy()
-# dfDistrict["DK2"] = [0, 0, 1, 1, 0, 0, 0]  #  effect: 0.1 better in 1993
-# cols = ["Brown", "DK2"]
+# dfDistrict["DK1"] = [0, 0, 0, 1, 1, 0]  #  effect: 0.1 better in 1993
+# cols = ["Brown", "DK1"]
 # years = list(range(1989, 1993 + 1))
 
-
 # Forward stepwise selection of dummies - CV over subset of sparsely observed lakes
-kwargs = {"data": dfObs, "dummies": cols, "years": years}  #  shared keyword arguments
+kwargs = {"dummies": cols, "data": dfObs, "dfDummies": dfDistrict, "years": years}
 selectedSparse, scoresSparse, statusSparse = stepwise_selection(subset=sparse, **kwargs)
 scoresSparse
 statusSparse
 
-# Selection of dummies from the subset selection above - CV over all observed values
+# Forward stepwise selection of dummies - CV over all observed values in all lakes
 selected, scores, status = stepwise_selection(subset=dfEcoObs, **kwargs)
 scores
 status
@@ -328,7 +323,7 @@ status
 ########################################################################################
 #   3. Visualization: Accuracy and share with less than good ecological status by year
 ########################################################################################
-# Read accuracy scores and share with less than good ecological status from CSV
+# Skip step 2 by reading DataFrames of accuracy score and ecological status from CSV
 # scores = pd.read_csv("output/lakes_eco_imp_accuracy.csv", index_col=0)
 sco = scores.drop(columns="n").drop("Total")
 sco.columns = ["No dummies", "Saline dummy"]  #  elaborate on "Saline" column name
