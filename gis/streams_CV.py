@@ -65,7 +65,7 @@ def AccuracyScore(y_true, y_pred):
     return accuracy_score(eco_true[0], eco_pred[0])
 
 
-def stepwise_selection(subset, dummies, data, dfDummies, years, use_order=False):
+def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False):
     """Forward stepwise selection of predictors p to include in the model."""
     predictors = ["No dummies"] + dummies  #  list of possible predictors to include
     selected = []  #  empty list for storing selected predictors
@@ -142,32 +142,39 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, use_order=False)
             if p == "No dummies":
                 break  #  save baseline model before stepwise selection of dummies
 
-            elif use_order is True:
-                break  #  only attempt to add dummies in the order they are listed
+            elif select_all is True:
+                break  #  proceed to select every predictor in the order they are listed
 
-        best_new_score = max(scores_total)  #  best score
-        if best_new_score > current_score:
+        best_new_score = max(scores_total)  #  best accuracy score among predictors
+
+        if select_all is True:
+            current_score = best_new_score  #  update current score to continue process
+
+            # Move the given dummy from the list of predictors to the list of selected
+            selected.append(predictors.pop(0))
+
+            # Save scores and status by year subject to the selected set of predictors
+            for a, b in zip([scores, status], [sco, sta]):
+                a[names[0]] = b[names[0]]  #  scores & status by year for predictor
+
+        elif best_new_score > current_score:
             current_score = best_new_score  #  update current score
             i = scores_total.index(best_new_score)  #  index for predictor w. best score
 
-            # Saves scores and status by year for the predictor with the new best score
-            for a, b in zip([scores, status], [sco, sta]):
-                a[names[i]] = b[names[i]]  #  scores & status by year for best predictor
-
-            # Move predictor with the best new score from "predictors" to "selected"
+            # Move dummy with the best new score from the list of predictors to selected
             selected.append(predictors.pop(i))
 
-            if p == "No dummies":
-                selected = []  #  after baseline model, start actual stepwise selection
-
-        elif use_order is True:
-            # Drop predictor with inferior score from "predictors" to "selected"
-            del predictors[i]
+            # Save scores and status by year subject to the selected set of predictors
+            for a, b in zip([scores, status], [sco, sta]):
+                a[names[i]] = b[names[i]]  #  scores & status by year for best predictor
 
         else:  #  if best_new_score == current_score (i.e., identical accuracy score)
             break  #  stop stepwise selection
 
-        if predictors == []:  #  if all predictors have been included in the best model
+        if p == "No dummies":
+            selected = []  #  after baseline model, start actual stepwise selection
+
+        elif predictors == []:  #  if all predictors have been included
             break  #  stop stepwise selection
 
     # Total number of observations that LOO-CV was performed over
@@ -351,7 +358,7 @@ statusSparse
 
 # Selection of dummies from the dummies selected above - CV over all observed values
 selected, scores, status = stepwise_selection(
-    subset=dfIndObs, dummies=selectedSparse, use_order=True, **kwargs
+    subset=dfIndObs, dummies=selectedSparse, select_all=True, **kwargs
 )
 scores
 status

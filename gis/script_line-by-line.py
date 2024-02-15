@@ -22,32 +22,31 @@ Author:     Thor Donsby Noe
 import os
 
 import arcpy
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
-
-# To use the experimental imputation feature, we must explicitly ask for it:
-from matplotlib import pyplot as plt
+from cycler import cycler
 from scipy import interpolate
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
 
-# Color-blind-friendly ordinal scale, modified from: gist.github.com/thriveth/8560036
-ColorCycle = {
-    "blue": "#377eb8",
-    "orange": "#ff7f00",
-    "green": "#4daf4a",
-    "gray": "#999999",  #  moved up
-    "pink": "#f781bf",
-    "brown": "#a65628",
-    "purple": "#984ea3",
-    "yellow": "#dede00",
-    "red": "#e41a1c",  #  moved down
+# Color-blind-friendly color scheme for qualitative data by Tol: personal.sron.nl/~pault
+colors = {
+    "blue": "#4477AA",
+    "cyan": "#66CCEE",
+    "green": "#228833",
+    "yellow": "#CCBB44",
+    "red": "#EE6677",
+    "purple": "#AA3377",
+    "grey": "#BBBBBB",
 }
 
-# Set the default color map and figure size for pyplots
-plt.rcParams["axes.prop_cycle"] = plt.cycler("color", list(ColorCycle.values()))
-plt.rcParams["figure.figsize"] = [10, 6.18]  #  golden ratio (paper with narrow margins)
+# Set the default property-cycle and figure size for pyplots
+color_cycler = cycler(color=list(colors.values()))  #  color cycler with 7 colors
+linestyle_cycler = cycler(linestyle=["-", "--", ":", "-.", "-", "--", ":"])  #  7 styles
+plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
+plt.rc("figure", figsize=[10, 6.2])  #  golden ratio
 
 ########################################################################################
 #   1. Setup

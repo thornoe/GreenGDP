@@ -70,24 +70,20 @@ class Water_Quality:
         self.path = os.getcwd()
         self.arcPath = self.path + "\\gis.gdb"
 
-        # Color-blind-friendly colors, modified from: gist.github.com/thriveth/8560036
+        # Color-blind-friendly color scheme by Paul Tol: https://personal.sron.nl/~pault
         colors = {
-            "blue": "#377eb8",
-            "orange": "#ff7f00",
-            "green": "#4daf4a",
-            "gray": "#999999",  #  moved up
-            "pink": "#f781bf",
-            "brown": "#a65628",
-            "purple": "#984ea3",
-            # "red": "#e41a1c",  #  out-commented to match length of linestyle
-            "yellow": "#dede00",
+            "blue": "#4477AA",
+            "cyan": "#66CCEE",
+            "green": "#228833",
+            "yellow": "#CCBB44",
+            "red": "#EE6677",
+            "purple": "#AA3377",
+            "grey": "#BBBBBB",
         }
 
         # Set the default property-cycle and figure size for pyplots
-        color_cycler = cycler(color=list(colors.values()))
-        linestyle_cycler = cycler(
-            linestyle=["-", "--", ":", "-.", "-", "--", ":", "-."]
-        )
+        color_cycler = cycler(color=list(colors.values()))  #  color cycler w. 7 colors
+        linestyle_cycler = cycler(linestyle=["-", "--", ":", "-.", "-", "--", ":"])  # 7
         plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
         plt.rc("figure", figsize=[10, 6.2])  #  golden ratio
 
@@ -265,8 +261,8 @@ class Water_Quality:
                     pd.concat([DVFI_F, DVFI_M, DVFI, DVFI2]).groupby("station").last()
                 )
 
-            else:
-                # Create longitudinal df for stations in lakes and coastal waters
+            else:  #  lakes and coastal waters
+                # Create longitudinal df for stations
                 long = self.longitudinal(
                     j,
                     f=self.data[j][0],

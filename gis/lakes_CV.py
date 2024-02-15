@@ -147,12 +147,12 @@ def stepwise_selection(subset, dummies, data, dfDummies, years):
             current_score = best_new_score  #  update current score
             i = scores_total.index(best_new_score)  #  index for predictor w. best score
 
-            # Saves scores and status by year for the predictor with the new best score
+            # Move dummy with the best new score from the list of predictors to selected
+            selected.append(predictors.pop(i))
+
+            # Save scores and status by year subject to the selected set of predictors
             for a, b in zip([scores, status], [sco, sta]):
                 a[names[i]] = b[names[i]]  #  scores & status by year for best predictor
-
-            # Move predictor with the best new score from "predictors" to "selected"
-            selected.append(predictors.pop(i))
 
             if p == "No dummies":
                 selected = []  #  after baseline model, start actual stepwise selection

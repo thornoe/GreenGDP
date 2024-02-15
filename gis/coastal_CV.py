@@ -87,6 +87,115 @@ def AccuracyScore(y_true, y_pred):
     return accuracy_score(eco_true[0], eco_pred[0])
 
 
+def stepwise_selection(subset, dummies, data, dfDummies, years):
+    """Forward stepwise selection of predictors p to include in the model."""
+    predictors = ["No dummies"] + dummies  #  list of possible predictors to include
+    selected = []  #  empty list for storing selected predictors
+    current_score, best_new_score = 0.0, 0.0  #  initial scores
+
+    # DataFrame for storing accuracy scores by year and calculating weighted average
+    scores = pd.DataFrame(subset.count(), index=years, columns=["n"]).astype(int)
+    scores.loc["Total", "n"] = np.nan  #  row to calculate weighted average of scores
+
+    # DataFrame for storing ecological status by year and calculating weighted average
+    status = pd.DataFrame(subset.count(), index=subset.columns, columns=["n"])
+    status["Obs"] = (subset < 2.5).sum() / status["n"]  #  ecological status < good
+    status.loc["Total", "Obs"] = (status["Obs"] * status["n"]).sum() / status["n"].sum()
+
+    while current_score == best_new_score:
+        names = []  #  empty list for storing model names
+        scores_total = []  #  empty list for storing total score for each predictor
+        sco = scores[["n"]].copy()  #  df for calculating weighted average of scores
+        sta = status[["n"]].copy()  #  df for calculating weighted average of status
+
+        for p in predictors:
+            if p == "No dummies":  #  baseline model without any dummies
+                df = data.copy()
+                df.name = "No dummies"  #  name baseline model
+            else:
+                predictors_used = selected + [p]  #  selected predictors remain in model
+                df = data.merge(dfDummies[predictors_used], on="wb")
+                df.name = ", ".join(predictors_used)  #  name model after its predictors
+            names.append(df.name)  #  add model name to list of model names
+
+            # Estimate share with less than good ecological status
+            dfImp = pd.DataFrame(
+                imputer.fit_transform(np.array(df)), index=df.index, columns=df.columns
+            )
+
+            # Subset to rows in "subset"
+            dfImpSubset = dfImp.loc[
+                subset.index, subset.columns
+            ]  # CAN I ADD COLS HERE?
+
+            # Store predicted share with less than good ecological status
+            sta[df.name] = (dfImpSubset[subset.columns] < 2.5).sum() / len(subset)
+
+            # loop over each year t and waterbody i in (subset of) observed waterbodies
+            for t in tqdm.tqdm(years):  #  time each model and report progress in years
+                y = subset[subset[t].notnull()].index  #  index for LOO-CV at year t
+                Y = pd.DataFrame(index=y)  #  empty df for observed and predicted values
+                Y["true"] = df.loc[y, t]  #  column with the observed ('true') values
+                Y["pred"] = pd.NA  #  empty column for storing predicted values
+                for i in y:  #  loop over each observed value at year t
+                    X = df.copy()  #  use a copy of the given DataFrame
+                    X.loc[i, t] = pd.NA  #  set the observed value as missing
+                    # Fit imputer and transform the dataset
+                    X_imp = pd.DataFrame(
+                        imputer.fit_transform(np.array(X)),
+                        index=X.index,
+                        columns=X.columns,
+                    )
+                    Y.loc[i, "pred"] = X_imp.loc[i, t]  #  store predicted value
+
+                # Accuracy of predicted ecological status
+                accuracy = AccuracyScore(Y["true"], Y["pred"])
+
+                # Save accuracy score each year to DataFrame for scores
+                sco.loc[t, df.name] = accuracy
+
+            # Total accuracy weighted by number of observations used for LOO-CV each year
+            for s in (sco, sta):
+                s.loc["Total", df.name] = (s[df.name] * s["n"]).sum() / s["n"].sum()
+            scores_total.append(sco.loc["Total", df.name])  #  score for each predictor
+
+            print(df.name, "used for imputation. Accuracy score:", scores_total[-1])
+
+            if p == "No dummies":
+                break  #  save baseline model before stepwise selection of dummies
+
+        best_new_score = max(scores_total)  #  best score
+        if best_new_score > current_score:
+            current_score = best_new_score  #  update current score
+            i = scores_total.index(best_new_score)  #  index for predictor w. best score
+
+            # Move dummy with the best new score from the list of predictors to selected
+            selected.append(predictors.pop(i))
+
+            # Save scores and status by year subject to the selected set of predictors
+            for a, b in zip([scores, status], [sco, sta]):
+                a[names[i]] = b[names[i]]  #  scores & status by year for best predictor
+
+            if p == "No dummies":
+                selected = []  #  after baseline model, start actual stepwise selection
+
+        else:  #  if best_new_score == current_score
+            break  #  stop stepwise selection
+
+        if predictors == []:  #  if all predictors have been included in the best model
+            break  #  stop stepwise selection
+
+    # Total number of observations that LOO-CV was performed over
+    for s in (scores, status):
+        s.loc["Total", "n"] = s["n"].sum()
+
+    # Save accuracy scores and share with less than good ecological status to CSV
+    scores.to_csv("output/waterbodies_eco_imp_accuracy.csv")
+    status.to_csv("output/waterbodies_eco_imp_LessThanGood.csv")
+
+    return selected, scores, status  #  selected predictors; scores and stats by year
+
+
 ########################################################################################
 #   1. Data setup
 ########################################################################################
@@ -165,7 +274,8 @@ dicts = {**dict1, **dict2}
 dummies = typ["ov_typ"].apply(process_string).apply(pd.Series).fillna(0).astype(int)
 
 # Dummies for typology
-cols = ["No", "K", "B", "Ø", "Fj", "Vf", "Vu", "F", "D", "L", "Se", "Sa", "T"]
+cols = list(dicts.keys())
+cols_names = list(dicts.values())
 
 # Merge DataFrames for typology and observed ecological status
 dfTypology = dfObs.merge(dummies[cols], on="wb")
@@ -191,311 +301,20 @@ d.loc[("Obs of n", "Obs of all", "All VP3"), :].T  #  report in percent
 
 
 ########################################################################################
-#   2. Multivariate feature imputation
-#   2.a Compare inclusion of single variables (LOO-CV takes ≤ 1 hour for each model)
+#   2. Multivariate feature imputation (note: Forward Stepwise Selection takes ~6 hours)
 ########################################################################################
-# DataFrame for storing accuracy scores by year and calculating weighted average
-scores = pd.DataFrame(dfEcoObs.count(), index=years, columns=["n"]).astype(int)
-
-# DataFrame for storing ecological status by year and calculating weighted average
-status = pd.DataFrame(dfEcoObs.count(), index=dfEcoObs.columns, columns=["n"])
-status["Obs"] = (dfEcoObs < 2.5).sum() / status["n"]  #  ecological status < good
-status.loc["Total", "Obs"] = (status["Obs"] * status["n"]).sum() / status["n"].sum()
-
-# Compare inclusion of single variables using leave-one-out cross-validation (LOO-CV)
-for name in [
-    "No dummies",
-    "No",
-    "K",
-    "B",
-    "Ø",
-    "Fj",
-    "Vf",
-    "Vu",
-    "F",
-    "D",
-    "L",
-    "Se",
-    "Sa",
-    "T",
-]:  #  LOO-CV of models using different dummies
-    if name == "No dummies":
-        df = dfObs.copy()
-    else:
-        df = dfObs.merge(dfTypology[name], on="wb")
-    df.name = name  #  name DataFrame for each model
-
-    # Estimate share with less than good ecological status
-    df_imp = pd.DataFrame(
-        imputer.fit_transform(np.array(df)), index=df.index, columns=df.columns
-    )
-
-    # Store predicted share with less than good ecological status
-    status[df.name] = (df_imp[dfEcoObs.columns] < 2.5).sum() / len(df)
-
-    # loop over each year t
-    print(df.name, "used for imputation. LOO-CV of observed coastal waters each year:")
-    for t in tqdm.tqdm(years):  #  time each model and report its progress in years
-        y = df[df[t].notnull()].index  #  index for observed values at year t
-        Y = pd.DataFrame(index=y)  #  empty df for observed and predicted values
-        Y["true"] = df.loc[y, t]  #  column with the observed ('true') values
-        Y["pred"] = pd.NA  #  empty column for storing predicted values
-        for i in y:  #  loop over each observed value at year t
-            X = df.copy()  #  use a copy of the given DataFrame
-            X.loc[i, t] = pd.NA  #  set the observed value as missing
-            # Fit imputer and transform the dataset
-            X_imp = pd.DataFrame(
-                imputer.fit_transform(np.array(X)), index=X.index, columns=X.columns
-            )
-            Y.loc[i, "pred"] = X_imp.loc[i, t]  #  store predicted value
-
-        # Accuracy of predicted ecological status
-        accuracy = AccuracyScore(Y["true"], Y["pred"])
-
-        # Save accuracy score each year to DataFrame for scores
-        scores.loc[t, df.name] = accuracy
-
-    # Totals weighted by number of observations
-    for s in (scores, status):
-        s.loc["Total", df.name] = (s[df.name] * s["n"]).sum() / s["n"].sum()
-
-# Change in accuracy or predicted status due to dummy (difference from "No dummies")
-scores.loc["Change", :] = scores.loc["Total", :] - scores.loc["Total", "No dummies"]
-scores.rename(columns=dicts).loc["Change", :] * 100  #  report in percentage points
-# freshwater "deep" worsens prediction accuracy (as a single dummy)
-
-# Total number of observations that LOO-CV was performed over
-for s in (scores, status):
-    s.loc["Total", "n"] = s["n"].sum()
-
-# List dummies that improve prediction accuracy
-cols_pos_single = [col for col in scores.columns if scores.loc["Change", col] > 0]
-
-# Save accuracy scores and share with less than good ecological status to CSV
-scores.to_csv("output/coastal_eco_imp_accuracy_single.csv")
-status.to_csv("output/coastal_eco_imp_LessThanGood_single.csv")
-
-########################################################################################
-#   2. Multivariate feature imputation
-#   2.a Compare inclusion of single variables (LOO-CV takes ≤ 1 hour for each model)
-########################################################################################
-# DataFrame for storing accuracy scores by year and calculating weighted average
-scores = pd.DataFrame(dfEcoObs.count(), index=years, columns=["n"]).astype(int)
-
-# DataFrame for storing ecological status by year and calculating weighted average
-status = pd.DataFrame(dfEcoObs.count(), index=dfEcoObs.columns, columns=["n"])
-status["Obs"] = (dfEcoObs < 2.5).sum() / status["n"]  #  ecological status < good
-status.loc["Total", "Obs"] = (status["Obs"] * status["n"]).sum() / status["n"].sum()
-
-# Compare inclusion of single variables using leave-one-out cross-validation (LOO-CV)
-for name in [
-    "No dummies",
-    "No",
-    "K",
-    "B",
-    "Ø",
-    "Fj",
-    "Vf",
-    "Vu",
-    "F",
-    "D",
-    "L",
-    "Se",
-    "Sa",
-    "T",
-]:  #  LOO-CV of models using different dummies
-    if name == "No dummies":
-        df = dfObs.copy()
-    else:
-        df = dfObs.merge(dfTypology[name], on="wb")
-    df.name = name  #  name DataFrame for each model
-
-    # Estimate share with less than good ecological status
-    df_imp = pd.DataFrame(
-        imputer.fit_transform(np.array(df)), index=df.index, columns=df.columns
-    )
-
-    # Store predicted share with less than good ecological status
-    status[df.name] = (df_imp[dfEcoObs.columns] < 2.5).sum() / len(df)
-
-    # loop over each year t
-    print(df.name, "used for imputation. LOO-CV of observed coastal waters each year:")
-    for t in tqdm.tqdm(years):  #  time each model and report its progress in years
-        y = df[df[t].notnull()].index  #  index for observed values at year t
-        Y = pd.DataFrame(index=y)  #  empty df for observed and predicted values
-        Y["true"] = df.loc[y, t]  #  column with the observed ('true') values
-        Y["pred"] = pd.NA  #  empty column for storing predicted values
-        for i in y:  #  loop over each observed value at year t
-            X = df.copy()  #  use a copy of the given DataFrame
-            X.loc[i, t] = pd.NA  #  set the observed value as missing
-            # Fit imputer and transform the dataset
-            X_imp = pd.DataFrame(
-                imputer.fit_transform(np.array(X)), index=X.index, columns=X.columns
-            )
-            Y.loc[i, "pred"] = X_imp.loc[i, t]  #  store predicted value
-
-        # Accuracy of predicted ecological status
-        accuracy = AccuracyScore(Y["true"], Y["pred"])
-
-        # Save accuracy score each year to DataFrame for scores
-        scores.loc[t, df.name] = accuracy
-
-    # Totals weighted by number of observations
-    for s in (scores, status):
-        s.loc["Total", df.name] = (s[df.name] * s["n"]).sum() / s["n"].sum()
-
-# Change in accuracy or predicted status due to dummy (difference from "No dummies")
-scores.loc["Change", :] = scores.loc["Total", :] - scores.loc["Total", "No dummies"]
-scores.rename(columns=dicts).loc["Change", :] * 100  #  report in percentage points
-# freshwater inflow, salinity, and DK2 worsens prediction accuracy (as a single dummy)
-
-# Total number of observations that LOO-CV was performed over
-for s in (scores, status):
-    s.loc["Total", "n"] = s["n"].sum()
-
-# List dummies that improve prediction accuracy (> 0.006 to omit fjords as reference)
-cols_pos_single = [col for col in scores.columns if scores.loc["Change", col] > 0.006]
-
-# Save accuracy scores and share with less than good ecological status to CSV
-scores.to_csv("output/coastal_eco_imp_accuracy_single.csv")
-status.to_csv("output/coastal_eco_imp_LessThanGood_single.csv")
-
-########################################################################################
-#   2.b Additive inclusion of single variables if its addition improves accuracy
-########################################################################################
-# Dummies that improved prediction accuracy w. single inclusion (to skip section 2.a)
-cols_pos_single = ["alkalinity", "brown", "saline", "DK2"]
-
-# Empty list for cols that improve accuracy w. additive inclusion
-cols_pos_additive = []
-
-# DataFrame for storing accuracy scores by year and calculating weighted average
-scores = pd.DataFrame(dfEcoObs.count(), index=years, columns=["n"]).astype(int)
-
-# DataFrame for storing ecological status by year and calculating weighted average
-status = pd.DataFrame(dfEcoObs.count(), index=dfEcoObs.columns, columns=["n"])
-status["Obs"] = (dfEcoObs < 2.5).sum() / status["n"]  #  ecological status < good
-status.loc["Total", "Obs"] = (status["Obs"] * status["n"]).sum() / status["n"].sum()
-
-# Compare additive inclusion of single variables (keep if it improves accuracy)
-for name in cols_pos_single:
-    if name == "No dummies":
-        df = dfObs.copy()
-    else:
-        df = dfObs.merge(dfTypology[name], on="wb")
-    df.name = name  #  name DataFrame for each model
-
-    # Estimate share with less than good ecological status
-    df_imp = pd.DataFrame(
-        imputer.fit_transform(np.array(df)), index=df.index, columns=df.columns
-    )
-
-    # Store predicted share with less than good ecological status
-    status[df.name] = (df_imp[dfEcoObs.columns] < 2.5).sum() / len(df)
-
-    # loop over each year t
-    print(df.name, "used for imputation. LOO-CV of observed coastal waters each year:")
-    for t in tqdm.tqdm(years):  #  time each model and report its progress in years
-        y = df[df[t].notnull()].index  #  index for observed values at year t
-        Y = pd.DataFrame(index=y)  #  empty df for observed and predicted values
-        Y["true"] = df.loc[y, t]  #  column with the observed ('true') values
-        Y["pred"] = pd.NA  #  empty column for storing predicted values
-        for i in y:  #  loop over each observed value at year t
-            X = df.copy()  #  use a copy of the given DataFrame
-            X.loc[i, t] = pd.NA  #  set the observed value as missing
-            # Fit imputer and transform the dataset
-            X_imp = pd.DataFrame(
-                imputer.fit_transform(np.array(X)), index=X.index, columns=X.columns
-            )
-            Y.loc[i, "pred"] = X_imp.loc[i, t]  #  store predicted value
-
-        # Accuracy of predicted ecological status
-        accuracy = AccuracyScore(Y["true"], Y["pred"])
-
-        # Save accuracy score each year to DataFrame for scores
-        scores.loc[t, df.name] = accuracy
-
-    # Totals weighted by number of observations
-    for s in (scores, status):
-        s.loc["Total", df.name] = (s[df.name] * s["n"]).sum() / s["n"].sum()
-
-    # Save accuracy scores and share with less than good ecological status to CSV
-    scores.to_csv("output/coastal_eco_imp_accuracy_" + df.name + ".csv")
-    status.to_csv("output/coastal_eco_imp_LessThanGood_" + df.name + ".csv")
-
-# Improvement in accuracy or predicted status due to dummy (difference from "No dummies")
-for s in (scores, status):
-    s.loc["Change", :] = s.loc["Total", :] - s.loc["Total", "No dummies"]
-    s.loc["Total", "n"] = s["n"].sum()  #  total observations used for LOO-CV
+# Forward stepwise selection of dummies - CV over all observed values in all lakes
+kwargs = {
+    "subset": dfEcoObs,
+    "dummies": cols_names,
+    "data": dfObs,
+    "dfDummies": dfTypology.rename(columns=dicts),
+    "years": years,
+}
+selected, scores, status = stepwise_selection(**kwargs)
 scores
 status
 
-# Save accuracy scores and share with less than good ecological status to CSV
-scores.to_csv("output/coastal_eco_imp_accuracy_additive.csv")
-status.to_csv("output/coastal_eco_imp_LessThanGood_additive.csv")
-
-########################################################################################
-#   2.c Comparison of models for illustrative figures
-########################################################################################
-# DataFrame for storing accuracy scores by year and calculating weighted average
-scores = pd.DataFrame(dfEcoObs.count(), index=years, columns=["n"]).astype(int)
-
-# DataFrame for storing ecological status by year and calculating weighted average
-status = pd.DataFrame(dfEcoObs.count(), index=dfEcoObs.columns, columns=["n"])
-status["Obs"] = (dfEcoObs < 2.5).sum() / status["n"]  #  ecological status < good
-status.loc["Total", "Obs"] = (status["Obs"] * status["n"]).sum() / status["n"].sum()
-
-# Leave-one-out cross-validation (LOO-CV) loop over every observed stream and year
-dfEcoObs.name = "No dummies"  #  name model without any dummies
-dfTypology.name = "Typology"  #  name model with dummies for typology
-for df in (dfObs, dfTypology, dfTypology):  #  LOO-CV of models using different dummies
-    # Estimate share with less than good ecological status
-    df_imp = pd.DataFrame(
-        imputer.fit_transform(np.array(df)), index=df.index, columns=df.columns
-    )
-
-    # Store predicted share with less than good ecological status
-    status[df.name] = (df_imp[dfEcoObs.columns] < 2.5).sum() / len(df)
-
-    # loop over each year t
-    print(df.name, "used for imputation. LOO-CV of observed coastal waters each year:")
-    for t in tqdm.tqdm(years):  #  time each model and report its progress in years
-        y = df[df[t].notnull()].index  #  index for observed values at year t
-        Y = pd.DataFrame(index=y)  #  empty df for observed and predicted values
-        Y["true"] = df.loc[y, t]  #  column with the observed ('true') values
-        Y["pred"] = pd.NA  #  empty column for storing predicted values
-        for i in y:  #  loop over each observed value at year t
-            X = df.copy()  #  use a copy of the given DataFrame
-            X.loc[i, t] = pd.NA  #  set the observed value as missing
-            # Fit imputer and transform the dataset
-            X_imp = pd.DataFrame(
-                imputer.fit_transform(np.array(X)), index=X.index, columns=X.columns
-            )
-            Y.loc[i, "pred"] = X_imp.loc[i, t]  #  store predicted value
-
-        # Accuracy of predicted ecological status
-        accuracy = AccuracyScore(Y["true"], Y["pred"])
-
-        # Save accuracy score each year to DataFrame for scores
-        scores.loc[t, df.name] = accuracy
-
-    # Totals weighted by number of observations
-    for s in (scores, status):
-        s.loc["Total", df.name] = (s[df.name] * s["n"]).sum() / s["n"].sum()
-
-    # Save accuracy scores and share with less than good ecological status to CSV
-    scores.to_csv("output/coastal_eco_imp_accuracy_" + df.name + ".csv")
-    status.to_csv("output/coastal_eco_imp_LessThanGood_" + df.name + ".csv")
-
-# Total observations used for LOO-CV
-for s in (scores, status):
-    s.loc["Total", "n"] = s["n"].sum()
-scores
-status
-
-# Save accuracy scores and share with less than good ecological status to CSV
-scores.to_csv("output/coastal_eco_imp_accuracy.csv")
-status.to_csv("output/coastal_eco_imp_LessThanGood.csv")
 
 ########################################################################################
 #   3. Visualization: Accuracy and share with less than good ecological status by year
