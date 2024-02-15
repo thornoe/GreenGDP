@@ -629,7 +629,7 @@ cols = ["No", "K", "B", "Ø", "Vf", "Vu", "D", "L", "Se", "T"]
 dfObsDum = dfObs.merge(dummies[cols], on="wb")
 
 # Iterative imputer using BayesianRidge() estimator with increased tolerance
-imputer = IterativeImputer(tol=1e-1, max_iter=50, random_state=0)
+imputer = IterativeImputer(tol=1e-1, max_iter=100, random_state=0)
 
 # Fit imputer, transform data iteratively, and limit to years of interest
 dfImp = pd.DataFrame(

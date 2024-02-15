@@ -49,9 +49,9 @@ plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
 plt.rc("figure", figsize=[12, 7.4])  #  golden ratio for appendix with wide margins
 
 
-# Function for score
+# Function for accuracy score of predicted fauna class
 def AccuracyScore(y_true, y_pred):
-    """Convert DVFI fauna index for streams to categorical index of ecological status and return accuracy score, i.e., the share of observed streams each year where predicted ecological status matches the true ecological status (which LOO-CV omits from the dataset before applying imputation)."""
+    """Convert DVFI fauna class for bottom fauna in streams to categorical index of ecological status and return accuracy score, i.e., the share of observed streams each year where predicted ecological status matches the true ecological status (which LOO-CV omits from the dataset before applying imputation)."""
     eco_true, eco_pred = [], []  #  empy lists for storing transformed observations
     for a, b in zip([y_true, y_pred], [eco_true, eco_pred]):
         # Categorical variable for ecological status: Bad, Poor, Moderate, Good, High
@@ -88,11 +88,11 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False
 
         for p in predictors:
             if p == "No dummies":  #  baseline model without any dummies
-                df = data.copy()
+                df = data.copy()  #  df without predictors
                 df.name = "No dummies"  #  name baseline model
             else:
                 predictors_used = selected + [p]  #  selected predictors remain in model
-                df = data.merge(dfDummies[predictors_used], on="wb")
+                df = data.merge(dfDummies[predictors_used], on="wb")  #  with predictors
                 df.name = ", ".join(predictors_used)  #  name model after its predictors
             names.append(df.name)  #  add model name to list of model names
 
@@ -101,10 +101,8 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False
                 imputer.fit_transform(np.array(df)), index=df.index, columns=df.columns
             )
 
-            # Subset to rows in "subset"
-            dfImpSubset = dfImp.loc[
-                subset.index, subset.columns
-            ]  # CAN I ADD COLS HERE?
+            # Subset to the waterbodies included in the subset
+            dfImpSubset = dfImp.loc[subset.index, subset.columns]
 
             # Store predicted share with less than good ecological status
             sta[df.name] = (dfImpSubset[subset.columns] < 4.5).sum() / len(subset)
@@ -169,7 +167,7 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False
                 a[names[i]] = b[names[i]]  #  scores & status by year for best predictor
 
         else:  #  if best_new_score == current_score (i.e., identical accuracy score)
-            break  #  stop stepwise selection
+            break  #  stop selection (including the predictor would increase variance)
 
         if p == "No dummies":
             selected = []  #  after baseline model, start actual stepwise selection
@@ -183,11 +181,11 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False
 
     # Save accuracy scores and share with less than good ecological status to CSV
     if subset is sparse:
-        scores.to_csv("output/waterbodies_eco_imp_accuracy_sparse.csv")
-        status.to_csv("output/waterbodies_eco_imp_LessThanGood_sparse.csv")
+        scores.to_csv("output/streams_eco_imp_accuracy_sparse.csv")
+        status.to_csv("output/streams_eco_imp_LessThanGood_sparse.csv")
     else:
-        scores.to_csv("output/waterbodies_eco_imp_accuracy.csv")
-        status.to_csv("output/waterbodies_eco_imp_LessThanGood.csv")
+        scores.to_csv("output/streams_eco_imp_accuracy.csv")
+        status.to_csv("output/streams_eco_imp_LessThanGood.csv")
 
     return selected, scores, status  #  selected predictors; scores and stats by year
 
