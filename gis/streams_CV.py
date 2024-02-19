@@ -361,6 +361,7 @@ selected, scores, status = stepwise_selection(
 scores
 status
 
+
 ### temporary correction of a mistake in the original code
 # DataFrame for storing accuracy scores by year and calculating weighted average
 scores = pd.DataFrame(dfIndObs.count(), index=years, columns=["n"]).astype(int)
@@ -371,11 +372,13 @@ status = pd.DataFrame(dfIndObs.count(), index=dfIndObs.columns, columns=["n"])
 # Mean ecological status by year for the n observations that don'nt have missing values
 status["Obs"] = (dfIndObs < 4.5).sum() / status["n"]  #  ecological status < good
 status.loc["Total", "Obs"] = (status["Obs"] * status["n"]).sum() / status["n"].sum()
+
 # Leave-one-out cross-validation (LOO-CV) loop over every observed stream and year
-dfTypology.drop(columns=["Medium", "Large"], inplace=True)
-predictors_used = ["Soft bottom", "Small"]
-dfTypology.name = ", ".join(predictors_used)  #  name model after predictors used
-for df in dfDistrict:  #  LOO-CV with different dummies
+df1 = dfNatural.drop(columns=["Small", "Medium", "Large"])
+df2 = dfNatural.drop(columns=["Medium", "Large"])
+df1.name = ", ".join(["Soft bottom", "Natural"])  #  name model
+df2.name = ", ".join(["Soft bottom", "Natural", "Small"])  #  name model
+for df in (df1, df2):  #  LOO-CV with different dummies
     # Impute missing values based on all observations (without cross-validation)
     df_imp = pd.DataFrame(
         imputer.fit_transform(np.array(df)), index=df.index, columns=df.columns

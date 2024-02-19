@@ -1008,7 +1008,7 @@ class Water_Quality:
                 # Merge df for biophysical indicator with df for typology
                 df = dfIndicator.merge(dfVP[["ov_typ"]], on="wb")
 
-                def SetThreshold(row):
+                def set_threshold(row):
                     if row["ov_typ"] in ["LWTYPE9", "LWTYPE11", "LWTYPE13", "LWTYPE15"]:
                         return pd.Series(
                             {
@@ -1029,7 +1029,7 @@ class Water_Quality:
                         )
 
                 # For df, add the series of thresholds relative to High ecological status
-                df[cols] = df.apply(SetThreshold, axis=1)
+                df[cols] = df.apply(set_threshold, axis=1)
                 df = df.drop(columns=["ov_typ"])  #  drop typology column
 
             else:  #  coastal waters

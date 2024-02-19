@@ -36,10 +36,10 @@ colors = {
     "blue": "#4477AA",
     "cyan": "#66CCEE",
     "green": "#228833",
+    "grey": "#BBBBBB",  #  moved up to be used for eco status of observed coastal waters
     "yellow": "#CCBB44",
     "red": "#EE6677",
     "purple": "#AA3377",
-    "grey": "#BBBBBB",  #  moved up to be used for eco status of observed coastal waters
 }
 
 # Set the default property-cycle and figure size for pyplots
@@ -300,7 +300,7 @@ d.loc[("Obs of n", "Obs of all", "All VP3"), :].T  #  report in percent
 
 
 ########################################################################################
-#   2. Multivariate feature imputation (note: Forward Stepwise Selection takes ~6 hours)
+#   2. Multivariate feature imputation (note: Forward Stepwise Selection takes ~1 day)
 ########################################################################################
 # Forward stepwise selection of dummies - CV over all observed values in coastal waters
 kwargs = {

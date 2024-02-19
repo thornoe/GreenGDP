@@ -86,7 +86,7 @@ data = {
 linkage = {
     "coastal": ["coastal_stations_VP3.csv", "coastal_chlorophyll_limits.csv"],
     "lakes": ["lakes_stations_VP3.csv", "lakes_stations_XY.csv"],
-    "streams": ["streams_stations_VP3.csv", "streams_stations_XY.csv"],
+    "streams": ["streams_stations_VP3.csv"],
 }
 
 # WFS service URL for the current water body plan (VP2 is for 2015-2021)
@@ -219,6 +219,7 @@ else:  #  Lakes and coastal waters
 df[["x", "y"]] = df[["x", "y"]].replace(0, np.nan)
 # Set up a longitudinal df with every station and its last non-null entry
 long = df[cols].groupby(level="station").last()
+
 # For each year t, add a column with observations for the indicator
 for t in df["year"].unique():
     # Subset to year t
