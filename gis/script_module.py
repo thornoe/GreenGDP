@@ -83,7 +83,7 @@ class Water_Quality:
 
         # Set the default property-cycle and figure size for pyplots
         color_cycler = cycler(color=list(colors.values()))  #  color cycler w. 7 colors
-        linestyle_cycler = cycler(linestyle=["-", "--", ":", "-.", "-", "--", ":"])  # 7
+        linestyle_cycler = cycler(linestyle=["-", "--", ":", "-", "--", ":", "-."])  # 7
         plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
         plt.rc("figure", figsize=[10, 6.2])  #  golden ratio
 
@@ -692,26 +692,28 @@ class Water_Quality:
 
                 # Create dummies for typology
                 typ = pd.get_dummies(dfVP["ov_typ"]).astype(int)
-                typ["softBottom"] = typ["RW4"] + typ["RW5"]
+                typ["Soft bottom"] = typ["RW4"] + typ["RW5"]
                 typ.columns = [
-                    "small",
-                    "medium",
-                    "large",
-                    "smallSoftBottom",
-                    "mediumSoftBottom",
-                    "softBottom",
+                    "Small",
+                    "Medium",
+                    "Large",
+                    "Small w. soft bottom",
+                    "Medium w. soft bottom",
+                    "Soft bottom",
                 ]
 
-                # List dummies for typology and natural water bodies
-                cols = ["small", "medium", "large", "softBottom"]
+                # Dummies for natural, artificial, and heavily modified water bodies
+                natural = pd.get_dummies(dfVP["na_kun_stm"]).astype(int)
+                natural.columns = ["Artificial", "Natural", "Heavily modified"]
 
-                # # Dummies for natural, artificial, and heavily modified water bodies
-                # natural = pd.get_dummies(dfVP["na_kun_stm"]).astype(int)
-                # natural.columns = ["artificial", "natural", "heavily modified"]
+                # Merge DataFrames for typology and natural water bodies
+                typ = typ.merge(natural, on="wb")
 
-                # # Merge DataFrames for typology and natural water bodies
-                # typ = typ.merge(natural["natural"], on="wb")
-                # cols.append("natural")
+                # List dummies for typology
+                cols = ["Small", "Medium", "Large", "Soft bottom", "Natural"]
+
+                # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
+                selected = ["Soft bottom", "Natural", "Small"]
 
             elif j == "lakes":
                 # Convert biophysical indicator to ecological status before imputing
@@ -739,10 +741,13 @@ class Water_Quality:
                 cond4 = [typ["type"].isin(np.arange(2, 17, 2)), typ["type"] == 17]
                 typ["Deep"] = np.select(cond4, [1, np.nan], default=0)
 
-                # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
-                cols = ["Saline"]
+                # List dummies for typology
+                cols = ["Alkalinity", "Brown", "Saline", "Deep"]
 
-            else:  #  coastal
+                # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
+                selected = ["Saline"]
+
+            else:  #  coastal waters
                 # Convert biophysical indicator to ecological status before imputing
                 dfObs = self.indicator_to_status(j, dfIndObs, dfVP).merge(
                     basis, on="wb"  #  include basis analysis for VP3
@@ -753,26 +758,22 @@ class Water_Quality:
 
                 # Define the dictionaries
                 dict1 = {
-                    "Nordsø": "No",
-                    "Kattegat": "K",
-                    "Bælthav": "B",
-                    "Østersøen": "Ø",
-                    "Fjord": "Fj",
-                    "Vesterhavsfjord": "Vf",
+                    "No": "North Sea",  # Nordsø
+                    "K": "Kattegat",  # Kattegat
+                    "B": "Belt Sea",  # Bælthav
+                    "Ø": "Baltic Sea",  # Østersøen
+                    "Fj": "Fjord",  # Fjord
+                    "Vf": "North Sea fjord",  # Vesterhavsfjord
                 }
                 dict2 = {
-                    "water exchange": "Vu",
-                    "freshwater inflow": "F",
-                    "water depth": "D",
-                    "stratification": "L",
-                    "sediment": "Se",
-                    "salinity": "Sa",
-                    "tide": "T",
+                    "Vu": "Water exchange",  # vandudveksling
+                    "F": "Freshwater inflow",  # ferskvandspåvirkning
+                    "D": "Deep",  # vanddybde
+                    "L": "Stratified",  # lagdeling
+                    "Se": "Sediment",  # sediment
+                    "Sa": "Saline",  # salinitet
+                    "T": "Tide",  # tidevand
                 }
-
-                # Reverse the dictionaries so the abbreviations are the keys
-                dict1 = {v: k for k, v in dict1.items()}
-                dict2 = {v: k for k, v in dict2.items()}
 
                 # Define a function to process each string
                 def process_string(s):
@@ -803,28 +804,35 @@ class Water_Quality:
                 # Replace NaN values with 0
                 typ = typ.fillna(0).astype(int)
 
-                # Dummies that improves prediction accuracy (omit fjords as reference)
-                cols = ["No", "K", "B", "Ø", "Vf", "Vu", "D", "L", "Se", "T"]
+                # Rename the columns from abbreviations to full names
+                dicts = {**dict1, **dict2}  #  combine the dictionaries
+                typ = typ.rename(columns=dicts)  #  rename columns to full names
 
-            if j == "streams":
-                # Create dummy for the district DK2 (Sealand, Lolland, Falster, and Møn)
-                district = pd.get_dummies(dfVP["distr_id"]).astype(int)
+                # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
+                cols = ["Sediment", "Deep"]
 
-                # Merge dummies for typology and water body district DK2
-                typ = typ.merge(district, on="wb")
-                cols.append("DK2")
+            # Create dummy for the district DK2 (Sealand, Lolland, Falster, and Møn)
+            district = pd.get_dummies(dfVP["distr_id"]).astype(int)
+
+            # Merge dummies for typology and water body district DK2
+            typ = typ.merge(district, on="wb")
+            cols.append("DK2")
 
             # Merge DataFrame for observed values with DataFrame for dummies
-            dfObsDum = dfObs.merge(typ[cols], on="wb")
+            dfDum = dfObs["basis"].merge(typ[cols], on="wb")  #  all possible predictors
+            dfObsSelected = dfObs.merge(typ[selected], on="wb")  #  selected predictors
+
+            # Descriptive statistics for all potential predictors
+            
 
             # Iterative imputer using BayesianRidge() estimator with increased tolerance
             imputer = IterativeImputer(tol=1e-1, max_iter=100, random_state=0)
 
             # Fit imputer, transform data iteratively, and limit to years of interest
             dfImp = pd.DataFrame(
-                imputer.fit_transform(np.array(dfObsDum)),
-                index=dfObsDum.index,
-                columns=dfObsDum.columns,
+                imputer.fit_transform(np.array(dfObsSelected)),
+                index=dfObsSelected.index,
+                columns=dfObsSelected.columns,
             )[self.years]
 
             # Convert imputed biophysical indicator to ecological status
@@ -988,9 +996,11 @@ class Water_Quality:
         try:
             # Column names for chlorophyll thresholds for lakes or coastal waters
             cols = ["bad", "poor", "moderate", "good"]
+
             if j == "streams":
                 # Copy DataFrame for the biophysical indicator
                 df = dfIndicator.copy()
+
                 # Convert DVFI fauna index for streams to index of ecological status
                 for t in df.columns:
                     # Set conditions given the official guidelines for conversion
@@ -1001,9 +1011,12 @@ class Water_Quality:
                         (df[t] >= 4.5) & (df[t] < 6.5),  #  Good
                         df[t] >= 6.5,  #  High
                     ]
+
                     # Ecological status as a categorical scale from Bad to High quality
                     df[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
+
                 return df
+
             elif j == "lakes":
                 # Merge df for biophysical indicator with df for typology
                 df = dfIndicator.merge(dfVP[["ov_typ"]], on="wb")
@@ -1018,6 +1031,7 @@ class Water_Quality:
                                 "good": 11.7,
                             }
                         )
+
                     else:
                         return pd.Series(
                             {

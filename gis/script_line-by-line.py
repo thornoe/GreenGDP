@@ -44,7 +44,7 @@ colors = {
 
 # Set the default property-cycle and figure size for pyplots
 color_cycler = cycler(color=list(colors.values()))  #  color cycler with 7 colors
-linestyle_cycler = cycler(linestyle=["-", "--", ":", "-.", "-", "--", ":"])  #  7 styles
+linestyle_cycler = cycler(linestyle=["-", "--", ":", "-", "--", ":", "-."])  #  7 styles
 plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
 plt.rc("figure", figsize=[10, 6.2])  #  golden ratio
 

@@ -245,36 +245,32 @@ typ = dfVP[["ov_typ"]].copy()
 
 # Define the dictionaries
 dict1 = {
-    "North Sea": "No",  # Nordsø
-    "Kattegat": "K",  # Kattegat
-    "Belt Sea": "B",  # Bælthav
-    "Baltic Sea": "Ø",  # Østersøen
-    "Fjord": "Fj",  # Fjord
-    "North Sea fjord": "Vf",  # Vesterhavsfjord
+    "No": "North Sea",  # Nordsø
+    "K": "Kattegat",  # Kattegat
+    "B": "Belt Sea",  # Bælthav
+    "Ø": "Baltic Sea",  # Østersøen
+    "Fj": "Fjord",  # Fjord
+    "Vf": "North Sea fjord",  # Vesterhavsfjord
 }
 dict2 = {
-    "Water exchange": "Vu",  # vandudveksling
-    "Freshwater inflow": "F",  # ferskvandspåvirkning
-    "Deep": "D",  # vanddybde
-    "Stratified": "L",  # lagdeling
-    "Sediment": "Se",  # sediment
-    "Saline": "Sa",  # salinitet
-    "Tide": "T",  # tidevand
+    "Vu": "Water exchange",  # vandudveksling
+    "F": "Freshwater inflow",  # ferskvandspåvirkning
+    "D": "Deep",  # vanddybde
+    "L": "Stratified",  # lagdeling
+    "Se": "Sediment",  # sediment
+    "Sa": "Saline",  # salinitet
+    "T": "Tide",  # tidevand
 }
-
-# Reverse the dictionaries so the abbreviations are the keys
-dict1 = {v: k for k, v in dict1.items()}
-dict2 = {v: k for k, v in dict2.items()}
-
-# Combine the dictionaries
-dicts = {**dict1, **dict2}
 
 # Apply the function to typ["ov_typ"] to create a new DataFrame with the dummy variables
 dummies = typ["ov_typ"].apply(process_string).apply(pd.Series).fillna(0).astype(int)
 
+# Combine the dictionaries
+dicts = {**dict1, **dict2}
+
 # Dummies for typology
-cols = list(dicts.keys())
-cols_names = list(dicts.values())
+cols = list(dicts.values())
+cols_names = list(dicts.keys())
 
 # Merge DataFrames for typology and observed ecological status
 dfTypology = dfObs.merge(dummies[cols], on="wb")
@@ -290,13 +286,13 @@ for c in cols:
     d[c] = 100 * obs[obs[c] == 1].count() / obs.count()
     d.loc["Obs of n", c] = 100 * len(obs[obs[c] == 1]) / len(obs)
     d.loc["Obs of all", c] = 100 * len(obs[obs[c] == 1]) / len(dfVP)
-    d.loc["All VP3", c] = 100 * len(dummies[dummies[c] == 1]) / len(dfVP)
+    d.loc["All in VP3", c] = 100 * len(dummies[dummies[c] == 1]) / len(dfVP)
 d.loc["Obs of n", "n"] = len(obs)  #  number of waterbodies observed at least once
 d.loc["Obs of all", "n"] = len(dfVP)  #  number of waterbodies in VP3
-d.loc["All VP3", "n"] = len(dfVP)  #  number of waterbodies in VP3
+d.loc["All in VP3", "n"] = len(dfVP)  #  number of waterbodies in VP3
 d = d.rename(columns=dicts)  #  rename columns to full names
 d.to_csv("output/coastal_VP_stats.csv")  #  save distributions to csv
-d.loc[("Obs of n", "Obs of all", "All VP3"), :].T  #  report in percent
+d.loc[("Obs of n", "Obs of all", "All in VP3"), :].T  #  report in percent
 
 
 ########################################################################################

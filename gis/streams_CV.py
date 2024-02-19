@@ -252,13 +252,13 @@ dfObs = dfIndObs.merge(basis, on="wb")
 
 # Create dummies for typology
 typ = pd.get_dummies(dfVP["ov_typ"]).astype(int)
-typ["SoftBottom"] = typ["RW4"] + typ["RW5"]
+typ["Soft bottom"] = typ["RW4"] + typ["RW5"]
 typ.columns = [
     "Small",
     "Medium",
     "Large",
-    "Small, Soft bottom",
-    "Medium, Soft bottom",
+    "Small w. soft bottom",
+    "Medium w. soft bottom",
     "Soft bottom",
 ]
 
@@ -314,12 +314,6 @@ for a, b in zip([dfIndObs, sparse], [dfDistrict, dfSparse]):
         d.to_csv("output/streams_VP_stats.csv")  #  save distributions to CSV
 VPstats  #  sparse has underrepresentation of Large and DK2 (share < 50% of average VP3)
 
-# Drop "large" to avoid perfect multicollinearity (i.e., keep out as reference category)
-# cols.remove("Large")
-# dfDistrict = dfDistrict.drop(columns="Large")
-# dfTypology = dfTypology.drop(columns="Large")
-# dfNatural = dfTypology.drop(columns="Large")
-# dfDistrict = dfDistrict.drop(columns=["Large", "Natural"])  #  drop natural as well
 
 ########################################################################################
 #   2. Multivariate feature imputation (note: Forward Stepwise Selection takes ~5 days)
