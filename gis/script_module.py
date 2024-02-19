@@ -709,11 +709,8 @@ class Water_Quality:
                 # Merge DataFrames for typology and natural water bodies
                 typ = typ.merge(natural, on="wb")
 
-                # List dummies for typology
-                cols = ["Small", "Medium", "Large", "Soft bottom", "Natural"]
-
                 # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
-                selected = ["Soft bottom", "Natural", "Small"]
+                cols = ["Soft bottom", "Natural", "Small"]
 
             elif j == "lakes":
                 # Convert biophysical indicator to ecological status before imputing
@@ -741,11 +738,8 @@ class Water_Quality:
                 cond4 = [typ["type"].isin(np.arange(2, 17, 2)), typ["type"] == 17]
                 typ["Deep"] = np.select(cond4, [1, np.nan], default=0)
 
-                # List dummies for typology
-                cols = ["Alkalinity", "Brown", "Saline", "Deep"]
-
                 # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
-                selected = ["Saline"]
+                cols = ["Saline"]
 
             else:  #  coastal waters
                 # Convert biophysical indicator to ecological status before imputing
@@ -804,26 +798,15 @@ class Water_Quality:
                 # Replace NaN values with 0
                 typ = typ.fillna(0).astype(int)
 
-                # Rename the columns from abbreviations to full names
+                # Rename the dummies from abbreviations to full names
                 dicts = {**dict1, **dict2}  #  combine the dictionaries
                 typ = typ.rename(columns=dicts)  #  rename columns to full names
 
                 # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
                 cols = ["Sediment", "Deep"]
 
-            # Create dummy for the district DK2 (Sealand, Lolland, Falster, and Møn)
-            district = pd.get_dummies(dfVP["distr_id"]).astype(int)
-
-            # Merge dummies for typology and water body district DK2
-            typ = typ.merge(district, on="wb")
-            cols.append("DK2")
-
             # Merge DataFrame for observed values with DataFrame for dummies
-            dfDum = dfObs["basis"].merge(typ[cols], on="wb")  #  all possible predictors
-            dfObsSelected = dfObs.merge(typ[selected], on="wb")  #  selected predictors
-
-            # Descriptive statistics for all potential predictors
-            
+            dfObsSelected = dfObs.merge(typ[cols], on="wb")  #  with selected predictors
 
             # Iterative imputer using BayesianRidge() estimator with increased tolerance
             imputer = IterativeImputer(tol=1e-1, max_iter=100, random_state=0)
