@@ -316,21 +316,28 @@ status
 ########################################################################################
 # Skip step 2 by reading DataFrames of accuracy score and ecological status from CSV
 # scores = pd.read_csv("output/coastal_eco_imp_accuracy.csv", index_col=0)
-sco = scores.drop(columns="n").drop("Total")
 # status = pd.read_csv("output/coastal_eco_imp_LessThanGood.csv", index_col=0)
-imp = status.drop(columns=["n", "Obs"]).drop("Total")  #  imputed status by predictors
-obs = status[["Obs"]].drop("Total")  #  df for eco status of observed costal waters
-obs.columns = ["Observed"]  #  rename 'Obs' to 'Observed'
-sta = imp.merge(obs, left_index=True, right_index=True)  #  add Observed as last column
+
+# Accuracy score by year and selected predictors
+sco = scores.drop(columns="n").drop("Total")
 
 # Bar plot accuracy scores
 f1 = sco.plot(
     kind="bar", ylabel="Accuracy in predicting observed ecological status"
 ).get_figure()
-f1.savefig("output/coastal_eco_imp_accuracy.pdf", bbox_inches="tight")
+f1.savefig("output/coastal_eco_imp_accuracy.pdf", bbox_inches="tight")  #  save PDF
+
+# Coastal waters with less than good ecological status by year and selected predictors
+status.index = status.index.astype(str)  #  convert index to string (to mimic read_csv)
+listYears = [str(t) for t in range(1990, 2020 + 1)]  #  1990 to 2020 as strings
+status_years = status.loc[listYears, :]  #  subset to years in natural capital account
+imp = status_years.drop(columns=["n", "Obs"])  #  imputed status by selected predictors
+obs = status_years[["Obs"]]  #  eco status of coastal waters observed the given year
+obs.columns = ["Observed"]  #  rename 'Obs' to 'Observed'
+sta = imp.merge(obs, left_index=True, right_index=True)  #  add Observed as last column
 
 # Plot share of coastal waters with less than good ecological status
 f2 = sta.plot(
-    ylabel="Share of coastal waters with less than good ecological status"
+    ylabel="Share of coastal with less than good ecological status"
 ).get_figure()
-f2.savefig("output/coastal_eco_imp_LessThanGood.pdf", bbox_inches="tight")
+f2.savefig("output/coastal_eco_imp_LessThanGood.pdf", bbox_inches="tight")  #  save PDF

@@ -445,11 +445,11 @@ class Water_Quality:
             # Fields in fc that contain water body ID, typology, district, and length
             fields = ["ov_id", "ov_typ", "distr_id"]
 
-            # Append field for ecological status assessed in basis analysis for VP3
+            # Append field for ecological status as assessed in basis analysis for VP3
             if j == "streams":
-                fields.append("til_oko_bb")
+                fields.append("til_oko_bb")  #  based on DVFI bottom fauna class
             else:  #  lakes and coastal waters
-                fields.append("til_oko_fy")
+                fields.append("til_oko_fy")  #  based on chlorophyll concentration
 
             # Append field for shape length
             if j != "coastal":
@@ -956,9 +956,6 @@ class Water_Quality:
                     "Status known (%)",
                 ]
 
-                # Save statistics as Markdown for online presentation
-                stats.astype(int).to_html("output\\" + j + "_eco_obs_stats.md")
-
             if index is None:
                 return dfEco, stats, indexSorted
             return dfEco, stats["not good"]
@@ -1260,7 +1257,7 @@ class Water_Quality:
                     df["D age"] = Dem.loc[t, "D age"]  #  dummy for mean age > 45 years
                     SL[t] = SL[t] * SL["length"]  #  shore length if status < good
                     SL_not_good = SL[["v", t]].groupby("v").sum()  #  if status < good
-                    df["ln PSL"] = SL_not_good[t] / Geo["shore all j"]  #  proportional
+                    df["ln PSL"] = SL_not_good[t] / Geo["shores all j"]  #  proportional
                     ln_PSL = np.log(df.loc[df["ln PSL"] > 0, "ln PSL"])  #  log PSL
                     ln_PSL_full = pd.Series(index=df.index)  #  empty series with index
                     ln_PSL_full[df["ln PSL"] != 0] = ln_PSL  #  fill with ln_PSL if > 0
@@ -1328,11 +1325,11 @@ class Water_Quality:
             d[["D age", "D lake", "N"]] = d[["D age", "D lake", "N"]].astype(int)
 
             # Consumer Price Index by year t (1990-2020)
-            CPI = pd.read_excel("data\\" + self.data["shared"][0], index_col=0)
+            CPI_NPV = pd.read_excel("data\\" + self.data["shared"][0], index_col=0)
 
             # Merge data with CPI to correct for assumption of unitary income elasticity
             kwargs = dict(how="left", left_index=True, right_index=True)
-            df1 = d.merge(CPI, **kwargs)
+            df1 = d.merge(CPI_NPV, **kwargs)
             df1["unityMWTP"] = self.BT(df1)  #  MWTP assuming unitary income elasticity
             df2018 = df1[df1.index.get_level_values("t") == 2018].copy()
             df2018["elastMWTP"] = self.BT(df2018, elast=1.453)  #  meta study income ε
@@ -1346,25 +1343,32 @@ class Water_Quality:
             df2["CWP"] = df2["MWTP"] * df2["N"] / 1e06  #  million DKK (2018 prices)
 
             if investment is True:
-                # Apply net present value (NPV) factor
-                df2["CWP"] = df2["CWP"] * df2["NPV"]
-
                 # Switch MWTP to negative if actual change is negative
                 cond = [df2["neg"] == 1]
                 df2["CWP"] = np.select(cond, [-df2["CWP"]], default=df2["CWP"])
 
-                if real is True:
-                    df2["IV"] = df2["CWP"]  #  rename CWP to IV
-                    return df2[["IV"]]  #  return complete dataset
+                # Apply net present value (NPV) factor using different discount rates r
+                if real is False:
+                    # r as prescribed by Ministry of Finance of Denmark the given year
+                    df2["CWP"] = df2["CWP"] * df2["NPV"]
 
-            if real is True:  #  Real cost of water pollution (million DKK, 2018 prices)
-                return df2[["CWP"]]  #  return complete dataset
+                else:
+                    # Declining r as prescribed by Ministry of Finance during 2014-2020
+                    df2["CWP"] = df2["CWP"] * CPI_NPV.loc[2018, "NPV"]
+
+                    # Rename CWP to IV (investment value of water quality improvements)
+                    df2["IV"] = df2["CWP"]  #  million DKK (2018 prices)
+
+                    return df2[["IV"]]  #  return real investment value by j, t, and v
+
+            if real is True:  #  Real cost of water pollution
+                return df2[["CWP"]]  #  return real cost of pollution by j, t, and v
 
             # Aggregate nominal MWTP per hh over households in coastal catchment area
-            df2["CWPn"] = df2["CWP"] * df2["CPI"] / CPI.loc[2018, "CPI"]  #  million DKK
+            df2["CWPn"] = df2["CWP"] * df2["CPI"] / CPI_NPV.loc[2018, "CPI"]
 
             # CWP in the prices of the preceding year (for year-by-year chain linking)
-            df2["D"] = df2["CWPn"] * df2["CPI t-1"] / df2["CPI"]  #  million DKK
+            df2["D"] = df2["CWPn"] * df2["CPI t-1"] / df2["CPI"]
 
             # Aggregate over coastal catchment areas
             grouped = (
@@ -1376,10 +1380,11 @@ class Water_Quality:
                 .rename_axis([None, None], axis=1)
             )
 
-            if investment is True:  #  rename CWP nominal to IV nominal
+            if investment is True:
+                # Rename CWP nominal to IV nominal
                 grouped.columns = grouped.columns.set_levels(["IVn", "D"], level=0)
 
-            return grouped
+            return grouped  #  in prices of current year and preceding year respectively
 
         except:
             # Report severe error messages

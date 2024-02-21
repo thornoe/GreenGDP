@@ -324,20 +324,27 @@ status
 ########################################################################################
 # Skip step 2 by reading DataFrames of accuracy score and ecological status from CSV
 # scores = pd.read_csv("output/lakes_eco_imp_accuracy.csv", index_col=0)
+# status = pd.read_csv("output/lakes_eco_imp_LessThanGood.csv", index_col=0)
+
+# Accuracy score by year and selected predictors
 sco = scores.drop(columns="n").drop("Total")
 sco.columns = ["No dummies", "Saline dummy"]  #  elaborate on "Saline" column name
-# status = pd.read_csv("output/lakes_eco_imp_LessThanGood.csv", index_col=0)
-sta = status[["No dummies", "Saline", "Obs"]].drop("Total")  #  reorder: "Obs" last
-sta.columns = ["No dummies", "Saline dummy", "Observed"]  #  elaborate column names
 
 # Bar plot accuracy scores
 f1 = sco.plot(
     kind="bar", ylabel="Accuracy in predicting observed ecological status"
 ).get_figure()
-f1.savefig("output/lakes_eco_imp_accuracy.pdf", bbox_inches="tight")
+f1.savefig("output/lakes_eco_imp_accuracy.pdf", bbox_inches="tight")  #  save to PDF
+
+# Share of lakes with less than good ecological status by year and selected predictors
+status.index = status.index.astype(str)  #  convert index to string (to mimic read_csv)
+listYears = [str(t) for t in range(1990, 2020 + 1)]  #  1990 to 2020 as strings
+status_years = status.loc[listYears, :]  #  subset to years in natural capital account
+sta = status_years[["No dummies", "Saline", "Obs"]]  #  reorder: "Obs" last
+sta.columns = ["No dummies", "Saline dummy", "Observed"]  #  elaborate column names
 
 # Plot share of lakes with less than good ecological status
 f2 = sta.plot(
     ylabel="Share of lakes with less than good ecological status"
 ).get_figure()
-f2.savefig("output/lakes_eco_imp_LessThanGood.pdf", bbox_inches="tight")
+f2.savefig("output/lakes_eco_imp_LessThanGood.pdf", bbox_inches="tight")  #  save to PDF

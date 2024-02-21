@@ -149,12 +149,12 @@ if keep_gdb != "true":
 ########################################################################################
 # Set up DataFrame of shore length for each category j ∈ {coastal, lakes, streams}
 shores = pd.DataFrame(shores_j)
-# shores["shore all j"] = shores["coastal"] + shores["lakes"] + shores["streams"]
+shores["shores all j"] = shores.sum(axis=1, skipna=True)
 shores.to_csv("output\\all_VP_shore length.csv")  #  save to csv
+shoresTotal = shores.sum()
 
 # Set up DataFrame of statistics for each category j ∈ {coastal, lakes, streams}
 stats = pd.DataFrame(stats_j)
-stats.to_csv("output\\all_eco_imp_LessThanGood.csv")  #  save to csv
 
 # Plot water bodies by category (mean ecological status weighted by length)
 f1 = (
@@ -163,6 +163,17 @@ f1 = (
     .get_figure()
 )
 f1.savefig("output\\all_eco_imp_LessThanGood.pdf", bbox_inches="tight")
+
+# Calculate mean ecological status across all categories j weighted by shore length
+stats["all j"] = (
+    stats["coastal"] * shoresTotal["coastal"]
+    + stats["lakes"] * shoresTotal["lakes"]
+    + stats["streams"] * shoresTotal["streams"]
+) / shoresTotal["shores all j"]
+
+# Save statistics to csv
+stats.to_csv("output\\all_eco_imp_LessThanGood.csv")
+
 
 ########################################################################################
 #   4.b Nominal cost of pollution and investment in water quality for national accounts
@@ -185,7 +196,7 @@ CWPn.columns = CWPn.columns.set_levels(
 
 # Investment in water quality (net present value of infinite stream of MWTP for change)
 IVn = c.valuation(df_BT, real=False, investment=True)
-# Nominal investment value in prices of current year, and preceding year respectively
+# Nominal investment value in prices of current year and preceding year respectively
 IVn.columns = IVn.columns.set_levels(
     [
         "Investment value (current year's prices, million DKK)",
@@ -196,7 +207,7 @@ IVn.columns = IVn.columns.set_levels(
 
 # Merge cost of pollution and investment value of increase (decrease) in water quality
 nominal = pd.concat([CWPn, IVn], axis=1)
-nominal.to_excel("output\\all_nominal.xlsx")  # manually left-align row 1 & delete row 3
+nominal.to_excel("output\\all_nominal.xlsx")  # manually Wrap Text row 1 & delete row 3
 
 
 ########################################################################################

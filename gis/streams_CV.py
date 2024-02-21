@@ -45,7 +45,7 @@ colors = {
 # Set the default property-cycle and figure size for pyplots
 color_cycler = cycler(color=list(colors.values()))  #  color cycler with 7 colors
 linestyle_cycler = cycler(linestyle=["-", "--", "-.", ":", "-", "--", ":"])  #  7 styles
-plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
+plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))  #  set color and linestyle
 plt.rc("figure", figsize=[12, 7.4])  #  golden ratio for appendix with wide margins
 
 
@@ -214,7 +214,7 @@ sparse.count()  #  lowest number of non-missing values with support in all years
 sparse.count().sum()  #  5453 non-missing values in total to loop over with LOO-CV
 
 # Include ecological status as assessed in basis analysis for VP3
-basis = dfVP[["til_oko_bb"]].copy()  #  bottom fauna measured as DVFI fauna class
+basis = dfVP[["til_oko_bb"]].copy()  #  based on DVFI bottom fauna class
 
 # Define a dictionary to map the Danish strings to an ordinal scale
 status_dict = {
@@ -236,18 +236,7 @@ basis.replace(status_dict, inplace=True)
 basis.columns = ["Basis"]
 basis["Basis"].unique()
 
-# Transform ecological status to fauna class (to match the scale used for imputation)
-conditions = [
-    basis["Basis"] == 0.0,  # Bad
-    basis["Basis"] == 1.0,  #  Poor
-    basis["Basis"] == 2.0,  #  Moderate
-    basis["Basis"] == 3.0,  #  Good
-    basis["Basis"] == 4.0,  #  High
-]
-# Fauna class ranges from 1-7 where Poor eco status is FK2-FK3 and Moderate is FK5-FK6
-basis["Basis"] = np.select(conditions, [1, 2.5, 4, 5.5, 7], default=np.nan)
-
-# Merge DataFrames for observed biophysical indicator with basis analysis for VP 3
+# Merge DataFrames for observed biophysical indicator with basis analysis for VP3
 dfObs = dfIndObs.merge(basis, on="wb")
 
 # Create dummies for typology
@@ -293,27 +282,52 @@ for a, b in zip([dfIndObs, sparse], [dfDistrict, dfSparse]):
     obs = b.loc[a.notna().any(axis=1)]  #  6151 out of 6703 streams in dfDistrict
 
     # df for storing number of observed streams and yearly distribution by dummies
-    d = pd.DataFrame(a.count(), index=a.columns, columns=["n"]).astype(int)
+    # d = pd.DataFrame(a.count(), index=a.columns, columns=["n"]).astype(int)
+    d = pd.DataFrame(index=a.columns)
 
     # Yearly distribution of observed streams by typology and district
     for c in cols:
-        d[c] = 100 * b[b[c] == 1].count() / b.count()
-        d.loc["Obs of n", c] = 100 * len(obs[obs[c] == 1]) / len(obs)
-        d.loc["Obs of all", c] = 100 * len(obs[obs[c] == 1]) / len(dfVP)
-        d.loc["All in VP3", c] = 100 * len(dfDistrict[dfDistrict[c] == 1]) / len(dfVP)
-    d.loc["Obs of n", "n"] = len(obs)  #  number of streams observed at least once
-    d.loc["Obs of all", "n"] = len(dfVP)  #  number of streams in VP3
+        d[c] = b[b[c] == 1].count() / b.count()  #  share w. typology c each year
+        d.loc["All obs", c] = len(obs[obs[c] == 1]) / len(obs)
+        d.loc["All in VP3", c] = len(dfDistrict[dfDistrict[c] == 1]) / len(dfVP)
+
+    # Mean ecological status as assessed in basis analysis for VP3
+    d.loc["All obs", "basis"] = obs["Basis"].mean()  #  streams observed at least once
+    d.loc["All in VP3", "basis"] = dfDistrict["Basis"].mean()  #  all streams in VP3
+
+    # Number of streams
+    d["n"] = a.count().astype(int)  #  number of streams observed each year
+    d.loc["All obs", "n"] = len(obs)  #  number of streams observed at least once
     d.loc["All in VP3", "n"] = len(dfVP)  #  number of streams in VP3
 
     if b is dfSparse:
-        VPstats["Sparse subset"] = d.loc["Obs of n", :]  #  distribution in sparse df
-        d.to_csv("output/streams_VP_stats_sparse.csv")  #  save to CSV
+        VPstats["Sparse subset"] = d.loc["All obs", :]  #  only observed 1-3 times
+        d = d.rename(index={"All obs": "All sparse"})  #  specify it's the sparse subset
+        d.to_csv("output/streams_VP_stats_yearly_sparse.csv")  #  save yearly distribut.
     else:
-        VPstats["Observed subset"] = d.loc["Obs of n", :]  #  distribution of observed
-        VPstats["All in VP3"] = d.loc["All in VP3", :]  #  distribution of all in VP3
-        d.to_csv("output/streams_VP_stats.csv")  #  save distributions to CSV
+        VPstats["Observed subset"] = d.loc["All obs", :]  # observed at least once
+        VPstats["All in VP3"] = d.loc["All in VP3", :]  #  distribution of all VP3
+        d.to_csv("output/streams_VP_stats_yearly.csv")  #  save yearly distributions
 VPstats  #  sparse has underrepresentation of Large and DK2 (share < 50% of average VP3)
 
+# Save descriptive statistics by subset
+VPstats.to_csv("output/streams_VP_stats.csv")  #  save means to CSV
+f = {row: "{:0.0f}".format if row == "n" else "{:0.4f}".format for row in VPstats.index}
+with open("output/streams_VP_stats.tex", "w") as tf:
+    tf.write(VPstats.apply(f, axis=1).to_latex())  #  apply formatter and save to LaTeX
+
+# Transform ecological status to DVFI fauna class to match the scale used for imputation
+for df in (dfObs, dfTypology, dfNatural, dfDistrict, dfSparse):
+    conditions = [
+        # Categorical variable for ecological status: Bad, Poor, Moderate, Good, High
+        df["Basis"] == 0.0,  #  Bad
+        df["Basis"] == 1.0,  #  Poor
+        df["Basis"] == 2.0,  #  Moderate
+        df["Basis"] == 3.0,  #  Good
+        df["Basis"] == 4.0,  #  High
+    ]
+    # Fauna class goes from 1-7 where Poor eco status is FK2-FK3 and Moderate is FK5-FK6
+    df["Basis"] = np.select(conditions, [1, 2.5, 4, 5.5, 7], default=np.nan)
 
 ########################################################################################
 #   2. Multivariate feature imputation (note: Forward Stepwise Selection takes ~5 days)
@@ -334,9 +348,9 @@ VPstats  #  sparse has underrepresentation of Large and DK2 (share < 50% of aver
 # dfObs = dfIndObs.copy()
 # dfTypology = dfObs.copy()
 # dfTypology["Small"] = [0, 0, 1, 1, 0, 0]  #  effect: 0.2 worse in 1993
-# dfDistrict = dfTypology.copy()
-# dfDistrict["DK1"] = [0, 0, 0, 1, 1, 0]  #  effect: 0.1 better in 1993
-# cols = ["Small", "DK1"]
+# dfNatural = dfTypology.copy()
+# dfNatural["Natural"] = [0, 0, 0, 1, 1, 0]  #  effect: 0.1 better in 1993
+# cols = ["Small", "Natural"]
 # years = list(range(1989, 1993 + 1))
 
 
@@ -368,11 +382,9 @@ status["Obs"] = (dfIndObs < 4.5).sum() / status["n"]  #  ecological status < goo
 status.loc["Total", "Obs"] = (status["Obs"] * status["n"]).sum() / status["n"].sum()
 
 # Leave-one-out cross-validation (LOO-CV) loop over every observed stream and year
-df1 = dfNatural.drop(columns=["Small", "Medium", "Large"])
 df2 = dfNatural.drop(columns=["Medium", "Large"])
-df1.name = ", ".join(["Soft bottom", "Natural"])  #  name model
 df2.name = ", ".join(["Soft bottom", "Natural", "Small"])  #  name model
-for df in (df1, df2):  #  LOO-CV with different dummies
+for df in [df2]:  #  LOO-CV with different dummies
     # Impute missing values based on all observations (without cross-validation)
     df_imp = pd.DataFrame(
         imputer.fit_transform(np.array(df)), index=df.index, columns=df.columns
@@ -410,27 +422,33 @@ for df in (df1, df2):  #  LOO-CV with different dummies
     scores.to_csv("output/streams_eco_imp_accuracy_" + df.name + ".csv")
     status.to_csv("output/streams_eco_imp_LessThanGood_" + df.name + ".csv")
 
-
 ########################################################################################
 #   3. Visualization: Accuracy and share with less than good ecological status by year
 ########################################################################################
 # Skip step 2 by reading DataFrames of accuracy score and ecological status from CSV
 # scores = pd.read_csv("output/streams_eco_imp_accuracy.csv", index_col=0)
-sco = scores.drop(columns="n").drop("Total")
 # status = pd.read_csv("output/streams_eco_imp_LessThanGood.csv", index_col=0)
-imp = status.drop(columns=["n", "Obs"]).drop("Total")  #  imputed status by predictors
-obs = status[["Obs"]].drop("Total")  #  df for ecological status of observed streams
-obs.columns = ["Observed"]  #  rename 'Obs' to 'Observed'
-sta = imp.merge(obs, left_index=True, right_index=True)  #  add Observed as last column
+
+# Accuracy score by year and selected predictors
+sco = scores.drop(columns="n").drop("Total")
 
 # Bar plot accuracy scores
 f1 = sco.plot(
     kind="bar", ylabel="Accuracy in predicting observed ecological status"
 ).get_figure()
-f1.savefig("output/streams_eco_imp_accuracy.pdf", bbox_inches="tight")
+f1.savefig("output/streams_eco_imp_accuracy.pdf", bbox_inches="tight")  #  save PDF
+
+# Share of streams with less than good ecological status by year and selected predictors
+status.index = status.index.astype(str)  #  convert index to string (to mimic read_csv)
+listYears = [str(t) for t in range(1990, 2020 + 1)]  #  1990 to 2020 as strings
+status_years = status.loc[listYears, :]  #  subset to years in natural capital account
+imp = status_years.drop(columns=["n", "Obs"])  #  imputed status by selected predictors
+obs = status_years[["Obs"]]  #  ecological status of streams observed the given year
+obs.columns = ["Observed"]  #  rename 'Obs' to 'Observed'
+sta = imp.merge(obs, left_index=True, right_index=True)  #  add Observed as last column
 
 # Plot share of streams with less than good ecological status
 f2 = sta.plot(
     ylabel="Share of streams with less than good ecological status"
 ).get_figure()
-f2.savefig("output/streams_eco_imp_LessThanGood.pdf", bbox_inches="tight")
+f2.savefig("output/streams_eco_imp_LessThanGood.pdf", bbox_inches="tight")  #  save PDF

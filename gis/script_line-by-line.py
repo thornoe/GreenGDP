@@ -815,7 +815,7 @@ for t in c.years:
         df["D age"] = Dem.loc[t, "D age"]  #  dummy for mean age > 45 years
         SL[t] = SL[t] * SL["length"]  #  shore length if status < good
         SL_not_good = SL[["v", t]].groupby("v").sum()  #  if status < good
-        df["ln PSL"] = SL_not_good[t] / Geo["shore all j"]  #  proportional
+        df["ln PSL"] = SL_not_good[t] / Geo["shores all j"]  #  proportional
         ln_PSL = np.log(df.loc[df["ln PSL"] > 0, "ln PSL"])  #  log PSL
         ln_PSL_full = pd.Series(index=df.index)  #  empty series with index
         ln_PSL_full[df["ln PSL"] != 0] = ln_PSL  #  fill with ln_PSL if > 0
@@ -838,7 +838,7 @@ shores_j[j] = shores_v
 ########################################################################################
 # Set up DataFrame of shore length for each category j ∈ {coastal, lakes, streams}
 shores = pd.DataFrame(shores_j)
-# shores["shore all j"] = shores["coastal"] + shores["lakes"] + shores["streams"]
+shores["shores all j"] = shores.sum(axis=1, skipna=True)
 shores.to_csv("output\\all_VP_shore length.csv")  #  save to csv
 
 # Set up DataFrame of statistics for each category j ∈ {coastal, lakes, streams}
