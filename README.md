@@ -1,7 +1,7 @@
-# The Green Net National Product: *Subproject regarding pollution of the water environment*
-This subproject is a part of a larger research project at [UCPH](https://www.ku.dk/english/) that aims to estimate the Green Net National Income (GNNI) for Denmark since 1990. The first stage of this subproject constructs longitudinal datasets and maps the ecological status of Danish water bodies.
+# Green GDP: Pollution of the water environment
+This research project estimates the investment in natural capital and cost of pollution of water ecosystem services for the [Green National Accounts](https://susy.ku.dk/research/developing-and-implementing-green-national-accounts-and-the-green-gdp) of Denmark for 1990-2020. 
 
-For more information and preliminary results for streams, see: [ThorNoe.GitHub.io/GreenGDP](https://thornoe.github.io/GreenGDP/). Similar work for lakes and coastal waters is forthcoming.
+For more information, see presentation of the ecological status of streams at [ThorNoe.GitHub.io/GreenGDP](https://thornoe.github.io/GreenGDP).
 
 ## Output
 Besides the [map book](https://github.com/thornoe/GreenGDP/raw/master/gis/output/streams.pdf) with a map for each year, the script tool creates two longitudinal datasets for further statistical work:
@@ -43,4 +43,4 @@ The version of Python used in ArcGIS Pro is systematically older than the most r
    2. Under **Tools** > **Options** > **IDE Shortcuts**, you can *Assign* the command **Run: Execute selection** to `Shift+Enter` (or whatever you prefer) instead of `Ctrl+F7`.
 
 ## License
-This project is released under the MIT License, that is, you can basically do anything with my code as long as you give appropriate credit and don’t hold me liable.
+This project is released under the [MIT License](https://github.com/thornoe/GreenGDP/blob/master/LICENSE), that is, you can basically do anything with my code as long as you give appropriate credit and don’t hold me liable.
