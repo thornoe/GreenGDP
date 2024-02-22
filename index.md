@@ -3,7 +3,7 @@ The first part of this research project is to construct a longitudinal dataset o
 
 The second part consists of imputing missing values in the dataset. The imputed ecological status is presented in the first figure below.
 
-The third part applies valuation studies to be able to estimate the development in the Green Net National Income (GNNI) for Denmark. For surface water, we apply the Benefit Transfer equation estimated by a meta analysis function ([Zandersen et al, 2022](https://dce.au.dk/udgivelser/vr/nr-451-500/abstracts/no-486-socio-economic-benefits-of-improved-water-quality-development-and-use-of-meta-analysis-function-for-benefit-transfer)) to help answer the overall research question, to what extent economic growth can be considered sustainable or at the cost of the environment?
+The third part applies valuation studies to be able to estimate the development in the Green Net National Income (GNNI) for Denmark. For surface water, we apply the Benefit Transfer equation estimated by a meta analysis function ([Zandersen et al, 2022 - *English summary*](https://dce.au.dk/udgivelser/vr/nr-451-500/abstracts/no-486-socio-economic-benefits-of-improved-water-quality-development-and-use-of-meta-analysis-function-for-benefit-transfer)) to help answer the overall research question, to what extent economic growth can be considered sustainable or at the cost of the environment?
 
 ## Imputed ecological status
 
@@ -15,7 +15,7 @@ This project follows the selection and demarcation given by **VP2** *([Vandområ
 
 
 ### Assigning monitoring stations to waterbodies
-Geographically, monitoring stations are recorded as point observations, streams are identified as vectors, while lakes and coastal waters constitute polygons. Official linkage tables link all waterbodies in VP2 with stations that have been monitored at some point after 2007. [MiljøGIS (Danish)](http://miljoegis.mim.dk/spatialmap?profile=vandrammedirektiv2-bek-2019) interactively shows the demarcation and the result of the basis analysis for VP2 which was carried out during 2008-2012 for streams or during 2007-2013 for lakes and coastal waters. It also encompassed several new indicators in a very thorough assessment of both ecological and chemical status.
+Geographically, monitoring stations are recorded as point observations, streams are identified as vectors, while lakes and coastal waters constitute polygons. Official linkage tables link all waterbodies in VP2 with stations that have been monitored at some point after 2007. [MiljøGIS (2019 - *Danish*)](http://miljoegis.mim.dk/spatialmap?profile=vandrammedirektiv2-bek-2019) interactively shows the demarcation and the result of the basis analysis for VP2 which was carried out during 2008-2012 for streams or during 2007-2013 for lakes and coastal waters. It also encompassed several new indicators in a very thorough assessment of both ecological and chemical status.
 
 
 ## Ecological status of streams by year
