@@ -1,10 +1,14 @@
-# Ecological status of waterbodies
-The first part of this project is to construct longitudinal panel series of ecological status for each Danish stream, lake and coastal water. The results for streams are illustrated below.
+# Ecological status of surface waters
+The first part of this research project is to construct a longitudinal dataset of ecological status for each Danish stream, lake and coastal water from 1990-2020. The data processing is outlined below. Ecological status is observed through biological indicators of eutrophication, which is the process of nutrient over-enrichment of waterbodies due to organic pollution from agriculture and point sources. Such pollution can lead to high growth of phytoplankton and thus oxygen depletion which leads to worse ecological conditions and loss of ecosystem services.
 
-The second part will consist of imputing missing values and apply valuation studies to be able to estimate the development in the Green Net National Income (GNNI) for Denmark from 1990-2020 and help answer the overall research question, whether economic growth can be considered to have been "green" or at the cost of the environment?
+The second part consists of imputing missing values in the dataset. The imputed ecological status is presented in the first figure below.
 
-Ecological status is observed through biological indicators of eutrophication, which is the process of nutrient over-enrichment of waterbodies due to organic pollution from agriculture and point sources. Such pollution can lead to high growth of phytoplankton and thus oxygen depletion which leads to worse ecological conditions and loss of ecosystem services.
+The third part applies valuation studies to be able to estimate the development in the Green Net National Income (GNNI) for Denmark. For surface water, we apply the Benefit Transfer equation estimated by a meta analysis function ([Zandersen et al, 2022](https://dce.au.dk/udgivelser/vr/nr-451-500/abstracts/no-486-socio-economic-benefits-of-improved-water-quality-development-and-use-of-meta-analysis-function-for-benefit-transfer)) to help answer the overall research question, to what extent economic growth can be considered sustainable or at the cost of the environment?
 
+## Imputed ecological status
+
+#### Surface water: Less than good ecological status (share of shore length)
+![Ecological status](https://github.com/thornoe/GreenGDP/blob/master/gis/output/all_eco_imp_LessThanGood.png)
 
 ## Identification of waterbodies
 This project follows the selection and demarcation given by **VP2** *([Vandområdeplan 2 - Danish](https://mst.dk/natur-vand/vandmiljoe/vandomraadeplaner/vandomraadeplaner-2015-2021/))* which is the Danish waterbody plan for 2015-2021 that implements phase two of the **EU-WFD** ([the European Union's Water Framework Directive - *English*](https://ec.europa.eu/environment/water/water-framework/)). The surface waterbodies in VP2 are constituted by a total of 6979 streams, 857 lakes and 119 coastal waters.
@@ -371,7 +375,7 @@ If your browser does not allow you to navigate the map book, you can [download i
 
 ## Assessing the ecological status of waterbodies
 
-The ecological conditions in waterbodies can be quantified directly in form of the concentration of chlorophyll *a* which are the green pigments found in phytoplankton (for lakes and coastal waters) or indirectly using biological indicators that are responsive to eutrophication.
+The ecological conditions in waterbodies can be quantified directly in form of the concentration of chlorophyll *a* which are the green pigments found in phytoplankton (for **lakes** and **coastal waters**) or indirectly using biological indicators that are responsive to eutrophication.
 
 For **streams**, the most long-lasting biological indicator for nutrient pollution in Danish streams is the **DVFI index** *(Dansk Vandløbsfaunaindeks)* which measures the occurrence and composition of benthic macroinvertebrates (small bottom-living animals without backbone). The index is one of many modified versions of the Trent Biotic Index (TBI) that was developed in 1964 for the River Trent watershed in England ([Andersen et al, 1984 - *English*](https://www.sciencedirect.com/science/article/abs/pii/0043135484900629)). In 1998 the Danish index was improved as observations before that were less consistent ([Danish Environmental Protection Agency, 1998 - *Danish*](https://www2.mst.dk/udgiv/Publikationer/1998/87-7810-995-7/pdf/87-7810-995-7.PDF)).
 
