@@ -7,7 +7,7 @@ The third part applies valuation studies to be able to estimate the development 
 
 ## Imputed ecological status
 
-#### Surface water: Less than good ecological status (share of shore length)
+#### Less than good ecological status (share of shore length)
 ![Ecological status](https://github.com/thornoe/GreenGDP/blob/master/gis/output/all_eco_imp_LessThanGood.png)
 
 ## Identification of waterbodies
@@ -17,11 +17,9 @@ This project follows the selection and demarcation given by **VP2** *([Vandområ
 ### Assigning monitoring stations to waterbodies
 Geographically, monitoring stations are recorded as point observations, streams are identified as vectors, while lakes and coastal waters constitute polygons. Official linkage tables link all waterbodies in VP2 with stations that have been monitored at some point after 2007. [MiljøGIS (Danish)](http://miljoegis.mim.dk/spatialmap?profile=vandrammedirektiv2-bek-2019) interactively shows the demarcation and the result of the basis analysis for VP2 which was carried out during 2008-2012 for streams or during 2007-2013 for lakes and coastal waters. It also encompassed several new indicators in a very thorough assessment of both ecological and chemical status.
 
-For **streams**, 11,289 stations were matched to a waterbody by the official linkage table.
-
 
 ## Ecological status of streams by year
-35,867 km is the he total shore length of streams included in VP2, of which 76% of streams representing 31,204 km (87% of total shore length) have been assessed at least once. On average, 15% of streams representing 8,923 km (24% of total shore length) are assessed each year. The composition as well as the extent of stations being monitored within a year is ever-changing, peaking at 46% of total shore length in 2002 as seen in the first row of the table below.
+35,867 km is the he total shore length of streams included in VP2, of which 76% of streams representing 31,204 km (87% of total shore length) have been assessed at least once. On average, 15% of streams representing 8,923 km (24% of total shore length) are assessed each year. The composition as well as the extent of stations being monitored within a year is ever-changing, peaking at 46% of total shore length in 2002 as seen in the last column of the table below.
 
 While the monitoring of water quality in Danish streams does cover the range of different pollution sources and physical conditions, it must be underlined that there is an overrepresentation of larger streams which generally have higher water quality. Moreover, a moderate to bad ecological status can in some cases be caused by influence of ochre or poor physical conditions due to stream straightening or intensive dredging and cutting of water weeds ([DCE, 2021 - *Danish*](https://dce.au.dk/udgivelser/vr/nr-451-500/abstracts/no-473-streams-2020)).
 
