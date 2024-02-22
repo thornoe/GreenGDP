@@ -836,6 +836,8 @@ shores_j[j] = shores_v
 ########################################################################################
 #   4.a Stats for all categories j: Shore length and share of it where eco status < Good
 ########################################################################################
+# Skip step 2 by reading DataFrames of accuracy score and ecological status from CSV
+
 # Set up DataFrame of shore length for each category j ∈ {coastal, lakes, streams}
 shores = pd.DataFrame(shores_j)
 shores["shores all j"] = shores.sum(axis=1, skipna=True)
@@ -844,14 +846,23 @@ shores.to_csv("output\\all_VP_shore length.csv")  #  save to csv
 # Set up DataFrame of statistics for each category j ∈ {coastal, lakes, streams}
 stats = pd.DataFrame(stats_j)
 stats.to_csv("output\\all_eco_imp_LessThanGood.csv")  #  save to csv
+stats = pd.read_csv("output\\all_eco_imp_LessThanGood.csv", index_col=0)
 
-# Plot water bodies by category (mean ecological status weighted by length)
-f1 = (
-    stats.drop(1989)
+for format in ("pdf", "png"):
+    f1 = (
+        stats.drop(1989).drop(columns="all j")
+        .plot(ylabel="Share of category with less than good ecological status")
+        .get_figure()
+    )
+    f1.savefig("output\\all_eco_imp_LessThanGood." + format, bbox_inches="tight")
+
+# PNG: Plot water bodies by category (mean ecological status weighted by length)
+f1b = (
+    stats.drop(1989).drop(columns="all j")
     .plot(ylabel="Share of category with less than good ecological status")
     .get_figure()
 )
-f1.savefig("output\\all_eco_imp_LessThanGood.pdf", bbox_inches="tight")
+f1b.savefig("output\\all_eco_imp_LessThanGood.png", bbox_inches="tight")
 
 ########################################################################################
 #   4.b Marginal willingness to pay (MWTP) for improvement of water quality to "Good"

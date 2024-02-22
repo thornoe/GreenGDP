@@ -1,5 +1,5 @@
-# Ecological status of waterbodies in Denmark
-The first part of this project is to construct longitudinal datasets with a time series of ecological status for each Danish stream, lake and coastal water. The results for streams are illustrated below.
+# Ecological status of waterbodies
+The first part of this project is to construct longitudinal panel series of ecological status for each Danish stream, lake and coastal water. The results for streams are illustrated below.
 
 The second part will consist of imputing missing values and apply valuation studies to be able to estimate the development in the Green Net National Income (GNNI) for Denmark from 1990-2020 and help answer the overall research question, whether economic growth can be considered to have been "green" or at the cost of the environment?
 
@@ -23,314 +23,347 @@ While the monitoring of water quality in Danish streams does cover the range of 
 
 Thus, the statistics shown in the table should be taken with a grain of salt but shows the same positive trend that can be identified for many individual streams in the map book below.
 
-#### Streams: Ecological status 1990-2019
+#### Streams: Ecological status 1990-2020
 <table border="1" class="dataframe">
   <thead>
     <tr style="text-align: right;">
       <th></th>
+      <th>Share of known is High (%)</th>
+      <th>Share of known is Good (%)</th>
+      <th>Share of known is Moderate (%)</th>
+      <th>Share of known is Poor (%)</th>
+      <th>Share of known is Bad (%)</th>
+      <th>Share of known is not Good (%)</th>
       <th>Status known (%)</th>
-      <th>Share of known is high (%)</th>
-      <th>Share of known is good (%)</th>
-      <th>Share of known is moderate (%)</th>
-      <th>Share of known is poor (%)</th>
-      <th>Share of known is bad (%)</th>
     </tr>
   </thead>
   <tbody>
     <tr>
       <th>1989</th>
-      <td>7</td>
-      <td>3</td>
-      <td>33</td>
-      <td>48</td>
+      <td>2</td>
+      <td>36</td>
+      <td>46</td>
       <td>12</td>
-      <td>1</td>
+      <td>2</td>
+      <td>61</td>
+      <td>10</td>
     </tr>
     <tr>
       <th>1990</th>
-      <td>7</td>
-      <td>5</td>
-      <td>36</td>
-      <td>46</td>
-      <td>7</td>
+      <td>3</td>
+      <td>39</td>
+      <td>40</td>
+      <td>14</td>
       <td>2</td>
+      <td>56</td>
+      <td>10</td>
     </tr>
     <tr>
       <th>1991</th>
-      <td>6</td>
-      <td>3</td>
-      <td>32</td>
-      <td>46</td>
+      <td>5</td>
+      <td>35</td>
+      <td>42</td>
       <td>13</td>
-      <td>3</td>
+      <td>2</td>
+      <td>58</td>
+      <td>9</td>
     </tr>
     <tr>
       <th>1992</th>
-      <td>22</td>
-      <td>1</td>
-      <td>32</td>
-      <td>46</td>
-      <td>15</td>
       <td>2</td>
+      <td>36</td>
+      <td>44</td>
+      <td>14</td>
+      <td>2</td>
+      <td>61</td>
+      <td>21</td>
     </tr>
     <tr>
       <th>1993</th>
-      <td>24</td>
       <td>4</td>
-      <td>30</td>
-      <td>46</td>
+      <td>33</td>
+      <td>43</td>
       <td>16</td>
       <td>2</td>
+      <td>61</td>
+      <td>24</td>
     </tr>
     <tr>
       <th>1994</th>
-      <td>25</td>
-      <td>2</td>
+      <td>3</td>
       <td>33</td>
-      <td>43</td>
-      <td>18</td>
+      <td>44</td>
+      <td>17</td>
       <td>1</td>
+      <td>62</td>
+      <td>26</td>
     </tr>
     <tr>
       <th>1995</th>
-      <td>26</td>
-      <td>3</td>
-      <td>36</td>
-      <td>43</td>
-      <td>14</td>
+      <td>4</td>
+      <td>37</td>
+      <td>44</td>
+      <td>13</td>
       <td>1</td>
+      <td>58</td>
+      <td>27</td>
     </tr>
     <tr>
       <th>1996</th>
-      <td>25</td>
-      <td>4</td>
-      <td>32</td>
-      <td>42</td>
-      <td>17</td>
+      <td>5</td>
+      <td>34</td>
+      <td>41</td>
+      <td>15</td>
       <td>2</td>
+      <td>59</td>
+      <td>25</td>
     </tr>
     <tr>
       <th>1997</th>
-      <td>25</td>
-      <td>4</td>
-      <td>34</td>
+      <td>5</td>
+      <td>35</td>
       <td>44</td>
-      <td>14</td>
+      <td>13</td>
       <td>1</td>
+      <td>59</td>
+      <td>27</td>
     </tr>
     <tr>
       <th>1998</th>
-      <td>28</td>
       <td>5</td>
-      <td>32</td>
-      <td>45</td>
-      <td>15</td>
+      <td>34</td>
+      <td>46</td>
+      <td>12</td>
       <td>1</td>
+      <td>60</td>
+      <td>29</td>
     </tr>
     <tr>
       <th>1999</th>
-      <td>37</td>
-      <td>4</td>
-      <td>31</td>
-      <td>50</td>
-      <td>12</td>
+      <td>5</td>
+      <td>34</td>
+      <td>48</td>
+      <td>10</td>
       <td>1</td>
+      <td>60</td>
+      <td>38</td>
     </tr>
     <tr>
       <th>2000</th>
-      <td>44</td>
       <td>6</td>
       <td>36</td>
-      <td>43</td>
+      <td>44</td>
       <td>12</td>
       <td>0</td>
+      <td>56</td>
+      <td>45</td>
     </tr>
     <tr>
       <th>2001</th>
-      <td>43</td>
-      <td>6</td>
-      <td>38</td>
-      <td>43</td>
-      <td>11</td>
+      <td>7</td>
+      <td>39</td>
+      <td>42</td>
+      <td>10</td>
       <td>0</td>
+      <td>53</td>
+      <td>44</td>
     </tr>
     <tr>
       <th>2002</th>
-      <td>46</td>
-      <td>6</td>
-      <td>37</td>
-      <td>45</td>
-      <td>10</td>
+      <td>7</td>
+      <td>39</td>
+      <td>43</td>
+      <td>8</td>
       <td>0</td>
+      <td>52</td>
+      <td>46</td>
     </tr>
     <tr>
       <th>2003</th>
-      <td>43</td>
-      <td>8</td>
-      <td>36</td>
-      <td>43</td>
+      <td>9</td>
+      <td>39</td>
+      <td>40</td>
       <td>10</td>
       <td>0</td>
+      <td>51</td>
+      <td>44</td>
     </tr>
     <tr>
       <th>2004</th>
-      <td>34</td>
       <td>11</td>
       <td>34</td>
-      <td>43</td>
+      <td>42</td>
       <td>10</td>
       <td>0</td>
+      <td>54</td>
+      <td>36</td>
     </tr>
     <tr>
       <th>2005</th>
-      <td>31</td>
-      <td>8</td>
-      <td>38</td>
-      <td>42</td>
+      <td>9</td>
+      <td>40</td>
+      <td>40</td>
       <td>9</td>
       <td>0</td>
+      <td>50</td>
+      <td>33</td>
     </tr>
     <tr>
       <th>2006</th>
-      <td>26</td>
-      <td>9</td>
-      <td>40</td>
+      <td>10</td>
       <td>43</td>
-      <td>5</td>
+      <td>39</td>
+      <td>6</td>
       <td>0</td>
+      <td>46</td>
+      <td>30</td>
     </tr>
     <tr>
       <th>2007</th>
-      <td>25</td>
-      <td>10</td>
-      <td>38</td>
-      <td>39</td>
-      <td>10</td>
+      <td>9</td>
+      <td>41</td>
+      <td>40</td>
+      <td>8</td>
       <td>0</td>
+      <td>49</td>
+      <td>28</td>
     </tr>
     <tr>
       <th>2008</th>
-      <td>17</td>
-      <td>14</td>
-      <td>36</td>
-      <td>41</td>
-      <td>8</td>
+      <td>12</td>
+      <td>42</td>
+      <td>38</td>
+      <td>5</td>
       <td>0</td>
+      <td>44</td>
+      <td>24</td>
     </tr>
     <tr>
       <th>2009</th>
-      <td>17</td>
-      <td>15</td>
-      <td>38</td>
-      <td>36</td>
-      <td>8</td>
+      <td>14</td>
+      <td>45</td>
+      <td>32</td>
+      <td>6</td>
       <td>0</td>
+      <td>39</td>
+      <td>25</td>
     </tr>
     <tr>
       <th>2010</th>
-      <td>20</td>
-      <td>16</td>
-      <td>39</td>
-      <td>32</td>
-      <td>10</td>
+      <td>15</td>
+      <td>42</td>
+      <td>31</td>
+      <td>9</td>
       <td>0</td>
+      <td>41</td>
+      <td>25</td>
     </tr>
     <tr>
       <th>2011</th>
-      <td>22</td>
-      <td>6</td>
-      <td>41</td>
-      <td>41</td>
       <td>9</td>
+      <td>43</td>
+      <td>38</td>
+      <td>8</td>
       <td>0</td>
+      <td>47</td>
+      <td>29</td>
     </tr>
     <tr>
       <th>2012</th>
-      <td>20</td>
       <td>12</td>
       <td>45</td>
       <td>33</td>
-      <td>8</td>
+      <td>7</td>
       <td>0</td>
+      <td>42</td>
+      <td>28</td>
     </tr>
     <tr>
       <th>2013</th>
-      <td>22</td>
-      <td>11</td>
-      <td>45</td>
-      <td>33</td>
-      <td>8</td>
+      <td>10</td>
+      <td>46</td>
+      <td>34</td>
+      <td>7</td>
       <td>0</td>
+      <td>43</td>
+      <td>33</td>
     </tr>
     <tr>
       <th>2014</th>
       <td>17</td>
-      <td>19</td>
-      <td>45</td>
-      <td>27</td>
-      <td>7</td>
+      <td>49</td>
+      <td>26</td>
+      <td>6</td>
       <td>0</td>
+      <td>33</td>
+      <td>28</td>
     </tr>
     <tr>
       <th>2015</th>
-      <td>14</td>
-      <td>20</td>
-      <td>41</td>
+      <td>17</td>
+      <td>46</td>
       <td>28</td>
-      <td>8</td>
+      <td>7</td>
       <td>0</td>
+      <td>36</td>
+      <td>24</td>
     </tr>
     <tr>
       <th>2016</th>
-      <td>18</td>
-      <td>23</td>
-      <td>42</td>
-      <td>27</td>
-      <td>6</td>
+      <td>21</td>
+      <td>44</td>
+      <td>29</td>
+      <td>4</td>
       <td>0</td>
+      <td>34</td>
+      <td>28</td>
     </tr>
     <tr>
       <th>2017</th>
       <td>15</td>
-      <td>16</td>
-      <td>42</td>
-      <td>33</td>
-      <td>7</td>
+      <td>46</td>
+      <td>30</td>
+      <td>6</td>
       <td>0</td>
+      <td>37</td>
+      <td>28</td>
     </tr>
     <tr>
       <th>2018</th>
-      <td>28</td>
       <td>15</td>
-      <td>44</td>
+      <td>45</td>
       <td>32</td>
       <td>6</td>
       <td>0</td>
+      <td>39</td>
+      <td>39</td>
     </tr>
     <tr>
       <th>2019</th>
-      <td>26</td>
-      <td>23</td>
-      <td>41</td>
-      <td>27</td>
-      <td>7</td>
+      <td>20</td>
+      <td>44</td>
+      <td>28</td>
+      <td>6</td>
       <td>0</td>
+      <td>35</td>
+      <td>28</td>
     </tr>
     <tr>
       <th>2020</th>
-      <td>18</td>
       <td>23</td>
-      <td>44</td>
-      <td>26</td>
-      <td>6</td>
+      <td>46</td>
+      <td>25</td>
+      <td>4</td>
       <td>0</td>
+      <td>30</td>
+      <td>25</td>
     </tr>
   </tbody>
 </table>
 
 The map book below shows the ecological status of streams for each year from 1992-2019. As stands out, initially the DVFI index was mostly used in the two [counties](https://en.wikipedia.org/wiki/Counties_of_Denmark) Viborg and Ringkjøbing (in mid-western Jutland).
 
-If your browser does not allow you to navigate the map book, you can [download it here](https://github.com/thornoe/GNNP/raw/master/gis/output/streams.pdf) instead.
+If your browser does not allow you to navigate the map book, you can [download it here](https://github.com/thornoe/GreenGDP/raw/master/gis/output/streams.pdf) instead.
 
 #### Streams: Ecological status mapped for each year
 <iframe src="//www.slideshare.net/slideshow/embed_code/key/vafjNGN9GUGLOm" width="900" height="1200" frameborder="0" marginwidth="0" marginheight="0" scrolling="no" style="border:1px solid #CCC; border-width:1px; margin-bottom:1px; max-width: 100%; max-height: 100%;" allowfullscreen> </iframe>
@@ -350,4 +383,4 @@ Finally, the seven fauna classes are converted to the five EU-WFD categories of 
 
 ### Data and reproducible code
 
-See [GitHub.com/ThorNoe/GNNP](https://github.com/ThorNoe/GNNP) for data, code and instructions on how to reproduce or update the data and maps.
+See [GitHub.com/ThorNoe/GreenGDP](https://github.com/ThorNoe/GreenGDP) for data, code and instructions on how to reproduce or update the data and maps.

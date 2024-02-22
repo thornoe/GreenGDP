@@ -157,12 +157,13 @@ shoresTotal = shores.sum()
 stats = pd.DataFrame(stats_j)
 
 # Plot water bodies by category (mean ecological status weighted by length)
-f1 = (
-    stats.drop(1989)
-    .plot(ylabel="Share of category with less than good ecological status")
-    .get_figure()
-)
-f1.savefig("output\\all_eco_imp_LessThanGood.pdf", bbox_inches="tight")
+for format in ("pdf", "png"):
+    f1 = (
+        stats.drop(1989)
+        .plot(ylabel="Share of category with less than good ecological status")
+        .get_figure()
+    )
+    f1.savefig("output\\all_eco_imp_LessThanGood." + format, bbox_inches="tight")
 
 # Calculate mean ecological status across all categories j weighted by shore length
 stats["all j"] = (
