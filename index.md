@@ -12,7 +12,7 @@ Our dataset indicates an overall improvement of the water environment since 1990
 ![Ecological status](https://github.com/thornoe/GreenGDP/blob/master/gis/output/all_eco_imp_LessThanGood.png?raw=true)
 
 ## Identification of waterbodies
-This project follows the selection and demarcation given by **VP2** *([Vandområdeplan 2 - Danish](https://mst.dk/natur-vand/vandmiljoe/vandomraadeplaner/vandomraadeplaner-2015-2021/))* which is the Danish waterbody plan for 2015-2021 that implements phase two of the **EU-WFD** ([the European Union's Water Framework Directive - *English*](https://ec.europa.eu/environment/water/water-framework/)). The surface waterbodies in VP2 are constituted by a total of 6979 streams, 857 lakes and 119 coastal waters.
+This project follows the selection and demarcation given by **VP2** *([Vandområdeplan 2 - Danish](https://mst.dk/natur-vand/vandmiljoe/vandomraadeplaner/vandomraadeplaner-2015-2021/))* which is the Danish waterbody plan for 2015-2021 that implements phase two of the **EU-WFD** ([the European Union's Water Framework Directive](https://ec.europa.eu/environment/water/water-framework/)). The surface waterbodies in VP2 are constituted by a total of 6979 streams, 857 lakes and 119 coastal waters.
 
 
 ### Assigning monitoring stations to waterbodies
@@ -376,7 +376,7 @@ If your browser does not allow you to navigate the map book, you can [download i
 
 The ecological conditions in waterbodies can be quantified directly in form of the concentration of chlorophyll *a* which are the green pigments found in phytoplankton (for **lakes** and **coastal waters**) or indirectly using biological indicators that are responsive to eutrophication.
 
-For **streams**, the most long-lasting biological indicator for nutrient pollution in Danish streams is the **DVFI index** *(Dansk Vandløbsfaunaindeks)* which measures the occurrence and composition of benthic macroinvertebrates (small bottom-living animals without backbone). The index is one of many modified versions of the Trent Biotic Index (TBI) that was developed in 1964 for the River Trent watershed in England ([Andersen et al, 1984 - *English*](https://www.sciencedirect.com/science/article/abs/pii/0043135484900629)). In 1998 the Danish index was improved as observations before that were less consistent ([Danish Environmental Protection Agency, 1998 - *Danish*](https://www2.mst.dk/udgiv/Publikationer/1998/87-7810-995-7/pdf/87-7810-995-7.PDF)).
+For **streams**, the most long-lasting biological indicator for nutrient pollution in Danish streams is the **DVFI index** *(Dansk Vandløbsfaunaindeks)* which measures the occurrence and composition of benthic macroinvertebrates (small bottom-living animals without backbone). The index is one of many modified versions of the Trent Biotic Index (TBI) that was developed in 1964 for the River Trent watershed in England ([Andersen et al, 1984](https://www.sciencedirect.com/science/article/abs/pii/0043135484900629)). In 1998 the Danish index was improved as observations before that were less consistent ([Danish Environmental Protection Agency, 1998 - *Danish*](https://www2.mst.dk/udgiv/Publikationer/1998/87-7810-995-7/pdf/87-7810-995-7.PDF)).
 
 ### From DVFI observations to ecological status of streams
 
