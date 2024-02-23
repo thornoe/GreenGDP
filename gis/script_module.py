@@ -1,7 +1,7 @@
 """
 Name:       script_module.py
 
-Label:      Construct and map longitudinal data of ecological status of streams.
+Label:      Set up longitudinal data, impute missing values, and apply valuation.
 
 Summary:    ThorNoe.GitHub.io/GreenGDP explains the overall approach and methodology.
 
