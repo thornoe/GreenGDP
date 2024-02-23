@@ -12,7 +12,7 @@ Our dataset indicates an overall improvement of the water environment since 1990
 ![Ecological status](https://github.com/thornoe/GreenGDP/blob/master/gis/output/all_eco_imp_LessThanGood.png?raw=true)
 
 ## Identification of waterbodies
-This project follows the selection and demarcation given by **VP2** *([Vandområdeplan 2 - Danish](https://mst.dk/natur-vand/vandmiljoe/vandomraadeplaner/vandomraadeplaner-2015-2021/))* which is the Danish waterbody plan for 2015-2021 that implements phase two of the **EU-WFD** ([the European Union's Water Framework Directive](https://ec.europa.eu/environment/water/water-framework/)). The surface waterbodies in VP2 are constituted by a total of 6979 streams, 857 lakes and 119 coastal waters.
+This project follows the selection and demarcation given by **VP2** *([Vandområdeplan 2 - Danish](https://mst.dk/natur-vand/vandmiljoe/vandomraadeplaner/vandomraadeplaner-2015-2021/))* which is the Danish waterbody plan for 2015-2021 that implements phase two of the **EU WFD** ([the European Union's Water Framework Directive](https://ec.europa.eu/environment/water/water-framework/)). The surface waterbodies in VP2 are constituted by a total of 6979 streams, 857 lakes and 119 coastal waters.
 
 
 ### Assigning monitoring stations to waterbodies
@@ -382,7 +382,7 @@ For **streams**, the most long-lasting biological indicator for nutrient polluti
 
 If a station has multiple observations within a year, take the median and round down. Subsequently, do the same if a stream has observations for multiple stations within a year. Thus, a unique DVFI fauna class is obtained for each stream for every year it has been observed ([SVANA, 2016 *- Danish*](https://mst.dk/media/121345/retningslinjer-vandomraadeplaner-for-anden-planperiode.pdf)).
 
-Finally, the seven fauna classes are converted to the five EU-WFD categories of ecological status: Bad, Poor, Moderate, Good, or High ([ministerial order no. 1001, 2016, Appendix 3 *- Danish*](https://www.retsinformation.dk/Forms/R0710.aspx?id=181970)).
+Finally, the seven fauna classes are converted to the five EU WFD categories of ecological status: Bad, Poor, Moderate, Good, or High ([ministerial order no. 1001, 2016, Appendix 3 *- Danish*](https://www.retsinformation.dk/Forms/R0710.aspx?id=181970)).
 
 ### Data and reproducible code
 
