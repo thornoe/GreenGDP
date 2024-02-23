@@ -6,9 +6,10 @@ The second part consists of imputing missing values in the dataset. The imputed 
 The third part applies valuation studies to be able to estimate the development in the Green Net National Income (GNNI) for Denmark. For surface water, we apply the Benefit Transfer equation estimated by a meta analysis function ([Zandersen et al, 2022 - *English summary*](https://dce.au.dk/udgivelser/vr/nr-451-500/abstracts/no-486-socio-economic-benefits-of-improved-water-quality-development-and-use-of-meta-analysis-function-for-benefit-transfer)) to help answer the overall research question, to what extent economic growth can be considered sustainable or at the cost of the environment?
 
 ## Imputed ecological status
+Our dataset indicates an overall improvement of the water environment since 1990. However, since agricultural Nitrogen surplus peaked in the mid 1980s, we are most likely only observing the latter half of an inverse U-shape of water pollution ([Hansen et al, 2011](https://doi.org/10.1021/es102334u)).
 
 #### Less than good ecological status (share of shore length)
-![Ecological status](https://github.com/thornoe/GreenGDP/blob/master/gis/output/all_eco_imp_LessThanGood.png)
+![Ecological status](https://github.com/thornoe/GreenGDP/blob/master/gis/output/all_eco_imp_LessThanGood.png?raw=true)
 
 ## Identification of waterbodies
 This project follows the selection and demarcation given by **VP2** *([Vandområdeplan 2 - Danish](https://mst.dk/natur-vand/vandmiljoe/vandomraadeplaner/vandomraadeplaner-2015-2021/))* which is the Danish waterbody plan for 2015-2021 that implements phase two of the **EU-WFD** ([the European Union's Water Framework Directive - *English*](https://ec.europa.eu/environment/water/water-framework/)). The surface waterbodies in VP2 are constituted by a total of 6979 streams, 857 lakes and 119 coastal waters.

@@ -185,9 +185,9 @@ df_BT.index.names = ["j", "t", "v"]
 df_BT.to_csv("output\\all_eco_imp.csv")  #  save to csv
 
 # Marginal willingness to pay (MWTP) for improvement of water quality to "Good"
-CWPn = c.valuation(df_BT, real=False)
+CWPn_j = c.valuation(df_BT, real=False)
 # Nominal cost of pollution in prices of current year, and preceding year respectively
-CWPn.columns = CWPn.columns.set_levels(
+CWPn_j.columns = CWPn_j.columns.set_levels(
     [
         "Cost (current year's prices, million DKK)",
         "Cost (preceding year's prices, million DKK)",
@@ -196,9 +196,9 @@ CWPn.columns = CWPn.columns.set_levels(
 )
 
 # Investment in water quality (net present value of infinite stream of MWTP for change)
-IVn = c.valuation(df_BT, real=False, investment=True)
+IVn_j = c.valuation(df_BT, real=False, investment=True)
 # Nominal investment value in prices of current year and preceding year respectively
-IVn.columns = IVn.columns.set_levels(
+IVn_j.columns = IVn_j.columns.set_levels(
     [
         "Investment value (current year's prices, million DKK)",
         "Investment value (preceding year's prices, million DKK)",
@@ -207,31 +207,33 @@ IVn.columns = IVn.columns.set_levels(
 )
 
 # Merge cost of pollution and investment value of increase (decrease) in water quality
-nominal = pd.concat([CWPn, IVn], axis=1)
+nominal = pd.concat([CWPn_j, IVn_j], axis=1)
 nominal.to_excel("output\\all_nominal.xlsx")  # manually Wrap Text row 1 & delete row 3
 
 
 ########################################################################################
-#   4.c Real cost of pollution and investment in water quality for national accounts
+#   4.c Real cost of water pollution and investment in water quality for journal article
 ########################################################################################
-# Costs of pollution in real terms (million DKK, 2018 prices)
+# Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices)
 CWP_v = c.valuation(df_BT)
-CWP = CWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
-CWP.rename_axis([None, None], axis=1).to_csv("output\\all_cost.csv")
+CWP_j = (
+    CWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)
+)  #  sum over v
+CWP_j.rename_axis([None, None], axis=1).to_csv("output\\all_cost.csv")
 f2 = (
-    CWP.loc[:, "CWP"]
+    CWP_j.loc[:, "CWP"]
     .rename_axis(None, axis=1)
     .plot(ylabel="Cost of current water pollution (million DKK, 2018 prices)")
     .get_figure()
 )
 f2.savefig("output\\all_cost.pdf", bbox_inches="tight")
 
-# Investment value in real terms (million DKK, 2018 prices)
-IV_v = c.valuation(df_BT, investment=True)
-IV = IV_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
-IV.rename_axis([None, None], axis=1).to_csv("output\\all_investment.csv")
+# Investment Value of water quality improvement in real terms (million DKK, 2018 prices)
+IV_vj = c.valuation(df_BT, investment=True)
+IV_j = IV_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
+IV_j.rename_axis([None, None], axis=1).to_csv("output\\all_investment.csv")
 f2 = (
-    IV.loc[:, "IV"]
+    IV_j.loc[:, "IV"]
     .rename_axis(None, axis=1)
     .plot(
         kind="bar",
@@ -240,6 +242,8 @@ f2 = (
     .get_figure()
 )
 f2.savefig("output\\all_investment.pdf", bbox_inches="tight")
+
+IV = IV_j.sum(axis=1)  #  sum over j
 
 
 ########################################################################################
