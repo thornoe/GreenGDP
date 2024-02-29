@@ -234,7 +234,7 @@ f2 = (
 f2.savefig("output\\all_cost.pdf", bbox_inches="tight")
 
 # Investment Value of water quality improvement in real terms (million DKK, 2018 prices)
-IV_vj = c.valuation(df_BT, investment=True)
+IV_v = c.valuation(df_BT, investment=True)
 IV_j = IV_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
 IV_j.rename_axis([None, None], axis=1).to_csv("output\\all_investment.csv")
 f2 = (
@@ -249,7 +249,7 @@ f2 = (
 f2.savefig("output\\all_investment.pdf", bbox_inches="tight")
 
 IV = IV_j.sum(axis=1)  #  sum over j
-
+IV.mean()  #  average investment value over the period
 
 ########################################################################################
 #   5. Decompose development by holding everything else equal
