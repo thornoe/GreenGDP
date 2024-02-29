@@ -155,7 +155,7 @@ df_eco_obs, obs_stats, index_sorted = c.ecological_status(j, df_ind_obs, df_VP)
 
 # Impute missing values for biophysical indicator and return ecological status
 df_eco_imp, stats_j[j] = c.impute_missing(j, df_ind_obs, df_VP, index_sorted)
-df_eco_imp = pd.read_csv("output\\" + j + "_ind_obs.csv", index_col="wb")
+df_eco_imp = pd.read_csv("output\\" + j + "_eco_imp.csv", index_col="wb")
 df_eco_imp.columns = df_eco_imp.columns.astype(int)
 
 # Set up df with variables by coastal catchment area for the Benefit Transfer equation
