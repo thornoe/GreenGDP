@@ -562,85 +562,121 @@ status_dict = {
 basis.replace(status_dict, inplace=True)
 basis.columns = ["basis"]
 
-# Convert biophysical indicator to ecological status before imputing
-dfObs = c.indicator_to_status(j, dfIndObs, dfVP).merge(basis, on="wb")
-
-# Get typology
-typ = dfVP[["ov_typ"]].copy()
-
-# Define the dictionaries
-dict1 = {
-    "Nordsø": "No",
-    "Kattegat": "K",
-    "Bælthav": "B",
-    "Østersøen": "Ø",
-    "Fjord": "Fj",
-    "Vesterhavsfjord": "Vf",
-}
-dict2 = {
-    "water exchange": "Vu",
-    "freshwater inflow": "F",
-    "water depth": "D",
-    "stratification": "L",
-    "sediment": "Se",
-    "salinity": "Sa",
-    "tide": "T",
-}
-
-# Reverse the dictionaries so the abbreviations are the keys
-dict1 = {v: k for k, v in dict1.items()}
-dict2 = {v: k for k, v in dict2.items()}
-
-# Combine the dictionaries
-dicts = {**dict1, **dict2}
-
-
-# Define a function to process each string
-def process_string(s):
-    # Drop the hyphen and everything following it
-    s = s.split("-")[0]
-
-    # Create a dictionary with the relevant abbreviations as keys and 1s as values
-    dummies = {}
-
-    # Check for abbreviations from dict1 first
-    for abbr in dict1:
-        if abbr in s:
-            dummies[abbr] = 1
-            s = s.replace(abbr, "")  # Remove the matched abbreviation from the string
-
-    # Then check for abbreviations from dict2
-    for abbr in dict2:
-        if abbr in s:
-            dummies[abbr] = 1
-
-    return dummies
-
-
-# Apply the function to typ["ov_typ"] to create a new DataFrame with the dummy variables
-dummies = typ["ov_typ"].apply(process_string).apply(pd.Series)
-
-# Replace NaN values with 0
-dummies = dummies.fillna(0).astype(int)
-
-# Dummies for typology that improves prediction accuracy (omit fjords as reference)
-cols = ["No", "K", "B", "Ø", "Vf", "Vu", "D", "L", "Se", "T"]
+if j == "streams":
+    # Impute biophysical indicator, i.e., use the bottom fauna index directly
+    dfObs = dfIndObs.copy().merge(basis, on="wb")  #  include basis analysis
+    # Create dummies for typology
+    typ = pd.get_dummies(dfVP["ov_typ"]).astype(int)
+    typ["Soft bottom"] = typ["RW4"] + typ["RW5"]
+    typ.columns = [
+        "Small",
+        "Medium",
+        "Large",
+        "Small w. soft bottom",
+        "Medium w. soft bottom",
+        "Soft bottom",
+    ]
+    # Dummies for natural, artificial, and heavily modified water bodies
+    natural = pd.get_dummies(dfVP["na_kun_stm"]).astype(int)
+    natural.columns = ["Artificial", "Natural", "Heavily modified"]
+    # Merge DataFrames for typology and natural water bodies
+    typ = typ.merge(natural, on="wb")
+    # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
+    cols = ["Soft bottom", "Natural", "Small"]
+elif j == "lakes":
+    # Convert biophysical indicator to ecological status before imputing
+    dfObs = c.indicator_to_status(j, dfIndObs, dfVP).merge(
+        basis, on="wb"  #  include basis analysis for VP3
+    )
+    # Convert typology to integers
+    typ = dfVP[["ov_typ"]].copy()
+    typ.loc[:, "type"] = typ["ov_typ"].str.slice(6).astype(int)
+    # Create dummies for high alkalinity, brown, saline, and deep lakes
+    cond1 = [(typ["type"] >= 9) & (typ["type"] <= 16), typ["type"] == 17]
+    typ["Alkalinity"] = np.select(cond1, [1, np.nan], default=0)
+    cond2 = [
+        typ["type"].isin([5, 6, 7, 8, 13, 14, 15, 16]),
+        typ["type"] == 17,
+    ]
+    typ["Brown"] = np.select(cond2, [1, np.nan], default=0)
+    cond3 = [
+        typ["type"].isin([2, 3, 7, 8, 11, 12, 15, 16]),
+        typ["type"] == 17,
+    ]
+    typ["Saline"] = np.select(cond3, [1, np.nan], default=0)
+    cond4 = [typ["type"].isin(np.arange(2, 17, 2)), typ["type"] == 17]
+    typ["Deep"] = np.select(cond4, [1, np.nan], default=0)
+    # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
+    cols = ["Saline"]
+else:  #  coastal waters
+    # Convert biophysical indicator to ecological status before imputing
+    dfObs = c.indicator_to_status(j, dfIndObs, dfVP).merge(
+        basis, on="wb"  #  include basis analysis for VP3
+    )
+    # Get typology
+    typ = dfVP[["ov_typ"]].copy()
+    # Define the dictionaries
+    dict1 = {
+        "No": "North Sea",  # Nordsø
+        "K": "Kattegat",  # Kattegat
+        "B": "Belt Sea",  # Bælthav
+        "Ø": "Baltic Sea",  # Østersøen
+        "Fj": "Fjord",  # Fjord
+        "Vf": "North Sea fjord",  # Vesterhavsfjord
+    }
+    dict2 = {
+        "Vu": "Water exchange",  # vandudveksling
+        "F": "Freshwater inflow",  # ferskvandspåvirkning
+        "D": "Deep",  # vanddybde
+        "L": "Stratified",  # lagdeling
+        "Se": "Sediment",  # sediment
+        "Sa": "Saline",  # salinitet
+        "T": "Tide",  # tidevand
+    }
+    # Define a function to process each string
+    def process_string(s):
+        # Drop the hyphen and everything following it
+        s = s.split("-")[0]
+        # Create a en empty dictionary for relevant abbreviations as keys
+        dummies = {}
+        # Check for abbreviations from dict1 first
+        for abbr in dict1:
+            if abbr in s:
+                dummies[abbr] = 1
+                s = s.replace(
+                    abbr, ""
+                )  # Remove the matched abbreviation from the string
+        # Then check for abbreviations from dict2
+        for abbr in dict2:
+            if abbr in s:
+                dummies[abbr] = 1
+        return dummies
+    # Apply the function to typ["ov_typ"] to create a df with the dummies
+    typ = typ["ov_typ"].apply(process_string).apply(pd.Series)
+    # Replace NaN values with 0
+    typ = typ.fillna(0).astype(int)
+    # Rename the dummies from abbreviations to full names
+    dicts = {**dict1, **dict2}  #  combine the dictionaries
+    typ = typ.rename(columns=dicts)  #  rename columns to full names
+    # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
+    cols = ["Sediment", "Deep"]
 
 # Merge DataFrame for observed values with DataFrame for dummies
-dfObsDum = dfObs.merge(dummies[cols], on="wb")
+dfObsSelected = dfObs.merge(typ[cols], on="wb")  #  with selected predictors
 
 # Iterative imputer using BayesianRidge() estimator with increased tolerance
 imputer = IterativeImputer(tol=1e-1, max_iter=100, random_state=0)
 
 # Fit imputer, transform data iteratively, and limit to years of interest
 dfImp = pd.DataFrame(
-    imputer.fit_transform(np.array(dfObsDum)),
-    index=dfObsDum.index,
-    columns=dfObsDum.columns,
+    imputer.fit_transform(np.array(dfObsSelected)),
+    index=dfObsSelected.index,
+    columns=dfObsSelected.columns,
 )[c.years]
 
 # Convert imputed biophysical indicator to ecological status
 dfEcoImp, impStats = c.ecological_status(j, dfImp, dfVP, "imp", index)
+
 dfEcoImp.describe()
 
 # def missing_values_graph(self, j, frame, suffix="obs", index=None):
