@@ -156,6 +156,7 @@ shores["shores all j"] = shores.sum(axis=1, skipna=True)
 shores.to_csv("output\\all_VP_shore length.csv")  #  save to csv
 shoresTotal = shores.sum()
 
+# Mean ecological status with and without 3-year moving average (MA) for each water body
 for dict, suffix in zip([stats_j, stats_MA_j], ["LessThanGood", "LessThanGood_MA"]):
     # Set up DataFrame of statistics for each category j ∈ {coastal, lakes, streams}
     stats = pd.DataFrame(dict)
