@@ -110,6 +110,7 @@ c = script_module.Water_Quality(
 frames_j = {}
 shores_j = {}
 stats_j = {}
+stats_MA_j = {}  #  stats based on 3-year moving average for each water to reduce noise
 
 # Loop over each category j ∈ {coastal, lakes, streams}
 for j in ("coastal", "lakes", "streams"):
@@ -127,10 +128,12 @@ for j in ("coastal", "lakes", "streams"):
     #     c.map_book(j, df_eco_obs)
 
     # Impute missing values for biophysical indicator and return ecological status
-    df_eco_imp, stats_j[j] = c.impute_missing(j, df_ind_obs, df_VP, index_sorted)
+    df_eco_imp, df_eco_imp_MA, stats_j[j], stats_MA_j[j] = c.impute_missing(
+        j, df_ind_obs, df_VP, index_sorted
+    )
 
     # df with variables by coastal catchment area for the Benefit Transfer equation
-    frames_j[j], shores_j[j] = c.values_by_catchment_area(j, df_eco_imp, df_VP)
+    frames_j[j], shores_j[j] = c.values_by_catchment_area(j, df_eco_imp_MA, df_VP)
 
     # Optional: Clean up after each iteration of loop
     if keep_gdb != "true":
@@ -153,27 +156,28 @@ shores["shores all j"] = shores.sum(axis=1, skipna=True)
 shores.to_csv("output\\all_VP_shore length.csv")  #  save to csv
 shoresTotal = shores.sum()
 
-# Set up DataFrame of statistics for each category j ∈ {coastal, lakes, streams}
-stats = pd.DataFrame(stats_j)
+for dict, suffix in zip([stats_j, stats_MA_j], ["LessThanGood", "LessThanGood_MA"]):
+    # Set up DataFrame of statistics for each category j ∈ {coastal, lakes, streams}
+    stats = pd.DataFrame(dict)
 
-# Plot water bodies by category (mean ecological status weighted by length)
-for format in ("pdf", "png"):
-    f1 = (
-        stats.drop(1989)
-        .plot(ylabel="Share of category with less than good ecological status")
-        .get_figure()
-    )
-    f1.savefig("output\\all_eco_imp_LessThanGood." + format, bbox_inches="tight")
+    # Plot water bodies by category (mean ecological status weighted by length)
+    for format in (".pdf", ".png"):
+        f1 = (
+            stats.drop(1989)
+            .plot(ylabel="Share of category with less than good ecological status")
+            .get_figure()
+        )
+        f1.savefig("output\\all_eco_imp_" + suffix + format, bbox_inches="tight")
 
-# Calculate mean ecological status across all categories j weighted by shore length
-stats["all j"] = (
-    stats["coastal"] * shoresTotal["coastal"]
-    + stats["lakes"] * shoresTotal["lakes"]
-    + stats["streams"] * shoresTotal["streams"]
-) / shoresTotal["shores all j"]
+    # Calculate mean ecological status across all categories j weighted by shore length
+    stats["all j"] = (
+        stats["coastal"] * shoresTotal["coastal"]
+        + stats["lakes"] * shoresTotal["lakes"]
+        + stats["streams"] * shoresTotal["streams"]
+    ) / shoresTotal["shores all j"]
 
-# Save statistics to csv
-stats.to_csv("output\\all_eco_imp_LessThanGood.csv")
+    # Save statistics to csv
+    stats.to_csv("output\\all_eco_imp_" + suffix + ".csv")
 
 
 ########################################################################################

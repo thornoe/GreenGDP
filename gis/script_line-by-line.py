@@ -428,6 +428,57 @@ for t in dfIndicator.columns:
 # Drop columns with thresholds
 df = df.drop(columns=cols)
 
+# def missing_values_graph(self, j, frame, suffix="obs", index=None):
+"""Heatmap visualizing observations of ecological status as either missing or using the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality respectively.
+Saves a figure of the heatmap."""
+frame, suffix, index = dfEcoImp, "imp", index_sorted
+if index is None:
+    # Sort water bodies by number of missing values across years of interest
+    df = frame.copy()
+    df["nan"] = df.shape[1] - df.count(axis=1)
+    df = df.sort_values(["nan"], ascending=False)[c.years]
+    # Save index to reuse the order after imputing the missing values
+    index = df.index
+    # Specify heatmap to show missing values as gray
+    colors = ["grey", "red", "orange", "yellow", "green", "blue"]
+    uniqueValues = [-1, 0, 1, 2, 3, 4]
+    description = "Missing value (gray), Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
+else:
+    # Sort water bodies by number of missing values prior to imputation
+    df = frame.copy().reindex(index)
+
+    # Specify heatmap without missing values
+    colors = ["red", "orange", "yellow", "green", "blue"]
+    uniqueValues = [0, 1, 2, 3, 4]
+    description = (
+        "Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
+    )
+# Plot heatmap
+df.fillna(-1, inplace=True)
+cm = sns.xkcd_palette(colors)
+plt.figure(figsize=(12, 12))
+ax = sns.heatmap(
+    df,
+    cmap=cm,
+    cbar=False,
+    cbar_kws={"ticks": uniqueValues},
+)
+ax.set(yticklabels=[])
+plt.ylabel(
+    str(len(df)) + " " + j + " ordered by number of missing values",
+    fontsize=14,
+)
+plt.xlabel("")
+plt.title(
+    ("Ecological status of " + j + "\n" + description),
+    fontsize=14,
+)
+plt.tight_layout()
+plt.savefig(
+    "output\\" + j + "_eco_" + suffix + ".pdf",
+    bbox_inches="tight",
+)
+
 
 # def ecological_status(self, j, dfIndicator, dfTyp, suffix="obs", index=None):
 """Call indicator_to_status() to convert the longitudinal DataFrame to the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality based on the category and typology of each water body.
@@ -435,6 +486,7 @@ Also call missing_values_graph() to map missing observations by year.
 Create a table of statistics and export it as an html table.
 Print the shore length and share of water bodies observed at least once."""
 dfIndicator, dfVP, suffix, index = df_ind_obs, df_VP, "obs", None
+
 if suffix == "obs":
     # Convert observed biophysical indicator to ecological status
     dfEco = c.indicator_to_status(j, dfIndicator, dfVP)
@@ -455,8 +507,11 @@ else:  #  lakes and coastal waters
         ]
         # Ecological status as a categorical index from Bad to High quality
         dfEco[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
-# Create missing values graph (heatmap of missing observations by year):
-indexSorted = c.missing_values_graph(j, dfEco, suffix, index)
+
+if suffix != "imp_MA":
+    # Create missing values graph (heatmap of missing observations by year):
+    indexSorted = c.missing_values_graph(j, dfEco, suffix, index)
+
 # Merge df for observed ecological status with df for characteristics
 df = dfEco.merge(dfVP[["length"]], on="wb")
 # Calculate total length of all water bodies in current water body plan (VP2)
@@ -633,6 +688,7 @@ else:  #  coastal waters
         "Sa": "Saline",  # salinitet
         "T": "Tide",  # tidevand
     }
+
     # Define a function to process each string
     def process_string(s):
         # Drop the hyphen and everything following it
@@ -651,6 +707,7 @@ else:  #  coastal waters
             if abbr in s:
                 dummies[abbr] = 1
         return dummies
+
     # Apply the function to typ["ov_typ"] to create a df with the dummies
     typ = typ["ov_typ"].apply(process_string).apply(pd.Series)
     # Replace NaN values with 0
@@ -672,63 +729,16 @@ dfImp = pd.DataFrame(
     imputer.fit_transform(np.array(dfObsSelected)),
     index=dfObsSelected.index,
     columns=dfObsSelected.columns,
-)[c.years]
+)[dfIndObs.columns]
 
-# Convert imputed biophysical indicator to ecological status
-dfEcoImp, impStats = c.ecological_status(j, dfImp, dfVP, "imp", index)
+# Calculate a 3-year moving average (MA) for each water body to reduce noise
+dfImpMA = dfImp.T.rolling(window=3, min_periods=2, center=True).mean().T
 
-dfEcoImp.describe()
+# Convert the imputed biophysical indicator to ecological status
+dfEcoImp, impStats = c.ecological_status(j, dfImp[c.years], dfVP, "imp", index)
 
-# def missing_values_graph(self, j, frame, suffix="obs", index=None):
-"""Heatmap visualizing observations of ecological status as either missing or using the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality respectively.
-Saves a figure of the heatmap."""
-frame, suffix, index = dfEcoImp, "imp", index_sorted
-if index is None:
-    # Sort water bodies by number of missing values across years of interest
-    df = frame.copy()
-    df["nan"] = df.shape[1] - df.count(axis=1)
-    df = df.sort_values(["nan"], ascending=False)[c.years]
-    # Save index to reuse the order after imputing the missing values
-    index = df.index
-    # Specify heatmap to show missing values as gray
-    colors = ["grey", "red", "orange", "yellow", "green", "blue"]
-    uniqueValues = [-1, 0, 1, 2, 3, 4]
-    description = "Missing value (gray), Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
-else:
-    # Sort water bodies by number of missing values prior to imputation
-    df = frame.copy().reindex(index)
-
-    # Specify heatmap without missing values
-    colors = ["red", "orange", "yellow", "green", "blue"]
-    uniqueValues = [0, 1, 2, 3, 4]
-    description = (
-        "Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
-    )
-# Plot heatmap
-df.fillna(-1, inplace=True)
-cm = sns.xkcd_palette(colors)
-plt.figure(figsize=(12, 12))
-ax = sns.heatmap(
-    df,
-    cmap=cm,
-    cbar=False,
-    cbar_kws={"ticks": uniqueValues},
-)
-ax.set(yticklabels=[])
-plt.ylabel(
-    str(len(df)) + " " + j + " ordered by number of missing values",
-    fontsize=14,
-)
-plt.xlabel("")
-plt.title(
-    ("Ecological status of " + j + "\n" + description),
-    fontsize=14,
-)
-plt.tight_layout()
-plt.savefig(
-    "output\\" + j + "_eco_" + suffix + ".pdf",
-    bbox_inches="tight",
-)
+# Convert moving average of the imputed biophysical indicator to eco status
+dfEcoImpMA, impStatsMA = c.ecological_status(j, dfImpMA[c.years], dfVP, "imp_MA", index)
 
 
 # def values_by_catchment_area(self, j, dfEcoImp, dfVP):
@@ -886,7 +896,8 @@ stats = pd.read_csv("output\\all_eco_imp_LessThanGood.csv", index_col=0)
 
 for format in ("pdf", "png"):
     f1 = (
-        stats.drop(1989).drop(columns="all j")
+        stats.drop(1989)
+        .drop(columns="all j")
         .plot(ylabel="Share of category with less than good ecological status")
         .get_figure()
     )
@@ -894,7 +905,8 @@ for format in ("pdf", "png"):
 
 # PNG: Plot water bodies by category (mean ecological status weighted by length)
 f1b = (
-    stats.drop(1989).drop(columns="all j")
+    stats.drop(1989)
+    .drop(columns="all j")
     .plot(ylabel="Share of category with less than good ecological status")
     .get_figure()
 )

@@ -816,12 +816,22 @@ class Water_Quality:
                 imputer.fit_transform(np.array(dfObsSelected)),
                 index=dfObsSelected.index,
                 columns=dfObsSelected.columns,
-            )[self.years]
+            )[dfIndObs.columns]
 
-            # Convert imputed biophysical indicator to ecological status
-            dfEcoImp, impStats = self.ecological_status(j, dfImp, dfVP, "imp", index)
+            # Calculate a 3-year moving average (MA) for each water body to reduce noise
+            dfImpMA = dfImp.T.rolling(window=3, min_periods=2, center=True).mean().T
 
-            return dfEcoImp, impStats
+            # Convert the imputed biophysical indicator to ecological status
+            dfEcoImp, impStats = self.ecological_status(
+                j, dfImp[self.years], dfVP, "imp", index
+            )
+
+            # Convert moving average of the imputed biophysical indicator to eco status
+            dfEcoImpMA, impStatsMA = self.ecological_status(
+                j, dfImpMA[self.years], dfVP, "imp_MA", index
+            )
+
+            return dfEcoImp, dfEcoImpMA, impStats, impStatsMA
 
         except:
             ## Report severe error messages
@@ -867,8 +877,9 @@ class Water_Quality:
                     # Ecological status as a categorical index from Bad to High quality
                     dfEco[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
 
-            # Create missing values graph (heatmap of missing observations by year):
-            indexSorted = self.missing_values_graph(j, dfEco, suffix, index)
+            if suffix != "imp_MA":
+                # Create missing values graph (heatmap of missing observations by year)
+                indexSorted = self.missing_values_graph(j, dfEco, suffix, index)
 
             # Merge df for observed ecological status with df for characteristics
             df = dfEco.merge(dfVP[["length"]], on="wb")
