@@ -54,7 +54,7 @@ year_last = 2020
 data = {
     "coastal": ["coastal_chlorophyll.xlsx"],
     "lakes": ["lakes_chlorophyll.xlsx"],
-    "streams": ["streams_DVFI.xlsx", "streams_1988-2020.xlsx"],
+    "streams": ["streams_DVFI.xlsx", "streams_1987-2020.xlsx"],
     "shared": ["CPI_NPV.xlsx", "demographics.csv", "geographical.xlsx"],
 }
 
@@ -84,9 +84,6 @@ wfs_fields = {
     "streams": ["distr_id", "ov_id", "ov_navn", "ov_typ", "til_oko_bb", "na_kun_stm"],
 }
 
-# Specification specific to category
-j = "coastal"
-
 ########################################################################################
 #   3. Import module and run the functions
 ########################################################################################
@@ -110,7 +107,7 @@ c = script_module.Water_Quality(
 frames_j = {}
 shores_j = {}
 stats_j = {}
-stats_MA_j = {}  #  stats based on 3-year moving average for each water to reduce noise
+stats_MA_j = {}  #  based on a 5-year moving average for each water body to reduce noise
 
 # Loop over each category j ∈ {coastal, lakes, streams}
 for j in ("coastal", "lakes", "streams"):
@@ -156,7 +153,7 @@ shores["shores all j"] = shores.sum(axis=1, skipna=True)
 shores.to_csv("output\\all_VP_shore length.csv")  #  save to csv
 shoresTotal = shores.sum()
 
-# Mean ecological status with and without 3-year moving average (MA) for each water body
+# Mean ecological status with and without 5-year moving average (MA) for each water body
 for dict, suffix in zip([stats_j, stats_MA_j], ["LessThanGood", "LessThanGood_MA"]):
     # Set up DataFrame of statistics for each category j ∈ {coastal, lakes, streams}
     stats = pd.DataFrame(dict)
@@ -191,53 +188,47 @@ df_BT.to_csv("output\\all_eco_imp.csv")  #  save to csv
 
 # Marginal willingness to pay (MWTP) for improvement of water quality to "Good"
 CWPn_j = c.valuation(df_BT, real=False)
-# Nominal cost of pollution in prices of current year, and preceding year respectively
-CWPn_j.columns = CWPn_j.columns.set_levels(
-    [
-        "Cost (current year's prices, million DKK)",
-        "Cost (preceding year's prices, million DKK)",
-    ],
-    level=0,
-)
 
 # Investment in water quality (net present value of infinite stream of MWTP for change)
 IVn_j = c.valuation(df_BT, real=False, investment=True)
-# Nominal investment value in prices of current year and preceding year respectively
-IVn_j.columns = IVn_j.columns.set_levels(
-    [
-        "Investment value (current year's prices, million DKK)",
-        "Investment value (preceding year's prices, million DKK)",
-    ],
-    level=0,
-)
 
 # Merge cost of pollution and investment value of increase (decrease) in water quality
 nominal = pd.concat([CWPn_j, IVn_j], axis=1)
 nominal.to_excel("output\\all_nominal.xlsx")  # manually Wrap Text row 1 & delete row 3
 
-
 ########################################################################################
 #   4.c Real cost of water pollution and investment in water quality for journal article
 ########################################################################################
+# Add adjustment factor due to using unitary income elasticity rather than estimated ε
+df_v = c.valuation(df_BT)
+df_BT_factor = df_BT.copy()
+df_BT_factor["factor"] = df_v["factor"]
+
+df_BT.loc[("coastal", 2018)]
+df_BT.loc[("coastal", 2019)]
+
+(CWP_v.loc[("coastal", 2019)] - CWP_v.loc[("coastal", 2018)])
+
+
 # Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices)
-CWP_v = c.valuation(df_BT)
+CWP_v = df_v[["CWP"]]
 CWP_j = (
-    CWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)
-)  #  sum over v
-CWP_j.rename_axis([None, None], axis=1).to_csv("output\\all_cost.csv")
+    CWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
+)
+CWP_j.rename_axis([None, None], axis=1).to_csv("output\\all_cost.csv")  #  save CSV
 f2 = (
     CWP_j.loc[:, "CWP"]
     .rename_axis(None, axis=1)
     .plot(ylabel="Cost of current water pollution (million DKK, 2018 prices)")
     .get_figure()
 )
-f2.savefig("output\\all_cost.pdf", bbox_inches="tight")
+f2.savefig("output\\all_cost.pdf", bbox_inches="tight")  #  save figure as PDF
 
 # Investment Value of water quality improvement in real terms (million DKK, 2018 prices)
 IV_v = c.valuation(df_BT, investment=True)
 IV_j = IV_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
-IV_j.rename_axis([None, None], axis=1).to_csv("output\\all_investment.csv")
-f2 = (
+IV_j.rename_axis([None, None], axis=1).to_csv("output\\all_investment.csv")  #  save CSV
+f3 = (
     IV_j.loc[:, "IV"]
     .rename_axis(None, axis=1)
     .plot(
@@ -246,13 +237,15 @@ f2 = (
     )
     .get_figure()
 )
-f2.savefig("output\\all_investment.pdf", bbox_inches="tight")
+f3.savefig("output\\all_investment.pdf", bbox_inches="tight")  #  save figure as PDF
 
-IV = IV_j.sum(axis=1)  #  sum over j
-IV.mean()  #  average investment value over the period
+# Overview using real prices and the same declining discount rate for all years
+CWP_j.mean()  #  average yearly cost of water pollution
+IV_j.mean()  #  average yearly investment value in better (or worse) water quality
+
 
 ########################################################################################
-#   5. Decompose development by holding everything else equal
+#   5. Decompose development by holding everything else equal at 1990 level
 ########################################################################################
 
 

@@ -687,7 +687,7 @@ class Water_Quality:
             basis.columns = ["basis"]
 
             if j == "streams":
-                # Impute biophysical indicator, i.e., use the bottom fauna index directly
+                # Impute biophysical indicator, i.e., use bottom fauna index directly
                 dfObs = dfIndObs.copy().merge(basis, on="wb")  #  include basis analysis
 
                 # Create dummies for typology
@@ -818,8 +818,8 @@ class Water_Quality:
                 columns=dfObsSelected.columns,
             )[dfIndObs.columns]
 
-            # Calculate a 3-year moving average (MA) for each water body to reduce noise
-            dfImpMA = dfImp.T.rolling(window=3, min_periods=2, center=True).mean().T
+            # Calculate a 5-year moving average (MA) for each water body to reduce noise
+            dfImpMA = dfImp.T.rolling(window=5, center=True).mean().T
 
             # Convert the imputed biophysical indicator to ecological status
             dfEcoImp, impStats = self.ecological_status(
@@ -1297,57 +1297,72 @@ class Water_Quality:
             arcpy.AddError(msg)  # return error message in ArcGIS
             sys.exit(1)
 
-    def valuation(self, dfBT, real=True, investment=False):
-        """Valuation of water quality as either current costs or investment value (IV).
+    def valuation(self, dfBT, real=True, investment=False, factor=False):
+        """Valuation as either Cost of Water Pollution (CWP) or Investment Value (IV).
         If not set to return real values (2018 prices), instead returns values in the prices of both the current year and the preceding year (for chain linking).
         """
         try:
             # Copy DataFrame with the variables needed for the benefit transfer equation
-            d = dfBT.copy()
+            df = dfBT.copy()
+
+            # Define a small constant to avoid RuntimeWarning due to taking the log of 0
+            epsilon = 1e-6  #  a millionth part
 
             if investment is False:
-                # MWTP = 0 if all water bodies of type j have ≥ Good ecological status
-                d["nonzero"] = np.select([d["Q"] < 2.99], [1])  #  dummy
+                # MWTP = 0 if all water bodies of type j have ≥ good ecological status
+                df["nonzero"] = np.select([df["Q"] < 2.99], [1])  #  dummy
 
-                # Distance from current to Good: convert mean Q to lnΔQ ≡ ln(Q good - Q)
-                d["Q"] = np.where(d["Q"] < 2.99, np.log(3 - d["Q"]), d["Q"])
+                # Distance from current to Good: transform mean Q to lnΔQ ≡ ln(good - Q)
+                df["Q"] = np.where(
+                    df["Q"] < 2.99,  # if some water bodies of type j have < good status
+                    np.log(3 - df["Q"] + epsilon),  #  log-transform difference good - Q
+                    df["Q"],  #  if Q ≥ good, transformation is invalid and redundant
+                )
 
             else:
                 # Actual change in ecological status since preceding year
-                d = d.reorder_levels(["j", "v", "t"]).sort_index()
-                d["Q"] = d["Q"].diff()
-                d = d.reorder_levels(["j", "t", "v"]).sort_index()
+                df = df.reorder_levels(["j", "v", "t"]).sort_index()  #  series by j & v
+                df["Q"] = df["Q"].diff()  #  transform Q to be the change in Q since t-1
+                df = df.reorder_levels(["j", "t", "v"]).sort_index()  #  series by j & t
 
-                # MWTP = 0 if actual change in water quality is zero
-                d["nonzero"] = np.select([d["Q"] != 0], [1])  #  dummy
+                # Dummy used to set MWTP = 0 if actual change in water quality is zero
+                df["nonzero"] = np.select([df["Q"] != 0], [1])  #  dummy
 
                 # Mark if actual change is negative (used to switch MWTP to negative)
-                d["neg"] = np.select([d["Q"] < 0], [1])  #  dummy
+                df["neg"] = np.select([df["Q"] < 0], [1])  #  dummy
 
-                # Convert Q to the log of the actual change using nested np.where()
-                d["Q"] = np.where(
-                    d["Q"] > 0,  #  condition
-                    np.log(d["Q"]),  #  if condition is met
-                    np.where(d["Q"] < 0, np.log(-d["Q"]), d["Q"]),  #  else
+                # Transform Q to the log of the actual change in water quality since t-1
+                df["Q"] = np.where(
+                    df["Q"] != 0,  #  if actual change in water quality is nonzero
+                    np.log(np.abs(df["Q"]) + epsilon),  #  log-transform absolute value
+                    df["Q"],  #  if change is 0, transformation is invalid and redundant
                 )
 
             # Drop year 1989 and specify integer values
-            d = d.drop(d[d.index.get_level_values("t") == 1989].index)
-            d[["D age", "D lake", "N"]] = d[["D age", "D lake", "N"]].astype(int)
+            df = df.drop(df[df.index.get_level_values("t") == 1989].index)
+            df[["D age", "D lake", "N"]] = df[["D age", "D lake", "N"]].astype(int)
 
             # Consumer Price Index by year t (1990-2020)
             CPI_NPV = pd.read_excel("data\\" + self.data["shared"][0], index_col=0)
 
             # Merge data with CPI to correct for assumption of unitary income elasticity
             kwargs = dict(how="left", left_index=True, right_index=True)
-            df1 = d.merge(CPI_NPV, **kwargs)
+            df1 = df.merge(CPI_NPV, **kwargs)
             df1["unityMWTP"] = self.BT(df1)  #  MWTP assuming unitary income elasticity
-            df2018 = df1[df1.index.get_level_values("t") == 2018].copy()
-            df2018["elastMWTP"] = self.BT(df2018, elast=1.453)  #  meta study income ε
-            df2018["factor"] = df2018["elastMWTP"] / df2018["unityMWTP"]
-            df2018 = df2018.droplevel("t")
-            df2 = df1.merge(df2018[["factor"]], **kwargs)
-            df2 = df2.reorder_levels(["j", "t", "v"]).sort_index()
+
+            if factor is False:
+                # Calculate factor that MWTP is increased by if using estimated income ε
+                df2018 = df1[df1.index.get_level_values("t") == 2018].copy()
+                df2018["elastMWTP"] = self.BT(df2018, elast=1.453)  #  meta reg income ε
+                df2018["factor"] = df2018["elastMWTP"] / df2018["unityMWTP"]
+                df2018 = df2018.droplevel("t")
+                df2 = df1.merge(df2018[["factor"]], **kwargs)
+                df2 = df2.reorder_levels(["j", "t", "v"]).sort_index()
+
+            else:
+                df2 = df1.copy()
+
+            # Adjust with factor of actual ε over unitary ε; set MWTP to 0 for certain Q
             df2["MWTP"] = df2["unityMWTP"] * df2["factor"] * df2["nonzero"]
 
             # Aggregate real MWTP per hh over households in coastal catchment area
@@ -1370,10 +1385,14 @@ class Water_Quality:
                     # Rename CWP to IV (investment value of water quality improvements)
                     df2["IV"] = df2["CWP"]  #  million DKK (2018 prices)
 
-                    return df2[["IV"]]  #  return real investment value by j, t, and v
+                    return df2[["IV"]]  #  return real investment value by j, t, v
 
-            if real is True:  #  Real cost of water pollution
-                return df2[["CWP"]]  #  return real cost of pollution by j, t, and v
+            if real is True:
+                if factor is True:
+                    return df2[["CWP"]]  #  real cost of water pollution by j, t, v
+
+                else:
+                    return df2  #  return full df to use df2["factor"] for decomposition
 
             # Aggregate nominal MWTP per hh over households in coastal catchment area
             df2["CWPn"] = df2["CWP"] * df2["CPI"] / CPI_NPV.loc[2018, "CPI"]
@@ -1391,9 +1410,25 @@ class Water_Quality:
                 .rename_axis([None, None], axis=1)
             )
 
-            if investment is True:
-                # Rename CWP nominal to IV nominal
-                grouped.columns = grouped.columns.set_levels(["IVn", "D"], level=0)
+            if investment is False:
+                # Rename CWP in prices of current year, and preceding year respectively
+                grouped.columns = grouped.columns.set_levels(
+                    [
+                        "Cost (current year's prices, million DKK)",
+                        "Cost (preceding year's prices, million DKK)",
+                    ],
+                    level=0,
+                )
+
+            else:
+                # Rename IV in prices of current year, and preceding year respectively
+                grouped.columns = grouped.columns.set_levels(
+                    [
+                        "Investment value (current year's prices, million DKK)",
+                        "Investment value (preceding year's prices, million DKK)",
+                    ],
+                    level=0,
+                )
 
             return grouped  #  in prices of current year and preceding year respectively
 
