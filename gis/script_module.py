@@ -819,7 +819,7 @@ class Water_Quality:
             )[dfIndObs.columns]
 
             # Calculate a 5-year moving average (MA) for each water body to reduce noise
-            dfImpMA = dfImp.T.rolling(window=5, center=True).mean().T
+            dfImpMA = dfImp.T.rolling(window=5, min_periods=3, center=True).mean().T
 
             # Convert the imputed biophysical indicator to ecological status
             dfEcoImp, impStats = self.ecological_status(
