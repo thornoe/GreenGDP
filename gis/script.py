@@ -126,7 +126,7 @@ for j in ("coastal", "lakes", "streams"):
 
     # Impute missing values for biophysical indicator and return ecological status
     df_eco_imp, df_eco_imp_MA, stats_j[j], stats_MA_j[j] = c.impute_missing(
-        j, df_ind_obs, df_VP, index_sorted
+        j, df_eco_obs, df_VP, index_sorted
     )
 
     # df with variables by coastal catchment area for the Benefit Transfer equation

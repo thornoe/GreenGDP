@@ -654,7 +654,7 @@ class Water_Quality:
             arcpy.AddError(msg)  # return error message in ArcGIS
             sys.exit(1)
 
-    def impute_missing(self, j, dfIndObs, dfVP, index):
+    def impute_missing(self, j, dfEcoObs, dfVP, index):
         """Impute ecological status for all water bodies from the observed indicator."""
         try:
             # Specify the biophysical indicator for the current category
@@ -686,10 +686,10 @@ class Water_Quality:
             basis.replace(status_dict, inplace=True)
             basis.columns = ["basis"]
 
-            if j == "streams":
-                # Impute biophysical indicator, i.e., use bottom fauna index directly
-                dfObs = dfIndObs.copy().merge(basis, on="wb")  #  include basis analysis
+            # Merge observed ecological status each year with basis analysis for VP3
+            dfObs = dfEcoObs.merge(basis, on="wb")
 
+            if j == "streams":
                 # Create dummies for typology
                 typ = pd.get_dummies(dfVP["ov_typ"]).astype(int)
                 typ["Soft bottom"] = typ["RW4"] + typ["RW5"]
@@ -713,11 +713,6 @@ class Water_Quality:
                 cols = ["Soft bottom", "Natural", "Small"]
 
             elif j == "lakes":
-                # Convert biophysical indicator to ecological status before imputing
-                dfObs = self.indicator_to_status(j, dfIndObs, dfVP).merge(
-                    basis, on="wb"  #  include basis analysis for VP3
-                )
-
                 # Convert typology to integers
                 typ = dfVP[["ov_typ"]].copy()
                 typ.loc[:, "type"] = typ["ov_typ"].str.slice(6).astype(int)
@@ -816,22 +811,20 @@ class Water_Quality:
                 imputer.fit_transform(np.array(dfObsSelected)),
                 index=dfObsSelected.index,
                 columns=dfObsSelected.columns,
-            )[dfIndObs.columns]
+            )[dfEcoObs.columns]
 
             # Calculate a 5-year moving average (MA) for each water body to reduce noise
             dfImpMA = dfImp.T.rolling(window=5, min_periods=3, center=True).mean().T
 
-            # Convert the imputed biophysical indicator to ecological status
-            dfEcoImp, impStats = self.ecological_status(
-                j, dfImp[self.years], dfVP, "imp", index
-            )
+            # Convert the imputed ecological status to categorical scale {0, 1, 2, 3, 4}
+            impStats = self.ecological_status(j, dfImp[self.years], dfVP, "imp", index)
 
-            # Convert moving average of the imputed biophysical indicator to eco status
-            dfEcoImpMA, impStatsMA = self.ecological_status(
+            # Convert moving average of the imputed eco status to categorical scale
+            impStatsMA = self.ecological_status(
                 j, dfImpMA[self.years], dfVP, "imp_MA", index
             )
 
-            return dfEcoImp, dfEcoImpMA, impStats, impStatsMA
+            return dfImp, dfImpMA, impStats, impStatsMA
 
         except:
             ## Report severe error messages
@@ -857,15 +850,11 @@ class Water_Quality:
                 # Convert observed biophysical indicator to ecological status
                 dfEco = self.indicator_to_status(j, dfIndicator, dfVP)
 
-            elif j == "streams":
-                # Convert imputed biophysical indicator to ecological status for streams
-                dfEco = self.indicator_to_status(j, dfIndicator, dfVP)
-
-            else:  #  lakes and coastal waters
-                # Ecological status was imputed directly but at a continuous scale
+            else:
+                # Imputed ecological status using a continuous scale
                 dfEco = dfIndicator.copy()
 
-                # Convert predicted ecological status to its ordinal scale
+                # Convert imputed ecological status (continuous) to categorical scale
                 for t in dfEco.columns:
                     conditions = [
                         dfEco[t] < 0.5,  # Bad
@@ -956,20 +945,9 @@ class Water_Quality:
                 # print(msg)  # print statistics in Python
                 arcpy.AddMessage(msg)  # return statistics in ArcGIS
 
-                # Elaborate column names of statistics for online presentation
-                stats.columns = [
-                    "Share of known is High (%)",
-                    "Share of known is Good (%)",
-                    "Share of known is Moderate (%)",
-                    "Share of known is Poor (%)",
-                    "Share of known is Bad (%)",
-                    "Share of known is not Good (%)",
-                    "Status known (%)",
-                ]
-
-            if index is None:
                 return dfEco, stats, indexSorted
-            return dfEco, stats["not good"]
+
+            return stats["not good"]
 
         except:
             # Report severe error messages

@@ -109,9 +109,9 @@ wfs_fields = {
 }
 
 # Specify a single category
-j = "coastal"
+# j = "coastal"
 # j = "lakes"
-# j = "streams"
+j = "streams"
 
 ########################################################################################
 #   3. Import module and run the functions
@@ -493,13 +493,12 @@ dfIndicator, dfVP, suffix, index = df_ind_obs, df_VP, "obs", None
 if suffix == "obs":
     # Convert observed biophysical indicator to ecological status
     dfEco = c.indicator_to_status(j, dfIndicator, dfVP)
-elif j == "streams":
-    # Convert imputed biophysical indicator to ecological status for streams
-    dfEco = c.indicator_to_status(j, dfIndicator, dfVP)
-else:  #  lakes and coastal waters
-    # Ecological status was imputed directly but at a continuous scale
+
+else:
+    # Imputed ecological status using a continuous scale
     dfEco = dfIndicator.copy()
-    # Convert predicted ecological status to its ordinal scale
+
+    # Convert imputed ecological status (continuous) to categorical scale
     for t in dfEco.columns:
         conditions = [
             dfEco[t] < 0.5,  # Bad
@@ -517,8 +516,10 @@ if suffix != "imp_MA":
 
 # Merge df for observed ecological status with df for characteristics
 df = dfEco.merge(dfVP[["length"]], on="wb")
+
 # Calculate total length of all water bodies in current water body plan (VP2)
 totalLength = df["length"].sum()
+
 # Create an empty df for statistics
 stats = pd.DataFrame(
     index=c.years,
@@ -555,6 +556,7 @@ if suffix != "obs":
 # Save both dataset and statistics on ecological status to CSV
 dfEco.to_csv("output\\" + j + "_eco_" + suffix + ".csv")
 stats.to_csv("output\\" + j + "_eco_" + suffix + "_stats.csv")
+
 # Brief analysis of missing observations (not relevant for imputed data)
 if suffix == "obs":
     # Create df limited to water bodies that are observed at least once
@@ -563,6 +565,7 @@ if suffix == "obs":
         how="inner",
         on="wb",
     )
+
     # Report length and share of water bodies observed at least once.
     msg = "{0} km is the total shore length of {1} included in VP3, of which {2}% of {1} representing {3} km ({4}% of total shore length of {1}) have been assessed at least once. On average, {5}% of {1} representing {6} km ({7}% of total shore length of {1}) are assessed each year.\n".format(
         round(totalLength),
@@ -576,6 +579,7 @@ if suffix == "obs":
     )
     # print(msg)  # print statistics in Python
     arcpy.AddMessage(msg)  # return statistics in ArcGIS
+
     # Elaborate column names of statistics for online presentation
     stats.columns = [
         "Share of known is High (%)",
@@ -589,11 +593,15 @@ if suffix == "obs":
     # Save statistics as Markdown for online presentation
     stats.astype(int).to_html("output\\" + j + "_eco_obs_stats.md")
 
+    # return dfEco, stats, indexSorted
 
-# def impute_missing_values(self, dfIndicator, dfVP, index):
+# return stats["not good"]
+
+
+# def impute_missing_values(self, dfEcoObs, dfVP, index):
 """Impute ecological status for all water bodies from the observed indicator."""
 # DataFrames for observed biophysical indicator and typology
-dfIndObs, dfVP, stats_j, index = df_ind_obs, df_VP, {}, index_sorted
+dfEcoObs, dfVP, stats_j, index = df_eco_obs, df_VP, {}, index_sorted
 
 # Specify the biophysical indicator for the current category
 if j == "streams":
@@ -603,6 +611,7 @@ else:  #  lakes and coastal waters
 
 # Include ecological status as assessed in basis analysis for VP3
 basis = dfVP[[indicator]].copy()
+
 # Define a dictionary to map the Danish strings to an ordinal scale
 status_dict = {
     "Dårlig økologisk tilstand": 0,
@@ -617,13 +626,15 @@ status_dict = {
     "Maksimalt økologisk potentiale": 4,
     "Ukendt": np.nan,
 }
+
 # Replace Danish strings in the df with the corresponding ordinal values
 basis.replace(status_dict, inplace=True)
 basis.columns = ["basis"]
 
+# Merge observed ecological status each year with basis analysis for VP3
+dfObs = dfEcoObs.merge(basis, on="wb")
+
 if j == "streams":
-    # Impute biophysical indicator, i.e., use the bottom fauna index directly
-    dfObs = dfIndObs.copy().merge(basis, on="wb")  #  include basis analysis
     # Create dummies for typology
     typ = pd.get_dummies(dfVP["ov_typ"]).astype(int)
     typ["Soft bottom"] = typ["RW4"] + typ["RW5"]
@@ -643,10 +654,6 @@ if j == "streams":
     # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
     cols = ["Soft bottom", "Natural", "Small"]
 elif j == "lakes":
-    # Convert biophysical indicator to ecological status before imputing
-    dfObs = c.indicator_to_status(j, dfIndObs, dfVP).merge(
-        basis, on="wb"  #  include basis analysis for VP3
-    )
     # Convert typology to integers
     typ = dfVP[["ov_typ"]].copy()
     typ.loc[:, "type"] = typ["ov_typ"].str.slice(6).astype(int)
@@ -668,10 +675,6 @@ elif j == "lakes":
     # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
     cols = ["Saline"]
 else:  #  coastal waters
-    # Convert biophysical indicator to ecological status before imputing
-    dfObs = c.indicator_to_status(j, dfIndObs, dfVP).merge(
-        basis, on="wb"  #  include basis analysis for VP3
-    )
     # Get typology
     typ = dfVP[["ov_typ"]].copy()
     # Define the dictionaries
@@ -733,19 +736,18 @@ dfImp = pd.DataFrame(
     imputer.fit_transform(np.array(dfObsSelected)),
     index=dfObsSelected.index,
     columns=dfObsSelected.columns,
-)[dfIndObs.columns]
+)[dfEcoObs.columns]
 
 # Calculate a 5-year moving average (MA) for each water body to reduce noise
 dfImpMA = dfImp.T.rolling(window=5, min_periods=3, center=True).mean().T
 
-dfImpMA.max()
+# Convert the imputed ecological status to categorical scale {0, 1, 2, 3, 4}
+impStats = c.ecological_status(j, dfImp[c.years], dfVP, "imp", index)
 
-# Convert the imputed biophysical indicator to ecological status
-dfEcoImp, impStats = c.ecological_status(j, dfImp[c.years], dfVP, "imp", index)
-dfEcoImp.max()
+# Convert moving average of the imputed eco status to categorical scale
+impStatsMA = c.ecological_status(j, dfImpMA[c.years], dfVP, "imp_MA", index)
 
-# Convert moving average of the imputed biophysical indicator to eco status
-dfEcoImpMA, impStatsMA = c.ecological_status(j, dfImpMA[c.years], dfVP, "imp_MA", index)
+# return dfImp, dfImpMA, impStats, impStatsMA
 
 
 # def values_by_catchment_area(self, j, dfEcoImp, dfVP):

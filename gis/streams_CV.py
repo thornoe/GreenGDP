@@ -51,15 +51,15 @@ plt.rc("figure", figsize=[12, 7.4])  #  golden ratio for appendix with wide marg
 
 # Function for accuracy score of predicted fauna class
 def AccuracyScore(y_true, y_pred):
-    """Convert DVFI fauna class for bottom fauna in streams to categorical index of ecological status and return accuracy score, i.e., the share of observed streams each year where predicted ecological status matches the true ecological status (which LOO-CV omits from the dataset before applying imputation)."""
+    """Convert continuous prediction of ecological status to categorical index and return accuracy score, i.e., the share of observed lakes each year where predicted ecological status matches the true ecological status (which LOO-CV omits from the dataset before applying imputation)."""
     eco_true, eco_pred = [], []  #  empy lists for storing transformed observations
     for a, b in zip([y_true, y_pred], [eco_true, eco_pred]):
-        # Categorical variable for ecological status: Bad, Poor, Moderate, Good, High
+        # Demarcation for categorical ecological status: Bad, Poor, Moderate, Good, High
         conditions = [
-            a < 1.5,  # Bad
-            (a >= 1.5) & (a < 3.5),  #  Poor
-            (a >= 3.5) & (a < 4.5),  #  Moderate
-            a >= 4.5,  #  Good or High
+            a < 0.5,  # Bad
+            (a >= 0.5) & (a < 1.5),  #  Poor
+            (a >= 1.5) & (a < 2.5),  #  Moderate
+            a >= 2.5,  #  Good or High
         ]
         b.append(np.select(conditions, [0, 1, 2, 3], default=np.nan))  #  add to list
     return accuracy_score(eco_true[0], eco_pred[0])
@@ -124,7 +124,7 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False
                     )
                     Y.loc[i, "pred"] = X_imp.loc[i, t]  #  store predicted value
 
-                # Accuracy of ecological status implied by predicted fauna class
+                # Accuracy of predicted ecological status
                 accuracy = AccuracyScore(Y["true"], Y["pred"])
 
                 # Save accuracy score each year to DataFrame for scores
@@ -200,16 +200,16 @@ os.chdir(r"C:\Users\au687527\GitHub\GreenGDP\gis")
 years = list(range(1989, 2020 + 1))
 
 # Read DataFrames for observed biophysical indicator and typology
-dfIndObs = pd.read_csv("output/streams_ind_obs.csv", index_col="wb")
-dfIndObs.columns = dfIndObs.columns.astype(int)
+dfEcoObs = pd.read_csv("output/streams_eco_obs.csv", index_col="wb")
+dfEcoObs.columns = dfEcoObs.columns.astype(int)
 dfVP = pd.read_csv("output\\streams_VP.csv", index_col="wb")
 
 # Share of waterbodies by number of non-missing values
-for n in range(0, len(dfIndObs.columns) + 1):
-    n, round(100 * sum(dfIndObs.notna().sum(axis=1) == n) / len(dfIndObs), 2)  # percent
+for n in range(0, len(dfEcoObs.columns) + 1):
+    n, round(100 * sum(dfEcoObs.notna().sum(axis=1) == n) / len(dfEcoObs), 2)  # percent
 
 # Subset of rows where only 1-3 values are non-missing
-sparse = dfIndObs[dfIndObs.notna().sum(axis=1).isin([1, 2, 3])]
+sparse = dfEcoObs[dfEcoObs.notna().sum(axis=1).isin([1, 2, 3])]
 sparse.count()  #  lowest number of non-missing values with support in all years
 sparse.count().sum()  #  5453 non-missing values in total to loop over with LOO-CV
 
@@ -237,7 +237,7 @@ basis.columns = ["Basis"]
 basis["Basis"].unique()
 
 # Merge DataFrames for observed biophysical indicator with basis analysis for VP3
-dfObs = dfIndObs.merge(basis, on="wb")
+dfObs = dfEcoObs.merge(basis, on="wb")
 
 # Create dummies for typology
 typ = pd.get_dummies(dfVP["ov_typ"]).astype(int)
@@ -277,7 +277,7 @@ cols.append("DK2")  #  add to list of dummies
 VPstats = pd.DataFrame(columns=["Sparse subset", "Observed subset", "All in VP3"])
 
 # Yearly distribution of observed streams by typology and district
-for a, b in zip([dfIndObs, sparse], [dfDistrict, dfSparse]):
+for a, b in zip([dfEcoObs, sparse], [dfDistrict, dfSparse]):
     # Subset dfDistrict to streams where ecological status is observed at least once
     obs = b.loc[a.notna().any(axis=1)]  #  6151 out of 6703 streams in dfDistrict
 
@@ -316,24 +316,12 @@ f = {row: "{:0.0f}".format if row == "n" else "{:0.4f}".format for row in VPstat
 with open("output/streams_VP_stats.tex", "w") as tf:
     tf.write(VPstats.apply(f, axis=1).to_latex())  #  apply formatter and save to LaTeX
 
-# Transform ecological status to DVFI fauna class to match the scale used for imputation
-for df in (dfObs, dfTypology, dfNatural, dfDistrict, dfSparse):
-    conditions = [
-        # Categorical variable for ecological status: Bad, Poor, Moderate, Good, High
-        df["Basis"] == 0.0,  #  Bad
-        df["Basis"] == 1.0,  #  Poor
-        df["Basis"] == 2.0,  #  Moderate
-        df["Basis"] == 3.0,  #  Good
-        df["Basis"] == 4.0,  #  High
-    ]
-    # Fauna class goes from 1-7 where Poor eco status is FK2-FK3 and Moderate is FK5-FK6
-    df["Basis"] = np.select(conditions, [1, 2.5, 4, 5.5, 7], default=np.nan)
 
 ########################################################################################
 #   2. Multivariate feature imputation (note: Forward Stepwise Selection takes ~5 days)
 ########################################################################################
 # # Example data for testing Forward Stepwise Selection with LOO-CV (takes ~5 seconds)
-# dfIndObs = pd.DataFrame(
+# dfEcoObs = pd.DataFrame(
 #     {
 #         1988: [2.5, 3.0, 3.5, 4.0, np.nan, 5.0],
 #         1989: [2.6, 3.1, 3.6, np.nan, 4.6, 5.1],
@@ -343,9 +331,9 @@ for df in (dfObs, dfTypology, dfNatural, dfDistrict, dfSparse):
 #         1993: [3.0, 3.5, 3.8, 4.4, 5.1, 5.5],
 #     }
 # )
-# dfIndObs.index.name = "wb"
-# sparse = dfIndObs[dfIndObs.notna().sum(axis=1) == 5]
-# dfObs = dfIndObs.copy()
+# dfEcoObs.index.name = "wb"
+# sparse = dfEcoObs[dfEcoObs.notna().sum(axis=1) == 5]
+# dfObs = dfEcoObs.copy()
 # dfTypology = dfObs.copy()
 # dfTypology["Small"] = [0, 0, 1, 1, 0, 0]  #  effect: 0.2 worse in 1993
 # dfNatural = dfTypology.copy()
@@ -364,63 +352,11 @@ statusSparse
 
 # Selection of dummies from the dummies selected above - CV over all observed values
 selected, scores, status = stepwise_selection(
-    subset=dfIndObs, dummies=selectedSparse, select_all=True, **kwargs
+    subset=dfEcoObs, dummies=selectedSparse, select_all=True, **kwargs
 )
 scores
 status
 
-
-### temporary correction of a mistake in the original code
-# DataFrame for storing accuracy scores by year and calculating weighted average
-scores = pd.DataFrame(dfIndObs.count(), index=years, columns=["n"]).astype(int)
-
-# DataFrame for storing ecological status by year and calculating weighted average
-status = pd.DataFrame(dfIndObs.count(), index=dfIndObs.columns, columns=["n"])
-
-# Mean ecological status by year for the n observations that don'nt have missing values
-status["Obs"] = (dfIndObs < 4.5).sum() / status["n"]  #  ecological status < good
-status.loc["Total", "Obs"] = (status["Obs"] * status["n"]).sum() / status["n"].sum()
-
-# Leave-one-out cross-validation (LOO-CV) loop over every observed stream and year
-df2 = dfNatural.drop(columns=["Medium", "Large"])
-df2.name = ", ".join(["Soft bottom", "Natural", "Small"])  #  name model
-for df in [df2]:  #  LOO-CV with different dummies
-    # Impute missing values based on all observations (without cross-validation)
-    df_imp = pd.DataFrame(
-        imputer.fit_transform(np.array(df)), index=df.index, columns=df.columns
-    )
-    # From imputed data, store estimated share with less than good ecological status
-    status[df.name] = (df_imp[dfIndObs.columns] < 4.5).sum() / len(df)
-
-    # For each year t, apply leave-one-out cross-validation
-    print(df.name, "used for imputation. LOO-CV of observed streams each year:")
-    for t in tqdm.tqdm(years):  #  time each model and report its progress in years
-        y = df[df[t].notnull()].index  #  index for observed values at year t
-        Y = pd.DataFrame(index=y)  #  empty df for observed and predicted values
-        Y["true"] = df.loc[y, t]  #  column with the observed ('true') values
-        Y["pred"] = pd.NA  #  empty column for storing predicted values
-        for i in y:  #  loop over each observed value at year t
-            X = df.copy()  #  use a copy of the given DataFrame
-            X.loc[i, t] = pd.NA  #  set the observed value as missing
-            # Fit imputer and transform the dataset
-            X_imp = pd.DataFrame(
-                imputer.fit_transform(np.array(X)), index=X.index, columns=X.columns
-            )
-            Y.loc[i, "pred"] = X_imp.loc[i, t]  #  store predicted value
-
-        # Accuracy of ecological status after converting DVFI fauna index for streams
-        accuracy = AccuracyScore(Y["true"], Y["pred"])
-
-        # Save accuracy score each year to DataFrame for scores
-        scores.loc[t, df.name] = accuracy
-
-    # Totals weighted by number of observations
-    for s in (scores, status):
-        s.loc["Total", df.name] = (s[df.name] * s["n"]).sum() / s["n"].sum()
-
-    # Save accuracy scores and share with less than good ecological status to CSV
-    scores.to_csv("output/streams_eco_imp_accuracy_" + df.name + ".csv")
-    status.to_csv("output/streams_eco_imp_LessThanGood_" + df.name + ".csv")
 
 ########################################################################################
 #   3. Visualization: Accuracy and share with less than good ecological status by year
