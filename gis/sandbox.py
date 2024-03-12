@@ -498,7 +498,7 @@ dfImp = pd.DataFrame(
     imputer.fit_transform(np.array(dfObsSelected)),
     index=dfObsSelected.index,
     columns=dfObsSelected.columns,
-)[dfEcoObs.columns]
+)[dfObs.columns]
 
 # Calculate a 5-year moving average (MA) for each water body to reduce noise
 dfImpMA = dfImp.T.rolling(window=5, min_periods=3, center=True).mean().T
@@ -510,7 +510,7 @@ dfImpMA.describe()
 impStats = c.ecological_status(j, dfImp[c.years], dfVP, "imp", index)
 
 # Convert moving average of the imputed eco status to categorical scale
-impStatsMA = c.ecological_status(j, dfImpMA[c.years], dfVP, "imp_MA", index)
+impStatsMA = c.ecological_status(j, dfImpMA, dfVP, "imp_MA", index)
 
 # return dfImp[c.years], dfImpMA[c.years], impStats, impStatsMA
 df_eco_imp_MA = dfImpMA[c.years]
@@ -536,12 +536,13 @@ else:
     # Imputed ecological status using a continuous scale
     dfEco = dfIndicator.copy()
 
-# Save CSV of statistics on mean ecological status by year weighted by shore length
+# Save CSV of data on mean ecological status by water body and year
 dfEco.to_csv("output\\" + j + "_eco_" + suffix + ".csv")
 
-if suffix == "obs":
-    # Precautionary conversion of imputed eco status to categorical scale
+if suffix != "obs":
+    # Prepare for statistics and missing values graph
     for t in dfEco.columns:
+        # Precautionary conversion of imputed status to categorical scale
         conditions = [
             dfEco[t] < 1,  # Bad
             (dfEco[t] >= 1) & (dfEco[t] < 2),  #  Poor
@@ -595,7 +596,7 @@ if suffix != "obs":
     dfEco = dfEco.astype(int)
     stats = stats.drop(columns="known")
 
-# Save CSV of statistics on mean ecological status by year weighted by shore length
+# Save statistics on mean ecological status by year weighted by shore length
 stats.to_csv("output\\" + j + "_eco_" + suffix + "_stats.csv")
 
 # Brief analysis of missing observations (not relevant for imputed data)

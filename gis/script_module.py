@@ -849,8 +849,13 @@ class Water_Quality:
                 # Imputed ecological status using a continuous scale
                 dfEco = dfIndicator.copy()
 
-                # Precautionary conversion of imputed eco status to categorical scale
+            # Save CSV of data on mean ecological status by water body and year
+            dfEco.to_csv("output\\" + j + "_eco_" + suffix + ".csv")
+
+            if suffix != "obs":
+                # Prepare for statistics and missing values graph
                 for t in dfEco.columns:
+                    # Precautionary conversion of imputed status to categorical scale
                     conditions = [
                         dfEco[t] < 1,  # Bad
                         (dfEco[t] >= 1) & (dfEco[t] < 2),  #  Poor
@@ -910,11 +915,9 @@ class Water_Quality:
 
             # For imputed ecological status, convert to integers and drop 'known' column
             if suffix != "obs":
-                dfEco = dfEco.astype(int)
                 stats = stats.drop(columns="known")
 
-            # Save both dataset and statistics on ecological status to CSV
-            dfEco.to_csv("output\\" + j + "_eco_" + suffix + ".csv")
+            # Save statistics on mean ecological status by year weighted by shore length
             stats.to_csv("output\\" + j + "_eco_" + suffix + "_stats.csv")
 
             # Brief analysis of missing observations (not relevant for imputed data)
