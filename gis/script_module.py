@@ -737,11 +737,6 @@ class Water_Quality:
                 cols = ["Saline"]
 
             else:  #  coastal waters
-                # Convert biophysical indicator to ecological status before imputing
-                dfObs = self.indicator_to_status(j, dfIndObs, dfVP).merge(
-                    basis, on="wb"  #  include basis analysis for VP3
-                )
-
                 # Get typology
                 typ = dfVP[["ov_typ"]].copy()
 
@@ -824,7 +819,7 @@ class Water_Quality:
                 j, dfImpMA[self.years], dfVP, "imp_MA", index
             )
 
-            return dfImp, dfImpMA, impStats, impStatsMA
+            return dfImp[self.years], dfImpMA[self.years], impStats, impStatsMA
 
         except:
             ## Report severe error messages
@@ -857,7 +852,7 @@ class Water_Quality:
                 # Convert imputed ecological status (continuous) to categorical scale
                 for t in dfEco.columns:
                     conditions = [
-                        dfEco[t] < 0.5,  # Bad
+                        dfEco[t] < 1.0,  # Bad
                         (dfEco[t] >= 0.5) & (dfEco[t] < 1.5),  #  Poor
                         (dfEco[t] >= 1.5) & (dfEco[t] < 2.5),  #  Moderate
                         (dfEco[t] >= 2.5) & (dfEco[t] < 3.5),  #  Good
@@ -1123,8 +1118,11 @@ class Water_Quality:
         """Assign water bodies to coastal catchment areas and calculate the weighted arithmetic mean of ecological status after truncating from above at Good status.
         For each year t, set up df with variables for the Benefit Transfer equation."""
         try:
-            if j == "coastal":  #  ID shared between coastal waters and catchment areas
+            if j == "coastal":
                 dfEcoImpCatch = dfEcoImp.copy()
+
+                # ID is shared between coastal waters and coastal catchment areas v
+                dfEcoImpCatch["v"] = dfEcoImpCatch.index
 
             else:  #  streams and lakes to coastal catchment areas
                 # Specify name of joined feature class (polygons)
@@ -1167,13 +1165,10 @@ class Water_Quality:
                     dfCatch.loc[11506, "v"] = "136"  #  Lille Langesø to Indre Randers F
 
                 # Merge df for imputed ecological status w. coastal catchment area
-                dfEcoImpCatch = dfEcoImp.merge(dfCatch, on="wb").astype(int)
+                dfEcoImpCatch = dfEcoImp.merge(dfCatch.astype(int), on="wb")
 
             # Merge df for imputed ecological status w. shore length
             dfEco = dfEcoImpCatch.merge(dfVP[["length"]], on="wb")  #  length
-
-            if j == "coastal":  # Coastal catchment area ID is the water body ID
-                dfEco["v"] = dfEco.index
 
             # List of coastal catchment areas where category j is present
             j_present = list(dfEco["v"].unique())
@@ -1213,7 +1208,10 @@ class Water_Quality:
             Dem = dfDem[["N"]].merge(
                 CPI["CPI"], "left", left_index=True, right_index=True
             )
-            Dem["D age"] = np.select([dfDem["age"] > 45], [1])  # dummy mean age > 45
+
+            # Dummy for mean age > 45 in catchment area
+            Dem["D age"] = np.select([dfDem["age"] > 45], [1])
+
             # Mean gross real household income (100,000 DKK, 2018 prices) by v and t
             Dem["y"] = dfDem["income"] * CPI.loc[2018, "CPI"] / Dem["CPI"] / 100000
             Dem["ln y"] = np.log(Dem["y"])  #  log mean gross real household income
@@ -1227,20 +1225,25 @@ class Water_Quality:
             # For each year t, create a df of variables needed for benefit transfer
             frames_t = {}  #  create empty dictionary to store a df for each year t
 
-            # DataFrame for water quality truncated from above at Good ecological status
+            # Truncate DataFrame for ecological status of water bodies from above/below
             Q = dfEco.copy()
-            Q[self.years] = Q[self.years].where(Q < 3, 3)
+            Q[self.years] = Q[self.years].mask(Q[self.years] > 3, 3)  #  at Good status
+            Q[self.years] = Q[self.years].mask(Q[self.years] < 0, 0)  #  at Bad status
 
             # DataFrame with dummy for less than good ecological status
             SL = Q.copy()
-            SL[self.years] = SL[self.years].mask(SL < 3, 1).mask(SL >= 3, 0)
+            SL[self.years] = (
+                SL[self.years].mask(SL[self.years] < 3, 1).mask(SL[self.years] >= 3, 0)
+            )
 
             # For each year t, create df by v for variables needed for benefit transfer
             for t in self.years:
                 df = pd.DataFrame()  #  empty df for values by coastal catchment area
+
                 # Q is mean ecological status of water bodies weighted by shore length
                 Q[t] = Q[t] * Q["length"]  #  ecological status × shore length
                 df["Q"] = Q[["v", t]].groupby("v").sum()[t] / shores_v
+
                 if t > 1989:
                     df["ln y"] = Dem.loc[t, "ln y"]  #  ln mean gross real household inc
                     df["D age"] = Dem.loc[t, "D age"]  #  dummy for mean age > 45 years
@@ -1250,7 +1253,7 @@ class Water_Quality:
                     ln_PSL = np.log(df.loc[df["ln PSL"] > 0, "ln PSL"])  #  log PSL
                     ln_PSL_full = pd.Series(index=df.index)  #  empty series with index
                     ln_PSL_full[df["ln PSL"] != 0] = ln_PSL  #  fill with ln_PSL if > 0
-                    df["ln PSL"] = np.where(df["ln PSL"] > 0, ln_PSL_full, df["ln PSL"])
+                    df["ln PSL"] = df["ln PSL"].mask(df["ln PSL"] > 0, ln_PSL_full)
                     df["ln PAL"] = Geo["ln PAL"]  #  proportion arable land
                     df["SL"] = SL_not_good / 1000  #  SL in 1,000 km
                     if j == "lakes":
@@ -1258,7 +1261,9 @@ class Water_Quality:
                     else:
                         df["D lake"] = 0
                     df["N"] = Dem.loc[t, "N"]  #  number of households
+
                 frames_t[t] = df  #  store df in dictionary of DataFrames
+
             dfBT = pd.concat(frames_t)
             dfBT.index.names = ["t", "v"]
 
@@ -1288,13 +1293,12 @@ class Water_Quality:
 
             if investment is False:
                 # MWTP = 0 if all water bodies of type j have ≥ good ecological status
-                df["nonzero"] = np.select([df["Q"] < 2.99], [1])  #  dummy
+                df["nonzero"] = np.select([df["Q"] < 3 - epsilon], [1])  #  dummy
 
                 # Distance from current to Good: transform mean Q to lnΔQ ≡ ln(good - Q)
-                df["Q"] = np.where(
-                    df["Q"] < 2.99,  # if some water bodies of type j have < good status
+                df["Q"] = df["Q"].mask(
+                    df["Q"] < 3 - epsilon,  # if some water bodies have < good status
                     np.log(3 - df["Q"] + epsilon),  #  log-transform difference good - Q
-                    df["Q"],  #  if Q ≥ good, transformation is invalid and redundant
                 )
 
             else:
@@ -1310,10 +1314,9 @@ class Water_Quality:
                 df["neg"] = np.select([df["Q"] < 0], [1])  #  dummy
 
                 # Transform Q to the log of the actual change in water quality since t-1
-                df["Q"] = np.where(
+                df["Q"] = df["Q"].mask(
                     df["Q"] != 0,  #  if actual change in water quality is nonzero
                     np.log(np.abs(df["Q"]) + epsilon),  #  log-transform absolute value
-                    df["Q"],  #  if change is 0, transformation is invalid and redundant
                 )
 
             # Drop year 1989 and specify integer values

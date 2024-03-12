@@ -109,9 +109,9 @@ wfs_fields = {
 }
 
 # Specify a single category
-# j = "coastal"
+j = "coastal"
 # j = "lakes"
-j = "streams"
+# j = "streams"
 
 ########################################################################################
 #   3. Import module and run the functions
@@ -156,7 +156,7 @@ df_eco_obs, obs_stats, index_sorted = c.ecological_status(j, df_ind_obs, df_VP)
 
 # Impute missing values for biophysical indicator and return ecological status
 df_eco_imp, df_eco_imp_MA, stats_j[j], stats_MA_j[j] = c.impute_missing(
-    j, df_ind_obs, df_VP, index_sorted
+    j, df_eco_obs, df_VP, index_sorted
 )
 df_eco_imp_MA = pd.read_csv("output\\" + j + "_eco_imp.csv", index_col="wb")
 df_eco_imp_MA.columns = df_eco_imp_MA.columns.astype(int)
@@ -360,248 +360,10 @@ else:  #  coastal waters
     dfVP[["length"]] = Geo[["shore coastal"]]
 
 
-# def indicator_to_status(self, j, dfIndicator, df_VP):
-"""Convert biophysical indicators to ecological status."""
-dfIndicator, dfVP = df_ind_obs, df_VP
-cols = ["bad", "poor", "moderate", "good"]
-if j == "streams":
-    # Copy DataFrame for the biophysical indicator
-    df = dfIndicator.copy()
-    # Convert DVFI fauna index for streams to index of ecological status
-    for t in df.columns:
-        # Set conditions given the official guidelines for conversion
-        conditions = [
-            df[t] < 1.5,  # Bad
-            (df[t] >= 1.5) & (df[t] < 3.5),  #  Poor
-            (df[t] >= 3.5) & (df[t] < 4.5),  #  Moderate
-            (df[t] >= 4.5) & (df[t] < 6.5),  #  Good
-            df[t] >= 6.5,  #  High
-        ]
-        # Ecological status as a categorical scale from Bad to High quality
-        df[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
-    # return df
-elif j == "lakes":
-    # Merge df for biophysical indicator with df for typology
-    df = dfIndicator.merge(dfVP[["ov_typ"]], on="wb")
-
-    def SetThreshold(row):
-        if row["ov_typ"] in ["LWTYPE9", "LWTYPE11", "LWTYPE13", "LWTYPE15"]:
-            return pd.Series(
-                {
-                    "bad": 90,
-                    "poor": 56,
-                    "moderate": 25,
-                    "good": 11.7,
-                }
-            )
-        else:
-            return pd.Series(
-                {
-                    "bad": 56,
-                    "poor": 27,
-                    "moderate": 12,
-                    "good": 7,
-                }
-            )
-
-    # For df, add the series of thresholds relative to High ecological status
-    df[cols] = df.apply(SetThreshold, axis=1)
-    df = df.drop(columns=["ov_typ"])  #  drop typology column
-
-else:  #  coastal waters
-    # Read table of thresholds of chlorophyll for each coastal water body
-    thresholds = pd.read_csv("linkage\\" + c.linkage[j][1], index_col=0).astype(int)
-
-    # Merge df for biophysical indicator with df for thresholds
-    df = dfIndicator.merge(thresholds[cols], on="wb")
-
-# Convert mean chlorophyll concentrations to index of ecological status
-for t in dfIndicator.columns:
-    # Set conditions given the threshold for the typology of each lake
-    conditions = [
-        df[t] >= df["bad"],
-        (df[t] < df["bad"]) & (df[t] >= df["poor"]),
-        (df[t] < df["poor"]) & (df[t] >= df["moderate"]),
-        (df[t] < df["moderate"]) & (df[t] >= df["good"]),
-        df[t] < df["good"],
-    ]
-    # Ordinal scale of ecological status: Bad, Poor, Moderate, Good, High
-    df[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
-
-# Drop columns with thresholds
-df = df.drop(columns=cols)
-
-# def missing_values_graph(self, j, frame, suffix="obs", index=None):
-"""Heatmap visualizing observations of ecological status as either missing or using the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality respectively.
-Saves a figure of the heatmap."""
-frame, suffix, index = dfEcoImp, "imp", index_sorted
-if index is None:
-    # Sort water bodies by number of missing values across years of interest
-    df = frame.copy()
-    df["nan"] = df.shape[1] - df.count(axis=1)
-    df = df.sort_values(["nan"], ascending=False)[c.years]
-    # Save index to reuse the order after imputing the missing values
-    index = df.index
-    # Specify heatmap to show missing values as gray
-    colors = ["grey", "red", "orange", "yellow", "green", "blue"]
-    uniqueValues = [-1, 0, 1, 2, 3, 4]
-    description = "Missing value (gray), Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
-else:
-    # Sort water bodies by number of missing values prior to imputation
-    df = frame.copy().reindex(index)
-
-    # Specify heatmap without missing values
-    colors = ["red", "orange", "yellow", "green", "blue"]
-    uniqueValues = [0, 1, 2, 3, 4]
-    description = (
-        "Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
-    )
-# Plot heatmap
-df.fillna(-1, inplace=True)
-cm = sns.xkcd_palette(colors)
-plt.figure(figsize=(12, 12))
-ax = sns.heatmap(
-    df,
-    cmap=cm,
-    cbar=False,
-    cbar_kws={"ticks": uniqueValues},
-)
-ax.set(yticklabels=[])
-plt.ylabel(
-    str(len(df)) + " " + j + " ordered by number of missing values",
-    fontsize=14,
-)
-plt.xlabel("")
-plt.title(
-    ("Ecological status of " + j + "\n" + description),
-    fontsize=14,
-)
-plt.tight_layout()
-plt.savefig(
-    "output\\" + j + "_eco_" + suffix + ".pdf",
-    bbox_inches="tight",
-)
-
-
-# def ecological_status(self, j, dfIndicator, dfTyp, suffix="obs", index=None):
-"""Call indicator_to_status() to convert the longitudinal DataFrame to the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality based on the category and typology of each water body.
-Also call missing_values_graph() to map missing observations by year.
-Create a table of statistics and export it as an html table.
-Print the shore length and share of water bodies observed at least once."""
-dfIndicator, dfVP, suffix, index = df_ind_obs, df_VP, "obs", None
-
-if suffix == "obs":
-    # Convert observed biophysical indicator to ecological status
-    dfEco = c.indicator_to_status(j, dfIndicator, dfVP)
-
-else:
-    # Imputed ecological status using a continuous scale
-    dfEco = dfIndicator.copy()
-
-    # Convert imputed ecological status (continuous) to categorical scale
-    for t in dfEco.columns:
-        conditions = [
-            dfEco[t] < 0.5,  # Bad
-            (dfEco[t] >= 0.5) & (dfEco[t] < 1.5),  #  Poor
-            (dfEco[t] >= 1.5) & (dfEco[t] < 2.5),  #  Moderate
-            (dfEco[t] >= 2.5) & (dfEco[t] < 3.5),  #  Good
-            dfEco[t] >= 3.5,  #  High
-        ]
-        # Ecological status as a categorical index from Bad to High quality
-        dfEco[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
-
-if suffix != "imp_MA":
-    # Create missing values graph (heatmap of missing observations by year):
-    indexSorted = c.missing_values_graph(j, dfEco, suffix, index)
-
-# Merge df for observed ecological status with df for characteristics
-df = dfEco.merge(dfVP[["length"]], on="wb")
-
-# Calculate total length of all water bodies in current water body plan (VP2)
-totalLength = df["length"].sum()
-
-# Create an empty df for statistics
-stats = pd.DataFrame(
-    index=c.years,
-    columns=["high", "good", "moderate", "poor", "bad", "not good", "known"],
-)
-
-# Calculate the above statistics for each year
-for t in c.years:
-    y = df[[t, "length"]].reset_index(drop=True)
-    y["high"] = np.select([y[t] == 4], [y["length"]])
-    y["good"] = np.select([y[t] == 3], [y["length"]])
-    y["moderate"] = np.select([y[t] == 2], [y["length"]])
-    y["poor"] = np.select([y[t] == 1], [y["length"]])
-    y["bad"] = np.select([y[t] == 0], [y["length"]])
-    y["not good"] = np.select([y[t] < 3], [y["length"]])
-    y["known"] = np.select([y[t].notna()], [y["length"]])
-    # Add shares of total length to stats
-    knownLength = y["known"].sum()
-    stats.loc[t] = [
-        100 * y["high"].sum() / knownLength,
-        100 * y["good"].sum() / knownLength,
-        100 * y["moderate"].sum() / knownLength,
-        100 * y["poor"].sum() / knownLength,
-        100 * y["bad"].sum() / knownLength,
-        100 * y["not good"].sum() / knownLength,
-        100 * knownLength / totalLength,
-    ]
-
-# For imputed ecological status, convert to integers and drop 'known' column
-if suffix != "obs":
-    dfEco = dfEco.astype(int)
-    stats = stats.drop(columns="known")
-
-# Save both dataset and statistics on ecological status to CSV
-dfEco.to_csv("output\\" + j + "_eco_" + suffix + ".csv")
-stats.to_csv("output\\" + j + "_eco_" + suffix + "_stats.csv")
-
-# Brief analysis of missing observations (not relevant for imputed data)
-if suffix == "obs":
-    # Create df limited to water bodies that are observed at least once
-    observed = dfVP[["length"]].merge(
-        dfEco.dropna(how="all"),
-        how="inner",
-        on="wb",
-    )
-
-    # Report length and share of water bodies observed at least once.
-    msg = "{0} km is the total shore length of {1} included in VP3, of which {2}% of {1} representing {3} km ({4}% of total shore length of {1}) have been assessed at least once. On average, {5}% of {1} representing {6} km ({7}% of total shore length of {1}) are assessed each year.\n".format(
-        round(totalLength),
-        j,
-        round(100 * len(observed) / len(df)),
-        round(observed["length"].sum()),
-        round(100 * observed["length"].sum() / totalLength),
-        round(100 * np.mean(dfEco[c.years].count() / len(df))),
-        round(stats["known"].mean() / 100 * totalLength),
-        round(stats["known"].mean()),
-    )
-    # print(msg)  # print statistics in Python
-    arcpy.AddMessage(msg)  # return statistics in ArcGIS
-
-    # Elaborate column names of statistics for online presentation
-    stats.columns = [
-        "Share of known is High (%)",
-        "Share of known is Good (%)",
-        "Share of known is Moderate (%)",
-        "Share of known is Poor (%)",
-        "Share of known is Bad (%)",
-        "Share of known is not Good (%)",
-        "Status known (%)",
-    ]
-    # Save statistics as Markdown for online presentation
-    stats.astype(int).to_html("output\\" + j + "_eco_obs_stats.md")
-
-    # return dfEco, stats, indexSorted
-
-# return stats["not good"]
-
-
-# def impute_missing_values(self, dfEcoObs, dfVP, index):
+# def impute_missing(self, dfEcoObs, dfVP, index):
 """Impute ecological status for all water bodies from the observed indicator."""
 # DataFrames for observed biophysical indicator and typology
-dfEcoObs, dfVP, stats_j, index = df_eco_obs, df_VP, {}, index_sorted
+dfEcoObs, dfVP, index, stats_j = df_eco_obs, df_VP, index_sorted, {}
 
 # Specify the biophysical indicator for the current category
 if j == "streams":
@@ -741,22 +503,277 @@ dfImp = pd.DataFrame(
 # Calculate a 5-year moving average (MA) for each water body to reduce noise
 dfImpMA = dfImp.T.rolling(window=5, min_periods=3, center=True).mean().T
 
+dfImp.describe()
+dfImpMA.describe()
+
 # Convert the imputed ecological status to categorical scale {0, 1, 2, 3, 4}
 impStats = c.ecological_status(j, dfImp[c.years], dfVP, "imp", index)
 
 # Convert moving average of the imputed eco status to categorical scale
 impStatsMA = c.ecological_status(j, dfImpMA[c.years], dfVP, "imp_MA", index)
 
-# return dfImp, dfImpMA, impStats, impStatsMA
+# return dfImp[c.years], dfImpMA[c.years], impStats, impStatsMA
+df_eco_imp_MA = dfImpMA[c.years]
 
 
-# def values_by_catchment_area(self, j, dfEcoImp, dfVP):
+# def ecological_status(self, j, dfIndicator, dfTyp, suffix="obs", index=None):
+"""Call indicator_to_status() to convert the longitudinal DataFrame to the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality based on the category and typology of each water body.
+Also call missing_values_graph() to map missing observations by year.
+Create a table of statistics and export it as an html table.
+Print the shore length and share of water bodies observed at least once."""
+# Report ecological status based on observed biophysical indicator
+dfIndicator, dfVP, suffix, index = df_ind_obs, df_VP, "obs", None
+# Convert the imputed ecological status to categorical scale {0, 1, 2, 3, 4}
+dfIndicator, dfVP, suffix, index = df_eco_imp, df_VP, "imp", index_sorted
+# Convert moving average of the imputed eco status to categorical scale
+dfIndicator, dfVP, suffix, index = df_eco_imp_MA, df_VP, "imp_MA", index_sorted
+
+if suffix == "obs":
+    # Convert observed biophysical indicator to ecological status
+    dfEco = c.indicator_to_status(j, dfIndicator, dfVP)
+
+else:
+    # Imputed ecological status using a continuous scale
+    dfEco = dfIndicator.copy()
+
+# Save CSV of statistics on mean ecological status by year weighted by shore length
+# dfEco.to_csv("output\\" + j + "_eco_" + suffix + ".csv")
+test = dfEco.copy()
+if suffix == "obs":
+    # Convert imputed ecological status (continuous) to categorical scale
+    for t in dfEco.columns:
+        conditions = [
+            dfEco[t] < 1,  # Bad
+            (dfEco[t] >= 1) & (dfEco[t] < 2),  #  Poor
+            (dfEco[t] >= 2) & (dfEco[t] < 3),  #  Moderate
+            (dfEco[t] >= 3) & (dfEco[t] < 4),  #  Good
+            dfEco[t] >= 4,  #  High
+        ]
+        # Ecological status as a categorical index from Bad to High quality
+        dfEco[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
+
+(dfEco - test).sum()
+
+if suffix != "imp_MA":
+    # Create missing values graph (heatmap of missing observations by year):
+    indexSorted = c.missing_values_graph(j, dfEco, suffix, index)
+
+# Merge df for observed ecological status with df for characteristics
+df = dfEco.merge(dfVP[["length"]], on="wb")
+
+# Calculate total length of all water bodies in current water body plan (VP2)
+totalLength = df["length"].sum()
+
+# Create an empty df for statistics
+stats = pd.DataFrame(
+    index=c.years,
+    columns=["high", "good", "moderate", "poor", "bad", "not good", "known"],
+)
+
+# Calculate the above statistics for each year
+for t in c.years:
+    y = df[[t, "length"]].reset_index(drop=True)
+    y["high"] = np.select([y[t] == 4], [y["length"]])
+    y["good"] = np.select([y[t] == 3], [y["length"]])
+    y["moderate"] = np.select([y[t] == 2], [y["length"]])
+    y["poor"] = np.select([y[t] == 1], [y["length"]])
+    y["bad"] = np.select([y[t] == 0], [y["length"]])
+    y["not good"] = np.select([y[t] < 3], [y["length"]])
+    y["known"] = np.select([y[t].notna()], [y["length"]])
+    # Add shares of total length to stats
+    knownLength = y["known"].sum()
+    stats.loc[t] = [
+        100 * y["high"].sum() / knownLength,
+        100 * y["good"].sum() / knownLength,
+        100 * y["moderate"].sum() / knownLength,
+        100 * y["poor"].sum() / knownLength,
+        100 * y["bad"].sum() / knownLength,
+        100 * y["not good"].sum() / knownLength,
+        100 * knownLength / totalLength,
+    ]
+
+# For imputed ecological status, convert to integers and drop 'known' column
+if suffix != "obs":
+    dfEco = dfEco.astype(int)
+    stats = stats.drop(columns="known")
+
+# Save CSV of statistics on mean ecological status by year weighted by shore length
+stats.to_csv("output\\" + j + "_eco_" + suffix + "_stats.csv")
+
+# Brief analysis of missing observations (not relevant for imputed data)
+if suffix == "obs":
+    # Create df limited to water bodies that are observed at least once
+    observed = dfVP[["length"]].merge(
+        dfEco.dropna(how="all"),
+        how="inner",
+        on="wb",
+    )
+
+    # Report length and share of water bodies observed at least once.
+    msg = "{0} km is the total shore length of {1} included in VP3, of which {2}% of {1} representing {3} km ({4}% of total shore length of {1}) have been assessed at least once. On average, {5}% of {1} representing {6} km ({7}% of total shore length of {1}) are assessed each year.\n".format(
+        round(totalLength),
+        j,
+        round(100 * len(observed) / len(df)),
+        round(observed["length"].sum()),
+        round(100 * observed["length"].sum() / totalLength),
+        round(100 * np.mean(dfEco[c.years].count() / len(df))),
+        round(stats["known"].mean() / 100 * totalLength),
+        round(stats["known"].mean()),
+    )
+    # print(msg)  # print statistics in Python
+    arcpy.AddMessage(msg)  # return statistics in ArcGIS
+
+    # Elaborate column names of statistics for online presentation
+    stats.columns = [
+        "Share of known is High (%)",
+        "Share of known is Good (%)",
+        "Share of known is Moderate (%)",
+        "Share of known is Poor (%)",
+        "Share of known is Bad (%)",
+        "Share of known is not Good (%)",
+        "Status known (%)",
+    ]
+    # Save statistics as Markdown for online presentation
+    stats.astype(int).to_html("output\\" + j + "_eco_obs_stats.md")
+
+    # return dfEco, stats, indexSorted
+
+# return stats["not good"]
+
+
+# def indicator_to_status(self, j, dfIndicator, df_VP):
+"""Convert biophysical indicators to ecological status."""
+dfIndicator, dfVP = df_ind_obs, df_VP
+cols = ["bad", "poor", "moderate", "good"]
+if j == "streams":
+    # Copy DataFrame for the biophysical indicator
+    df = dfIndicator.copy()
+    # Convert DVFI fauna index for streams to index of ecological status
+    for t in df.columns:
+        # Set conditions given the official guidelines for conversion
+        conditions = [
+            df[t] < 1.5,  # Bad
+            (df[t] >= 1.5) & (df[t] < 3.5),  #  Poor
+            (df[t] >= 3.5) & (df[t] < 4.5),  #  Moderate
+            (df[t] >= 4.5) & (df[t] < 6.5),  #  Good
+            df[t] >= 6.5,  #  High
+        ]
+        # Ecological status as a categorical scale from Bad to High quality
+        df[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
+    # return df
+elif j == "lakes":
+    # Merge df for biophysical indicator with df for typology
+    df = dfIndicator.merge(dfVP[["ov_typ"]], on="wb")
+
+    def SetThreshold(row):
+        if row["ov_typ"] in ["LWTYPE9", "LWTYPE11", "LWTYPE13", "LWTYPE15"]:
+            return pd.Series(
+                {
+                    "bad": 90,
+                    "poor": 56,
+                    "moderate": 25,
+                    "good": 11.7,
+                }
+            )
+        else:
+            return pd.Series(
+                {
+                    "bad": 56,
+                    "poor": 27,
+                    "moderate": 12,
+                    "good": 7,
+                }
+            )
+
+    # For df, add the series of thresholds relative to High ecological status
+    df[cols] = df.apply(SetThreshold, axis=1)
+    df = df.drop(columns=["ov_typ"])  #  drop typology column
+
+else:  #  coastal waters
+    # Read table of thresholds of chlorophyll for each coastal water body
+    thresholds = pd.read_csv("linkage\\" + c.linkage[j][1], index_col=0).astype(int)
+
+    # Merge df for biophysical indicator with df for thresholds
+    df = dfIndicator.merge(thresholds[cols], on="wb")
+
+# Convert mean chlorophyll concentrations to index of ecological status
+for t in dfIndicator.columns:
+    # Set conditions given the threshold for the typology of each lake
+    conditions = [
+        df[t] >= df["bad"],
+        (df[t] < df["bad"]) & (df[t] >= df["poor"]),
+        (df[t] < df["poor"]) & (df[t] >= df["moderate"]),
+        (df[t] < df["moderate"]) & (df[t] >= df["good"]),
+        df[t] < df["good"],
+    ]
+    # Ordinal scale of ecological status: Bad, Poor, Moderate, Good, High
+    df[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
+
+# Drop columns with thresholds
+df = df.drop(columns=cols)
+
+# def missing_values_graph(self, j, frame, suffix="obs", index=None):
+"""Heatmap visualizing observations of ecological status as either missing or using the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality respectively.
+Saves a figure of the heatmap."""
+frame, suffix, index = dfEcoImp, "imp", index_sorted
+if index is None:
+    # Sort water bodies by number of missing values across years of interest
+    df = frame.copy()
+    df["nan"] = df.shape[1] - df.count(axis=1)
+    df = df.sort_values(["nan"], ascending=False)[c.years]
+    # Save index to reuse the order after imputing the missing values
+    index = df.index
+    # Specify heatmap to show missing values as gray
+    colors = ["grey", "red", "orange", "yellow", "green", "blue"]
+    uniqueValues = [-1, 0, 1, 2, 3, 4]
+    description = "Missing value (gray), Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
+else:
+    # Sort water bodies by number of missing values prior to imputation
+    df = frame.copy().reindex(index)
+
+    # Specify heatmap without missing values
+    colors = ["red", "orange", "yellow", "green", "blue"]
+    uniqueValues = [0, 1, 2, 3, 4]
+    description = (
+        "Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
+    )
+# Plot heatmap
+df.fillna(-1, inplace=True)
+cm = sns.xkcd_palette(colors)
+plt.figure(figsize=(12, 12))
+ax = sns.heatmap(
+    df,
+    cmap=cm,
+    cbar=False,
+    cbar_kws={"ticks": uniqueValues},
+)
+ax.set(yticklabels=[])
+plt.ylabel(
+    str(len(df)) + " " + j + " ordered by number of missing values",
+    fontsize=14,
+)
+plt.xlabel("")
+plt.title(
+    ("Ecological status of " + j + "\n" + description),
+    fontsize=14,
+)
+plt.tight_layout()
+plt.savefig(
+    "output\\" + j + "_eco_" + suffix + ".pdf",
+    bbox_inches="tight",
+)
+
+
+# def values_by_catchment_area(self, j, dfEcoImpMA, dfVP):
 """Assign water bodies to coastal catchment areas and calculate the weighted arithmetic mean of ecological status after truncating from above at Good status.
 For each year t, set up df with variables for the Benefit Transfer equation."""
 dfEcoImp, dfVP, frames_j = df_eco_imp_MA, df_VP, {}
 
-if j == "coastal":  #  ID shared between coastal waters and catchment areas
+if j == "coastal":
     dfEcoImpCatch = dfEcoImp.copy()
+
+    # ID is shared between coastal waters and coastal catchment areas v
+    dfEcoImpCatch["v"] = dfEcoImpCatch.index
 
 else:  #  streams and lakes to coastal catchment areas
     # Specify name of joined feature class (polygons)
@@ -785,7 +802,7 @@ else:  #  streams and lakes to coastal catchment areas
     else:
         dfCatch.loc[:, "wb"] = dfCatch["ov_id"].str.slice(7).astype(int)
     dfCatch["v"] = dfCatch["op_id"]
-
+        
     # Subset to columns; water body ID as index; sort by catchment area ID
     dfCatch = dfCatch[["wb", "v"]].set_index("wb").sort_values(by="v")
 
@@ -799,13 +816,10 @@ else:  #  streams and lakes to coastal catchment areas
         dfCatch.loc[11506, "v"] = "136"  #  Lille Langesø to Indre Randers Fjord
 
     # Merge df for imputed ecological status w. coastal catchment area
-    dfEcoImpCatch = dfEcoImp.merge(dfCatch, on="wb").astype(int)
+    dfEcoImpCatch = dfEcoImp.merge(dfCatch.astype(int), on="wb")
 
 # Merge df for imputed ecological status w. shore length
 dfEco = dfEcoImpCatch.merge(dfVP[["length"]], on="wb")  #  length
-
-if j == "coastal":  # Coastal catchment area ID is the water body ID
-    dfEco["v"] = dfEco.index
 
 # List of coastal catchment areas where category j is present
 j_present = list(dfEco["v"].unique())
@@ -851,13 +865,14 @@ Geo = Geo.loc[j_present].sort_index()
 # For each year t, create a df of variables needed for benefit transfer
 frames_t = {}  #  create empty dictionary to store a df for each year t
 
-# DataFrame for water quality truncated from above at Good ecological status
+# Truncate DataFrame for ecological status of water bodies from above/below
 Q = dfEco.copy()
-Q[c.years] = Q[c.years].where(Q < 3, 3)
+Q[c.years] = Q[c.years].mask(Q[c.years] > 3, 3)  #  at Good status
+Q[c.years] = Q[c.years].mask(Q[c.years] < 0, 0)  #  at Bad status
 
 # DataFrames with dummy for less than good ecological status
 SL = Q.copy()
-SL[c.years] = SL[c.years].mask(SL < 3, 1).mask(SL >= 3, 0)
+SL[c.years] = SL[c.years].mask(SL[c.years] < 3, 1).mask(SL[c.years] >= 3, 0)
 
 # For each year t, create df by v for variables needed for benefit transfer
 for t in c.years:
@@ -874,7 +889,7 @@ for t in c.years:
         ln_PSL = np.log(df.loc[df["ln PSL"] > 0, "ln PSL"])  #  log PSL
         ln_PSL_full = pd.Series(index=df.index)  #  empty series with index
         ln_PSL_full[df["ln PSL"] != 0] = ln_PSL  #  fill with ln_PSL if > 0
-        df["ln PSL"] = np.where(df["ln PSL"] > 0, ln_PSL_full, df["ln PSL"])
+        df["ln PSL"] = df["ln PSL"].mask(df["ln PSL"] > 0, ln_PSL_full)
         df["ln PAL"] = Geo["ln PAL"]  #  proportion arable land
         df["SL"] = SL_not_good / 1000  #  SL in 1,000 km
         if j == "lakes":
@@ -887,6 +902,7 @@ dfBT = pd.concat(frames_t)
 dfBT.index.names = ["t", "v"]
 frames_j[j] = dfBT
 shores_j[j] = shores_v
+
 
 ########################################################################################
 #   4.a Stats for all categories j: Shore length and share of it where eco status < Good
@@ -955,17 +971,16 @@ factor = False
 # Define a small constant to avoid RuntimeWarning due to taking the log of 0
 epsilon = 1e-6  #  a millionth part
 
-df[(df["Q"] > 2.99) & (df["Q"] < 3)]
+df[(df["Q"] > 3 - epsilon) & (df["Q"] < 3)]
 
 if investment is False:
     # MWTP = 0 if all water bodies of type j have ≥ good ecological status
-    df["nonzero"] = np.select([df["Q"] < 2.99], [1])  #  dummy
+    df["nonzero"] = np.select([df["Q"] < 3 - epsilon], [1])  #  dummy
 
     # Distance from current to Good: transform mean Q to lnΔQ ≡ ln(good - Q)
-    df["Q"] = np.where(
-        df["Q"] < 2.99,  # if some water bodies of type j have < good status
+    df["Q"] = df["Q"].mask(
+        df["Q"] < 3 - epsilon,  # if some water bodies have < good status
         np.log(3 - df["Q"] + epsilon),  #  log-transform difference good - Q
-        df["Q"],  #  if Q ≥ good, transformation is invalid and redundant
     )
 
 else:
@@ -981,17 +996,18 @@ else:
     df["neg"] = np.select([df["Q"] < 0], [1])  #  dummy
 
     # Transform Q to the log of the actual change in water quality since t-1
-    df["Q"] = np.where(
+    df["Q"] = df["Q"].mask(
         df["Q"] != 0,  #  if actual change in water quality is nonzero
         np.log(np.abs(df["Q"]) + epsilon),  #  log-transform absolute value
-        df["Q"],  #  if change is 0, transformation is invalid and redundant
     )
 
 # Drop year 1989 and specify integer values
 df = df.drop(df[df.index.get_level_values("t") == 1989].index)
 df[["D age", "D lake", "N"]] = df[["D age", "D lake", "N"]].astype(int)
+
 # Consumer Price Index by year t (1990-2020)
 CPI_NPV = pd.read_excel("data\\" + c.data["shared"][0], index_col=0)
+
 # Merge data with CPI to correct for assumption of unitary income elasticity
 kwargs = dict(how="left", left_index=True, right_index=True)
 df1 = df.merge(CPI_NPV, **kwargs)
