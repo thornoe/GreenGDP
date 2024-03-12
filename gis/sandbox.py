@@ -498,13 +498,13 @@ dfImp = pd.DataFrame(
     imputer.fit_transform(np.array(dfObsSelected)),
     index=dfObsSelected.index,
     columns=dfObsSelected.columns,
-)[dfObs.columns]
+)[dfEcoObs.columns]
 
 # Calculate a 5-year moving average (MA) for each water body to reduce noise
-dfImpMA = dfImp.T.rolling(window=5, min_periods=3, center=True).mean().T
+MA = dfImp.T.rolling(window=5, min_periods=3, center=True).mean().T
 
-dfImp.describe()
-dfImpMA.describe()
+# Merge imputed ecological status each year with basis analysis for VP3
+dfImpMA = MA.merge(basis, on="wb")
 
 # Convert the imputed ecological status to categorical scale {0, 1, 2, 3, 4}
 impStats = c.ecological_status(j, dfImp[c.years], dfVP, "imp", index)

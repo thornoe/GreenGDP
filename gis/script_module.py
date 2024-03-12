@@ -809,15 +809,16 @@ class Water_Quality:
             )[dfEcoObs.columns]
 
             # Calculate a 5-year moving average (MA) for each water body to reduce noise
-            dfImpMA = dfImp.T.rolling(window=5, min_periods=3, center=True).mean().T
+            MA = dfImp.T.rolling(window=5, min_periods=3, center=True).mean().T
+
+            # Merge imputed ecological status each year with basis analysis for VP3
+            dfImpMA = MA.merge(basis, on="wb")
 
             # Convert the imputed ecological status to categorical scale {0, 1, 2, 3, 4}
             impStats = self.ecological_status(j, dfImp[self.years], dfVP, "imp", index)
 
             # Convert moving average of the imputed eco status to the categorical scale
-            impStatsMA = self.ecological_status(
-                j, dfImpMA[self.years], dfVP, "imp_MA", index
-            )
+            impStatsMA = self.ecological_status(j, dfImpMA, dfVP, "imp_MA", index)
 
             return dfImp[self.years], dfImpMA[self.years], impStats, impStatsMA
 
