@@ -852,7 +852,7 @@ class Water_Quality:
                 # Convert imputed ecological status (continuous) to categorical scale
                 for t in dfEco.columns:
                     conditions = [
-                        dfEco[t] < 1.0,  # Bad
+                        dfEco[t] < 0.5,  # Bad
                         (dfEco[t] >= 0.5) & (dfEco[t] < 1.5),  #  Poor
                         (dfEco[t] >= 1.5) & (dfEco[t] < 2.5),  #  Moderate
                         (dfEco[t] >= 2.5) & (dfEco[t] < 3.5),  #  Good
