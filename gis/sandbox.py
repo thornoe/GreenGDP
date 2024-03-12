@@ -537,10 +537,10 @@ else:
     dfEco = dfIndicator.copy()
 
 # Save CSV of statistics on mean ecological status by year weighted by shore length
-# dfEco.to_csv("output\\" + j + "_eco_" + suffix + ".csv")
-test = dfEco.copy()
+dfEco.to_csv("output\\" + j + "_eco_" + suffix + ".csv")
+
 if suffix == "obs":
-    # Convert imputed ecological status (continuous) to categorical scale
+    # Precautionary conversion of imputed eco status to categorical scale
     for t in dfEco.columns:
         conditions = [
             dfEco[t] < 1,  # Bad
@@ -551,8 +551,6 @@ if suffix == "obs":
         ]
         # Ecological status as a categorical index from Bad to High quality
         dfEco[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
-
-(dfEco - test).sum()
 
 if suffix != "imp_MA":
     # Create missing values graph (heatmap of missing observations by year):
@@ -636,7 +634,7 @@ if suffix == "obs":
     # Save statistics as Markdown for online presentation
     stats.astype(int).to_html("output\\" + j + "_eco_obs_stats.md")
 
-    # return dfEco, stats, indexSorted
+#     return dfEco, stats, indexSorted
 
 # return stats["not good"]
 
@@ -802,7 +800,7 @@ else:  #  streams and lakes to coastal catchment areas
     else:
         dfCatch.loc[:, "wb"] = dfCatch["ov_id"].str.slice(7).astype(int)
     dfCatch["v"] = dfCatch["op_id"]
-        
+
     # Subset to columns; water body ID as index; sort by catchment area ID
     dfCatch = dfCatch[["wb", "v"]].set_index("wb").sort_values(by="v")
 
@@ -959,13 +957,32 @@ IVn_j = c.valuation(df_BT, real=False, investment=True)
 nominal = pd.concat([CWPn_j, IVn_j], axis=1)
 nominal.to_excel("output\\all_nominal.xlsx")  # manually Wrap Text row 1 & delete row 3
 
+
+def BT(df, elast=1):
+    """Apply Benefit Transfer equation from meta study (Zandersen et al., 2022)"""
+    # ln MWTP for improvement from current ecological status to "Good"
+    lnMWTP = (
+        4.142
+        + 0.551 * df["Q"]
+        + elast * df["ln y"]
+        + 0.496 * df["D age"]
+        + 0.121 * df["ln PSL"]
+        - 0.072 * df["ln PAL"]
+        - 0.005 * df["SL"]
+        - 0.378 * df["D lake"]
+    )
+    # Real MWTP per household (DKK, 2018 prices) using the meta study variance
+    MWTP = np.exp(lnMWTP + (0.136 + 0.098) / 2)  #  variance components
+    return MWTP
+
+
 # def valuation(self, dfBT, real=True, investment=False, factor=False):
 """Valuation as either Cost of Water Pollution (CWP) or Investment Value (IV).
 If not set to return real values (2018 prices), instead returns values in the prices of both the current year and the preceding year (for year-by-year chain linking)."""
 # Copy DataFrame with the variables needed for the benefit transfer equation
 df = df_BT.copy()
 real = False
-investment = False
+investment = True
 factor = False
 
 # Define a small constant to avoid RuntimeWarning due to taking the log of 0
@@ -1011,12 +1028,12 @@ CPI_NPV = pd.read_excel("data\\" + c.data["shared"][0], index_col=0)
 # Merge data with CPI to correct for assumption of unitary income elasticity
 kwargs = dict(how="left", left_index=True, right_index=True)
 df1 = df.merge(CPI_NPV, **kwargs)
-df1["unityMWTP"] = c.BT(df1)  #  MWTP assuming unitary income elasticity
+df1["unityMWTP"] = BT(df1)  #  MWTP assuming unitary income elasticity
 
 if factor is False:
     # Calculate factor that MWTP is increased by if using estimated income ε
     df2018 = df1[df1.index.get_level_values("t") == 2018].copy()
-    df2018["elastMWTP"] = c.BT(df2018, elast=1.453)  #  meta reg income ε
+    df2018["elastMWTP"] = BT(df2018, elast=1.453)  #  meta reg income ε
     df2018["factor"] = df2018["elastMWTP"] / df2018["unityMWTP"]
     df2018 = df2018.droplevel("t")
     df2 = df1.merge(df2018[["factor"]], **kwargs)
@@ -1045,12 +1062,15 @@ if investment is True:
         df2["CWP"] = df2["CWP"] * CPI_NPV.loc[2018, "NPV"]
         # Rename CWP to IV (investment value of water quality improvements)
         df2["IV"] = df2["CWP"]  #  million DKK (2018 prices)
-        # return df2[["IV"]]  #  return real investment value by j, t, and v
+#         return df2[["IV"]]  #  return real investment value by j, t, and v
 # if real is True:
 #     if factor is True:
 #         return df2[["CWP"]]  #  real cost of water pollution by j, t, v
 #     else:
 #         return df2  #  return full df to use df2["factor"] for decomposition
+
+df2[df2["nonzero"] == 0]
+df2[(df2.index.get_level_values("j") == "coastal") & (df2["nonzero"] == 0)]
 
 # Aggregate nominal MWTP per hh over households in coastal catchment area
 df2["CWPn"] = df2["CWP"] * df2["CPI"] / CPI_NPV.loc[2018, "CPI"]

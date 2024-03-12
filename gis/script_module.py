@@ -814,7 +814,7 @@ class Water_Quality:
             # Convert the imputed ecological status to categorical scale {0, 1, 2, 3, 4}
             impStats = self.ecological_status(j, dfImp[self.years], dfVP, "imp", index)
 
-            # Convert moving average of the imputed eco status to categorical scale
+            # Convert moving average of the imputed eco status to the categorical scale
             impStatsMA = self.ecological_status(
                 j, dfImpMA[self.years], dfVP, "imp_MA", index
             )
@@ -849,14 +849,14 @@ class Water_Quality:
                 # Imputed ecological status using a continuous scale
                 dfEco = dfIndicator.copy()
 
-                # Convert imputed ecological status (continuous) to categorical scale
+                # Precautionary conversion of imputed eco status to categorical scale
                 for t in dfEco.columns:
                     conditions = [
-                        dfEco[t] < 0.5,  # Bad
-                        (dfEco[t] >= 0.5) & (dfEco[t] < 1.5),  #  Poor
-                        (dfEco[t] >= 1.5) & (dfEco[t] < 2.5),  #  Moderate
-                        (dfEco[t] >= 2.5) & (dfEco[t] < 3.5),  #  Good
-                        dfEco[t] >= 3.5,  #  High
+                        dfEco[t] < 1,  # Bad
+                        (dfEco[t] >= 1) & (dfEco[t] < 2),  #  Poor
+                        (dfEco[t] >= 2) & (dfEco[t] < 3),  #  Moderate
+                        (dfEco[t] >= 3) & (dfEco[t] < 4),  #  Good
+                        dfEco[t] >= 4,  #  High
                     ]
                     # Ecological status as a categorical index from Bad to High quality
                     dfEco[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
@@ -1438,8 +1438,10 @@ class Water_Quality:
                 - 0.005 * df["SL"]
                 - 0.378 * df["D lake"]
             )
+
             # Real MWTP per household (DKK, 2018 prices) using the meta study variance
             MWTP = np.exp(lnMWTP + (0.136 + 0.098) / 2)  #  variance components
+
             return MWTP
 
         except:
