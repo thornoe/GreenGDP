@@ -106,8 +106,9 @@ c = script_module.Water_Quality(
 # Dictionaries to store DataFrame, shore length, and stats for each category j
 frames_j = {}
 shores_j = {}
-stats_j = {}
-stats_MA_j = {}  #  based on a 5-year moving average for each water body to reduce noise
+stats_obs_j = {}
+stats_imp_j = {}
+stats_imp_MA_j = {}  #  using 5-year moving average for each water body to reduce noise
 
 # Loop over each category j ∈ {coastal, lakes, streams}
 for j in ("coastal", "lakes", "streams"):
@@ -118,14 +119,14 @@ for j in ("coastal", "lakes", "streams"):
     df_ind_obs, df_VP = c.observed_indicator(j)
 
     # Report ecological status based on observed biophysical indicator
-    df_eco_obs, obs_stats, index_sorted = c.ecological_status(j, df_ind_obs, df_VP)
+    df_eco_obs, stats_obs_j[j], index_sorted = c.ecological_status(j, df_ind_obs, df_VP)
 
     # if j == 'streams':
     #     # Create a map book with yearly maps of observed ecological status
     #     c.map_book(j, df_eco_obs)
 
     # Impute missing values for biophysical indicator and return ecological status
-    df_eco_imp, df_eco_imp_MA, stats_j[j], stats_MA_j[j] = c.impute_missing(
+    df_eco_imp, df_eco_imp_MA, stats_imp_j[j], stats_imp_MA_j[j] = c.impute_missing(
         j, df_eco_obs, df_VP, index_sorted
     )
 
@@ -204,12 +205,6 @@ df_v = c.valuation(df_BT)
 df_BT_factor = df_BT.copy()
 df_BT_factor["factor"] = df_v["factor"]
 
-df_BT.loc[("coastal", 2018)]
-df_BT.loc[("coastal", 2019)]
-
-(CWP_v.loc[("coastal", 2019)] - CWP_v.loc[("coastal", 2018)])
-
-
 # Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices)
 CWP_v = df_v[["CWP"]]
 CWP_j = (
@@ -223,6 +218,10 @@ f2 = (
     .get_figure()
 )
 f2.savefig("output\\all_cost.pdf", bbox_inches="tight")  #  save figure as PDF
+
+df_BT.loc[("coastal", 2018)]
+df_BT.loc[("coastal", 2019)]
+(CWP_v.loc[("coastal", 2019)] - CWP_v.loc[("coastal", 2018)])
 
 # Investment Value of water quality improvement in real terms (million DKK, 2018 prices)
 IV_v = c.valuation(df_BT, investment=True)

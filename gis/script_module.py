@@ -657,38 +657,6 @@ class Water_Quality:
     def impute_missing(self, j, dfEcoObs, dfVP, index):
         """Impute ecological status for all water bodies from the observed indicator."""
         try:
-            # Specify the biophysical indicator for the current category
-            if j == "streams":
-                indicator = "til_oko_bb"  #  bottom fauna measured as DVFI index
-
-            else:  #  lakes and coastal waters
-                indicator = "til_oko_fy"  #  phytoplankton measured as chlorophyll
-
-            # Include ecological status as assessed in basis analysis for VP3
-            basis = dfVP[[indicator]].copy()
-
-            # Define a dictionary to map the Danish strings to an ordinal scale
-            status_dict = {
-                "Dårlig økologisk tilstand": 0,
-                "Ringe økologisk tilstand": 1,
-                "Moderat økologisk tilstand": 2,
-                "God økologisk tilstand": 3,
-                "Høj økologisk tilstand": 4,
-                "Dårligt økologisk potentiale": 0,
-                "Ringe økologisk potentiale": 1,
-                "Moderat økologisk potentiale": 2,
-                "Godt økologisk potentiale": 3,
-                "Maksimalt økologisk potentiale": 4,
-                "Ukendt": np.nan,
-            }
-
-            # Replace Danish strings in the df with the corresponding ordinal values
-            basis.replace(status_dict, inplace=True)
-            basis.columns = ["basis"]
-
-            # Merge observed ecological status each year with basis analysis for VP3
-            dfObs = dfEcoObs.merge(basis, on="wb")
-
             if j == "streams":
                 # Create dummies for typology
                 typ = pd.get_dummies(dfVP["ov_typ"]).astype(int)
@@ -796,7 +764,7 @@ class Water_Quality:
                 cols = ["Sediment", "Deep"]
 
             # Merge DataFrame for observed values with DataFrame for dummies
-            dfObsSelected = dfObs.merge(typ[cols], on="wb")  #  with selected predictors
+            dfObsSelected = dfEcoObs.merge(typ[cols], on="wb")  #  selected predictors
 
             # Iterative imputer using BayesianRidge() estimator with increased tolerance
             imputer = IterativeImputer(tol=1e-1, max_iter=100, random_state=0)
@@ -812,15 +780,19 @@ class Water_Quality:
             MA = dfImp.T.rolling(window=5, min_periods=3, center=True).mean().T
 
             # Merge imputed ecological status each year with basis analysis for VP3
-            dfImpMA = MA.merge(basis, on="wb")
+            dfImpMA = MA.merge(dfEcoObs["basis"], on="wb")
 
             # Convert the imputed ecological status to categorical scale {0, 1, 2, 3, 4}
-            impStats = self.ecological_status(j, dfImp[self.years], dfVP, "imp", index)
+            dfImp2, impStats = self.ecological_status(
+                j, dfImp[self.years], dfVP, "imp", index
+            )
 
             # Convert moving average of the imputed eco status to the categorical scale
-            impStatsMA = self.ecological_status(j, dfImpMA, dfVP, "imp_MA", index)
+            dfImpMA2, impStatsMA = self.ecological_status(
+                j, dfImpMA, dfVP, "imp_MA", index
+            )
 
-            return dfImp[self.years], dfImpMA[self.years], impStats, impStatsMA
+            return dfImp2[self.years], dfImpMA2[self.years], impStats, impStatsMA
 
         except:
             ## Report severe error messages
@@ -844,7 +816,38 @@ class Water_Quality:
         try:
             if suffix == "obs":
                 # Convert observed biophysical indicator to ecological status
-                dfEco = self.indicator_to_status(j, dfIndicator, dfVP)
+                dfEcoObs = self.indicator_to_status(j, dfIndicator, dfVP)
+
+                # Specify the biophysical indicator for the current category
+                if j == "streams":
+                    indicator = "til_oko_bb"  #  bottom fauna measured as DVFI index
+                else:  #  lakes and coastal waters
+                    indicator = "til_oko_fy"  #  phytoplankton measured as chlorophyll
+
+                # Include ecological status as assessed in basis analysis for VP3
+                basis = dfVP[[indicator]].copy()
+
+                # Define a dictionary to map the Danish strings to an ordinal scale
+                status_dict = {
+                    "Dårlig økologisk tilstand": 0,
+                    "Ringe økologisk tilstand": 1,
+                    "Moderat økologisk tilstand": 2,
+                    "God økologisk tilstand": 3,
+                    "Høj økologisk tilstand": 4,
+                    "Dårligt økologisk potentiale": 0,
+                    "Ringe økologisk potentiale": 1,
+                    "Moderat økologisk potentiale": 2,
+                    "Godt økologisk potentiale": 3,
+                    "Maksimalt økologisk potentiale": 4,
+                    "Ukendt": np.nan,
+                }
+
+                # Replace Danish strings in the df with the corresponding ordinal values
+                basis.replace(status_dict, inplace=True)
+                basis.columns = ["basis"]
+
+                # Merge observed ecological status each year with basis analysis for VP3
+                dfEco = dfEcoObs.merge(basis, on="wb")
 
             else:
                 # Imputed ecological status using a continuous scale
@@ -946,7 +949,7 @@ class Water_Quality:
 
                 return dfEco, stats, indexSorted
 
-            return stats["not good"]
+            return dfEco, stats["not good"]
 
         except:
             # Report severe error messages
@@ -1072,7 +1075,7 @@ class Water_Quality:
 
             else:
                 # Sort water bodies by number of missing values prior to imputation
-                df = frame.copy().reindex(index)
+                df = frame.copy().reindex(index)[self.years]
 
                 # Specify heatmap without missing values
                 colors = ["red", "orange", "yellow", "green", "blue"]
@@ -1231,8 +1234,8 @@ class Water_Quality:
 
             # Truncate DataFrame for ecological status of water bodies from above/below
             Q = dfEco.copy()
-            Q[self.years] = Q[self.years].mask(Q[self.years] > 3, 3)  #  at Good status
-            Q[self.years] = Q[self.years].mask(Q[self.years] < 0, 0)  #  at Bad status
+            Q[self.years] = Q[self.years].mask(Q[self.years] > 3, 3)  #  above at Good
+            Q[self.years] = Q[self.years].mask(Q[self.years] < 0, 0)  #  below at Bad
 
             # DataFrame with dummy for less than good ecological status
             SL = Q.copy()
