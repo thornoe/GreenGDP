@@ -152,23 +152,31 @@ if keep_gdb != "true":
 shores = pd.DataFrame(shores_j)
 shores["shores all j"] = shores.sum(axis=1, skipna=True)
 shores.to_csv("output\\all_VP_shore length.csv")  #  save to csv
+
+# Total shore length of each category j
 shoresTotal = shores.sum()
 
-# Mean ecological status with and without 5-year moving average (MA) for each water body
-for dict, suffix in zip([stats_j, stats_MA_j], ["LessThanGood", "LessThanGood_MA"]):
-    # Set up DataFrame of statistics for each category j ∈ {coastal, lakes, streams}
+# Dictionary of stats for observed, imputed, and imputed with moving average respectively
+stats_j = {
+    "obs_LessThanGood": stats_obs_j,
+    "imp_LessThanGood": stats_imp_j,
+    "imp_LessThanGood_MA": stats_imp_MA_j,
+}
+
+for key, dict in stats_j.items():
+    # Set up df of share < good status for each category j ∈ {coastal, lakes, streams}
     stats = pd.DataFrame(dict)
 
-    # Plot water bodies by category (mean ecological status weighted by length)
+    # Plot share of category j with less than good ecological status by year
     for format in (".pdf", ".png"):
         f1 = (
-            stats.drop(1989)
+            stats[list(range(year_first + 1, year_last + 1))]
             .plot(ylabel="Share of category with less than good ecological status")
             .get_figure()
         )
-        f1.savefig("output\\all_eco_imp_" + suffix + format, bbox_inches="tight")
+        f1.savefig("output\\all_eco_" + key + format, bbox_inches="tight")
 
-    # Calculate mean ecological status across all categories j weighted by shore length
+    # Calculate share < eco good status across all categories j weighted by shore length
     stats["all j"] = (
         stats["coastal"] * shoresTotal["coastal"]
         + stats["lakes"] * shoresTotal["lakes"]
@@ -176,7 +184,7 @@ for dict, suffix in zip([stats_j, stats_MA_j], ["LessThanGood", "LessThanGood_MA
     ) / shoresTotal["shores all j"]
 
     # Save statistics to csv
-    stats.to_csv("output\\all_eco_imp_" + suffix + ".csv")
+    stats.to_csv("output\\all_eco_" + key + ".csv")
 
 
 ########################################################################################

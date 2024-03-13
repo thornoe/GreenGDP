@@ -135,8 +135,9 @@ c = script_module.Water_Quality(
 # Dictionaries to store DataFrame, shore length, and stats for each category j
 frames_j = {}
 shores_j = {}
-stats_j = {}
-stats_MA_j = {}  #  based on a 5-year moving average for each water body to reduce noise
+stats_obs_j = {}
+stats_imp_j = {}
+stats_imp_MA_j = {}  #  using 5-year moving average for each water body to reduce noise
 
 # Get the feature class from the WFS service
 c.get_fc_from_WFS(j)
@@ -148,14 +149,14 @@ df_ind_obs.columns = df_ind_obs.columns.astype(int)
 df_VP = pd.read_csv("output\\" + j + "_VP.csv", index_col="wb")
 
 # Report ecological status based on observed biophysical indicator
-df_eco_obs, obs_stats, index_sorted = c.ecological_status(j, df_ind_obs, df_VP)
+df_eco_obs, stats_obs_j[j], index_sorted = c.ecological_status(j, df_ind_obs, df_VP)
 
 # if j == 'streams':
 #     # Create a map book with yearly maps of observed ecological status
 #     c.map_book(j, df_eco_obs)
 
 # Impute missing values for biophysical indicator and return ecological status
-df_eco_imp, df_eco_imp_MA, stats_j[j], stats_MA_j[j] = c.impute_missing(
+df_eco_imp, df_eco_imp_MA, stats_imp_j[j], stats_imp_MA_j[j] = c.impute_missing(
     j, df_eco_obs, df_VP, index_sorted
 )
 df_eco_imp_MA = pd.read_csv("output\\" + j + "_eco_imp.csv", index_col="wb")
@@ -497,6 +498,9 @@ dfIndicator, dfVP, suffix, index = df_eco_imp, df_VP, "imp", index_sorted
 # Convert moving average of the imputed eco status to categorical scale
 dfIndicator, dfVP, suffix, index = df_eco_imp_MA, df_VP, "imp_MA", index_sorted
 
+# Index for statistics by year and each ecological status
+index_stats = c.years
+
 if suffix == "obs":
     # Convert observed biophysical indicator to ecological status
     dfEcoObs = c.indicator_to_status(j, dfIndicator, dfVP)
@@ -532,6 +536,9 @@ if suffix == "obs":
     # Merge observed ecological status each year with basis analysis for VP3
     dfEco = dfEcoObs.merge(basis, on="wb")
 
+    # Add the basis analysis to the index for statistics by year and status
+    index_stats.append("basis")
+
 else:
     # Imputed ecological status using a continuous scale
     dfEco = dfIndicator.copy()
@@ -558,10 +565,10 @@ if suffix != "imp_MA":
     indexSorted = c.missing_values_graph(j, dfEco, suffix, index)
 
 # Merge df for observed ecological status with df for characteristics
-df = dfEco.merge(dfVP[["length"]], on="wb")
+dfEcoLength = dfEco.merge(dfVP[["length"]], on="wb")
 
 # Calculate total length of all water bodies in current water body plan (VP2)
-totalLength = df["length"].sum()
+totalLength = dfEcoLength["length"].sum()
 
 # Create an empty df for statistics
 stats = pd.DataFrame(
@@ -570,8 +577,8 @@ stats = pd.DataFrame(
 )
 
 # Calculate the above statistics for each year
-for t in c.years:
-    y = df[[t, "length"]].reset_index(drop=True)
+for t in index_stats:
+    y = dfEcoLength[[t, "length"]].reset_index(drop=True)
     y["high"] = np.select([y[t] == 4], [y["length"]])
     y["good"] = np.select([y[t] == 3], [y["length"]])
     y["moderate"] = np.select([y[t] == 2], [y["length"]])
@@ -601,15 +608,15 @@ stats.to_csv("output\\" + j + "_eco_" + suffix + "_stats.csv")
 
 # Brief analysis of missing observations (not relevant for imputed data)
 if suffix == "obs":
-    # Create df limited to water bodies that are observed at least once
+    # Create df limited to water bodies that are observed at least one year
     observed = dfVP[["length"]].merge(
-        dfEco.dropna(how="all"),
+        dfEco.drop(columns="basis").dropna(how="all"),
         how="inner",
         on="wb",
     )
 
-    # Report length and share of water bodies observed at least once.
-    msg = "{0} km is the total shore length of {1} included in VP3, of which {2}% of {1} representing {3} km ({4}% of total shore length of {1}) have been assessed at least once. On average, {5}% of {1} representing {6} km ({7}% of total shore length of {1}) are assessed each year.\n".format(
+    # Report length and share of water bodies observed at least one year
+    msg = "{0} km is the total shore length of {1} included in VP3, of which {2}% of {1} representing {3} km ({4}% of total shore length of {1}) have been assessed at least one year. On average, {5}% of {1} representing {6} km ({7}% of total shore length of {1}) are assessed each year.\n".format(
         round(totalLength),
         j,
         round(100 * len(observed) / len(df)),
@@ -635,7 +642,7 @@ if suffix == "obs":
     # Save statistics as Markdown for online presentation
     stats.astype(int).to_html("output\\" + j + "_eco_obs_stats.md")
 
-#     return dfEco, stats, indexSorted
+#     return dfEco, stats["not good"], indexSorted
 
 # return stats["not good"]
 
@@ -911,24 +918,31 @@ shores_j[j] = shores_v
 # shores["shores all j"] = shores.sum(axis=1, skipna=True)
 # shores.to_csv("output\\all_VP_shore length.csv")  #  skip if reading it instead
 shores = pd.read_csv("output\\all_VP_shore length.csv", index_col=0)
+
+# Total shore length of each category j
 shoresTotal = shores.sum()
 
-# Mean ecological status with and without 5-year moving average (MA) for each water body
-for dict, suffix in zip([stats_j, stats_MA_j], ["LessThanGood", "LessThanGood_MA"]):
-    # Set up DataFrame of statistics for each category j ∈ {coastal, lakes, streams}
-    # stats = pd.DataFrame(dict)  #  skip if reading it instead
-    stats = pd.read_csv("output\\all_eco_imp_" + suffix + ".csv", index_col=0)
+# Dictionary of stats for observed, imputed, and imputed with moving average respectively
+stats_j = {
+    "obs_LessThanGood": stats_obs_j,
+    "imp_LessThanGood": stats_imp_j,
+    "imp_LessThanGood_MA": stats_imp_MA_j,
+}
 
-    # Plot water bodies by category (mean ecological status weighted by length)
+for key, dict in stats_j.items():
+    # Set up df of share < good status for each category j ∈ {coastal, lakes, streams}
+    stats = pd.DataFrame(dict)
+
+    # Plot share of category j with less than good ecological status by year
     for format in (".pdf", ".png"):
         f1 = (
-            stats.drop(1989)
+            stats[list(range(year_first + 1, year_last + 1))]
             .plot(ylabel="Share of category with less than good ecological status")
             .get_figure()
         )
-        f1.savefig("output\\all_eco_imp_" + suffix + format, bbox_inches="tight")
+        f1.savefig("output\\all_eco_" + key + format, bbox_inches="tight")
 
-    # Calculate mean ecological status across all categories j weighted by shore length
+    # Calculate share < eco good status across all categories j weighted by shore length
     stats["all j"] = (
         stats["coastal"] * shoresTotal["coastal"]
         + stats["lakes"] * shoresTotal["lakes"]
@@ -936,7 +950,7 @@ for dict, suffix in zip([stats_j, stats_MA_j], ["LessThanGood", "LessThanGood_MA
     ) / shoresTotal["shores all j"]
 
     # Save statistics to csv
-    stats.to_csv("output\\all_eco_imp_" + suffix + ".csv")
+    stats.to_csv("output\\all_eco_" + key + ".csv")
 
 
 ########################################################################################

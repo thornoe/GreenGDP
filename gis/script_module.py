@@ -814,6 +814,9 @@ class Water_Quality:
 
         Print the shore length and share of water bodies observed at least once."""
         try:
+            # Index for statistics by year and each ecological status
+            index_stats = self.years
+
             if suffix == "obs":
                 # Convert observed biophysical indicator to ecological status
                 dfEcoObs = self.indicator_to_status(j, dfIndicator, dfVP)
@@ -848,6 +851,9 @@ class Water_Quality:
 
                 # Merge observed ecological status each year with basis analysis for VP3
                 dfEco = dfEcoObs.merge(basis, on="wb")
+
+                # Add the basis analysis to the index for statistics by year and status
+                index_stats.append("basis")
 
             else:
                 # Imputed ecological status using a continuous scale
@@ -926,15 +932,15 @@ class Water_Quality:
 
             # Brief analysis of missing observations (not relevant for imputed data)
             if suffix == "obs":
-                # Create df limited to water bodies that are observed at least once
+                # Create df limited to water bodies that are observed at least one year
                 observed = dfVP[["length"]].merge(
-                    dfEco.dropna(how="all"),
+                    dfEco.drop(columns="basis").dropna(how="all"),
                     how="inner",
                     on="wb",
                 )
 
-                # Report length and share of water bodies observed at least once.
-                msg = "{0} km is the total shore length of {1} included in VP3, of which {2}% of {1} representing {3} km ({4}% of total shore length of {1}) have been assessed at least once. On average, {5}% of {1} representing {6} km ({7}% of total shore length of {1}) are assessed each year.\n".format(
+                # Report length and share of water bodies observed at least one year
+                msg = "{0} km is the total shore length of {1} included in VP3, of which {2}% of {1} representing {3} km ({4}% of total shore length of {1}) have been assessed at least one year. On average, {5}% of {1} representing {6} km ({7}% of total shore length of {1}) are assessed each year.\n".format(
                     round(totalLength),
                     j,
                     round(100 * len(observed) / len(df)),
@@ -947,7 +953,7 @@ class Water_Quality:
                 # print(msg)  # print statistics in Python
                 arcpy.AddMessage(msg)  # return statistics in ArcGIS
 
-                return dfEco, stats, indexSorted
+                return dfEco, stats["not good"], indexSorted
 
             return dfEco, stats["not good"]
 
