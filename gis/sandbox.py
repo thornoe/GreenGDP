@@ -572,7 +572,7 @@ totalLength = dfEcoLength["length"].sum()
 
 # Create an empty df for statistics
 stats = pd.DataFrame(
-    index=c.years,
+    index=indexStats,
     columns=["high", "good", "moderate", "poor", "bad", "not good", "known"],
 )
 
@@ -718,15 +718,17 @@ for t in dfIndicator.columns:
 # Drop columns with thresholds
 df = df.drop(columns=cols)
 
+
 # def missing_values_graph(self, j, frame, suffix="obs", index=None):
 """Heatmap visualizing observations of ecological status as either missing or using the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality respectively.
 Saves a figure of the heatmap."""
-frame, suffix, index = dfEcoImp, "imp", index_sorted
-if index is None:
+frame, suffix, index = dfEco, "obs", None
+frame, suffix, index = dfEco, "imp", index_sorted
+if suffix == "obs":
     # Sort water bodies by number of missing values across years of interest
     df = frame.copy()
     df["nan"] = df.shape[1] - df.count(axis=1)
-    df = df.sort_values(["nan"], ascending=False)[c.years]
+    df = df.sort_values(["basis", "nan"], ascending=False)[c.years]
     # Save index to reuse the order after imputing the missing values
     index = df.index
     # Specify heatmap to show missing values as gray
@@ -735,7 +737,7 @@ if index is None:
     description = "Missing value (gray), Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
 else:
     # Sort water bodies by number of missing values prior to imputation
-    df = frame.copy().reindex(index)[self.years]
+    df = frame.copy().reindex(index)[c.years]
 
     # Specify heatmap without missing values
     colors = ["red", "orange", "yellow", "green", "blue"]

@@ -888,7 +888,7 @@ class Water_Quality:
 
             # Create an empty df for statistics
             stats = pd.DataFrame(
-                index=self.years,
+                index=indexStats,
                 columns=[
                     "high",
                     "good",
@@ -1065,11 +1065,11 @@ class Water_Quality:
         """Heatmap visualizing observations of ecological status as either missing or using the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality respectively.
         Saves a figure of the heatmap."""
         try:
-            if index is None:
-                # Sort water bodies by number of missing values across years of interest
+            if suffix == "obs":
+                # Sort by eco status in basis analysis then number of missing values
                 df = frame.copy()
                 df["nan"] = df.shape[1] - df.count(axis=1)
-                df = df.sort_values(["nan"], ascending=False)[self.years]
+                df = df.sort_values(["basis", "nan"], ascending=False)[self.years]
 
                 # Save index to reuse the order after imputing the missing values
                 index = df.index
