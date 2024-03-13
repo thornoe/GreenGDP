@@ -499,7 +499,7 @@ dfIndicator, dfVP, suffix, index = df_eco_imp, df_VP, "imp", index_sorted
 dfIndicator, dfVP, suffix, index = df_eco_imp_MA, df_VP, "imp_MA", index_sorted
 
 # Index for statistics by year and each ecological status
-index_stats = c.years
+indexStats = c.years
 
 if suffix == "obs":
     # Convert observed biophysical indicator to ecological status
@@ -537,7 +537,7 @@ if suffix == "obs":
     dfEco = dfEcoObs.merge(basis, on="wb")
 
     # Add the basis analysis to the index for statistics by year and status
-    index_stats.append("basis")
+    indexStats.append("basis")
 
 else:
     # Imputed ecological status using a continuous scale
@@ -577,7 +577,7 @@ stats = pd.DataFrame(
 )
 
 # Calculate the above statistics for each year
-for t in index_stats:
+for t in indexStats:
     y = dfEcoLength[[t, "length"]].reset_index(drop=True)
     y["high"] = np.select([y[t] == 4], [y["length"]])
     y["good"] = np.select([y[t] == 3], [y["length"]])
@@ -619,10 +619,10 @@ if suffix == "obs":
     msg = "{0} km is the total shore length of {1} included in VP3, of which {2}% of {1} representing {3} km ({4}% of total shore length of {1}) have been assessed at least one year. On average, {5}% of {1} representing {6} km ({7}% of total shore length of {1}) are assessed each year.\n".format(
         round(totalLength),
         j,
-        round(100 * len(observed) / len(df)),
+        round(100 * len(observed) / len(dfEco)),
         round(observed["length"].sum()),
         round(100 * observed["length"].sum() / totalLength),
-        round(100 * np.mean(dfEco[c.years].count() / len(df))),
+        round(100 * np.mean(dfEco[c.years].count() / len(dfEco))),
         round(stats["known"].mean() / 100 * totalLength),
         round(stats["known"].mean()),
     )

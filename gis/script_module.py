@@ -815,7 +815,7 @@ class Water_Quality:
         Print the shore length and share of water bodies observed at least once."""
         try:
             # Index for statistics by year and each ecological status
-            index_stats = self.years
+            indexStats = self.years
 
             if suffix == "obs":
                 # Convert observed biophysical indicator to ecological status
@@ -853,7 +853,7 @@ class Water_Quality:
                 dfEco = dfEcoObs.merge(basis, on="wb")
 
                 # Add the basis analysis to the index for statistics by year and status
-                index_stats.append("basis")
+                indexStats.append("basis")
 
             else:
                 # Imputed ecological status using a continuous scale
@@ -881,10 +881,10 @@ class Water_Quality:
                 indexSorted = self.missing_values_graph(j, dfEco, suffix, index)
 
             # Merge df for observed ecological status with df for characteristics
-            df = dfEco.merge(dfVP[["length"]], on="wb")
+            dfEcoLength = dfEco.merge(dfVP[["length"]], on="wb")
 
             # Calculate total length of all water bodies in current water body plan (VP2)
-            totalLength = df["length"].sum()
+            totalLength = dfEcoLength["length"].sum()
 
             # Create an empty df for statistics
             stats = pd.DataFrame(
@@ -901,8 +901,8 @@ class Water_Quality:
             )
 
             # Calculate the above statistics for each year
-            for t in self.years:
-                y = df[[t, "length"]].reset_index(drop=True)
+            for t in indexStats:
+                y = dfEcoLength[[t, "length"]].reset_index(drop=True)
                 y["high"] = np.select([y[t] == 4], [y["length"]])
                 y["good"] = np.select([y[t] == 3], [y["length"]])
                 y["moderate"] = np.select([y[t] == 2], [y["length"]])
@@ -943,10 +943,10 @@ class Water_Quality:
                 msg = "{0} km is the total shore length of {1} included in VP3, of which {2}% of {1} representing {3} km ({4}% of total shore length of {1}) have been assessed at least one year. On average, {5}% of {1} representing {6} km ({7}% of total shore length of {1}) are assessed each year.\n".format(
                     round(totalLength),
                     j,
-                    round(100 * len(observed) / len(df)),
+                    round(100 * len(observed) / len(dfEco)),
                     round(observed["length"].sum()),
                     round(100 * observed["length"].sum() / totalLength),
-                    round(100 * np.mean(dfEco[self.years].count() / len(df))),
+                    round(100 * np.mean(dfEco[self.years].count() / len(dfEco))),
                     round(stats["known"].mean() / 100 * totalLength),
                     round(stats["known"].mean()),
                 )
