@@ -858,11 +858,11 @@ class Water_Quality:
                 for t in dfEco.columns:
                     # Precautionary conversion of imputed status to categorical scale
                     conditions = [
-                        dfEco[t] < 0.5,  # Bad
-                        (dfEco[t] >= 0.5) & (dfEco[t] < 1.5),  #  Poor
-                        (dfEco[t] >= 1.5) & (dfEco[t] < 2.5),  #  Moderate
-                        (dfEco[t] >= 2.5) & (dfEco[t] < 3.5),  #  Good
-                        dfEco[t] >= 3.5,  #  High
+                        dfEco[t] < 1,  # Bad
+                        (dfEco[t] >= 1) & (dfEco[t] < 2),  #  Poor
+                        (dfEco[t] >= 2) & (dfEco[t] < 3),  #  Moderate
+                        (dfEco[t] >= 3) & (dfEco[t] < 4),  #  Good
+                        dfEco[t] >= 4,  #  High
                     ]
                     # Ecological status as a categorical index from Bad to High quality
                     dfEco[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
