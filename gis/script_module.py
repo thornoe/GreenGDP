@@ -809,10 +809,10 @@ class Water_Quality:
             # Calculate a 5-year moving average (MA) for each water body to reduce noise
             dfImpMA = dfImp.T.rolling(window=5, min_periods=3, center=True).mean().T
 
-            # Convert the imputed ecological status to categorical scale {0, 1, 2, 3, 4}
+            # Stats if converting imputed status to categorical scale ∈ {0, 1, 2, 3, 4}
             impStats = self.ecological_status(j, dfImp, dfVP, "imp", index)
 
-            # Convert moving average of the imputed eco status to the categorical scale
+            # Stats if converting moving average to categorical scale ∈ {0, 1, 2, 3, 4}
             impStatsMA = self.ecological_status(j, dfImpMA, dfVP, "imp_MA", index)
 
             return dfImp[self.years], dfImpMA[self.years], impStats, impStatsMA
@@ -1055,7 +1055,7 @@ class Water_Quality:
         Saves a figure of the heatmap."""
         try:
             # Subset DataFrame to for span of natural capital account & basis analysis
-            df = frame[self.years + ["basis"]]
+            df = frame[self.years + ["basis"]].copy()
 
             if suffix == "obs":
                 # Sort by eco status in basis analysis then number of observed values
@@ -1065,15 +1065,9 @@ class Water_Quality:
                 # Save index to reuse the order after imputing the missing values
                 index = df.index
 
-                # Description for heatmap of observed eco status (instead of legend)
-                description = "Missing value (gray), Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
-
             else:
                 # Sort by status in basis analysis & number of observed values as above
                 df = df.reindex(index)
-
-                # Description for heatmap of imputed eco status (instead of legend)
-                description = "Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
 
             # Check df for the presence of any missing values
             if df.isna().sum().sum() > 0:
@@ -1084,10 +1078,14 @@ class Water_Quality:
                 colors = ["grey", "red", "orange", "yellow", "green", "blue"]
                 uniqueValues = [-1, 0, 1, 2, 3, 4]
 
+                # Description for heatmap of observed eco status (instead of fig legend)
+                description = "Missing value (gray), Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
+
             else:
-                # Specify heatmap without missing values
+                # Specify heatmap without any missing values (only for imputed coastal)
                 colors = ["red", "orange", "yellow", "green", "blue"]
                 uniqueValues = [0, 1, 2, 3, 4]
+                description = "Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
 
             # Plot heatmap
             colorMap = sns.xkcd_palette(colors)

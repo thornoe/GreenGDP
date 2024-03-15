@@ -689,7 +689,7 @@ frame, suffix, index = dfEco, "obs", None
 frame, suffix, index = dfEco, "imp", index_sorted
 
 # Subset DataFrame to for span of natural capital account & basis analysis
-df = frame[c.years + ["basis"]]
+df = frame[c.years + ["basis"]].copy()
 
 if suffix == "obs":
     # Sort by eco status in basis analysis then number of observed values
@@ -697,14 +697,9 @@ if suffix == "obs":
     df = df.sort_values(["basis", "n"], ascending=False).drop(columns="n")
     # Save index to reuse the order after imputing the missing values
     index = df.index
-    # Description for heatmap of observed eco status (instead of legend)
-    description = "Missing value (gray), Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
 else:
     # Sort by status in basis analysis & number of observed values as above
     df = df.reindex(index)
-
-    # Description for heatmap of imputed eco status (instead of legend)
-    description = "Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
 
 # Check df for the presence of any missing values
 if df.isna().sum().sum() > 0:
@@ -714,11 +709,15 @@ if df.isna().sum().sum() > 0:
     # Specify heatmap to show missing values as gray (xkcd spells it "grey")
     colors = ["grey", "red", "orange", "yellow", "green", "blue"]
     uniqueValues = [-1, 0, 1, 2, 3, 4]
+    
+    # Description for heatmap of observed eco status (instead of fig legend)
+    description = "Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue), missing value (gray)"
 
 else:
-    # Specify heatmap without missing values
+    # Specify heatmap without any missing values (only for imputed coastal)
     colors = ["red", "orange", "yellow", "green", "blue"]
     uniqueValues = [0, 1, 2, 3, 4]
+    description = "Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
 
 # Plot heatmap
 colorMap = sns.xkcd_palette(colors)

@@ -116,7 +116,10 @@ for j in ("coastal", "lakes", "streams"):
     c.get_fc_from_WFS(j)
 
     # Create a DataFrame with observed biophysical indicator by year
-    df_ind_obs, df_VP = c.observed_indicator(j)
+    # df_ind_obs, df_VP = c.observed_indicator(j)
+    df_ind_obs = pd.read_csv("output\\" + j + "_ind_obs.csv", index_col="wb")
+    df_ind_obs.columns = df_ind_obs.columns.astype(int)
+    df_VP = pd.read_csv("output\\" + j + "_VP.csv", index_col="wb")
 
     # Report ecological status based on observed biophysical indicator
     df_eco_obs, stats_obs_j[j], index_sorted = c.ecological_status(j, df_ind_obs, df_VP)
@@ -170,7 +173,7 @@ for key, dict in stats_method.items():
     # Plot share of category j with less than good ecological status by year
     for format in (".pdf", ".png"):
         f1 = (
-            stats[list(range(year_first + 1, year_last + 1))]
+            stats.loc[list(range(year_first + 1, year_last + 1)), :]
             .plot(ylabel="Share of category with less than good ecological status")
             .get_figure()
         )
