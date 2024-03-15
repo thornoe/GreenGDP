@@ -1226,11 +1226,13 @@ class Water_Quality:
             # For each year t, create a df of variables needed for benefit transfer
             frames_t = {}  #  create empty dictionary to store a df for each year t
 
-            # Truncate DataFrame for ecological status of water bodies from above
+            # DataFrame for ecological status of water bodies from above at Good
             Q = dfEco.copy()
-            Q[self.years] = Q[self.years].mask(Q[self.years] > 3, 3)  #  above at Good
 
-            # DataFrame with dummy for less than good ecological status
+            # Truncate from above at Good ecological status
+            Q[self.years] = Q[self.years].mask(Q[self.years] > 3, 3)
+
+            # DataFrame with dummy for less than Good ecological status
             SL = Q.copy()
             SL[self.years] = (
                 SL[self.years].mask(SL[self.years] < 3, 1).mask(SL[self.years] >= 3, 0)

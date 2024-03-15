@@ -233,10 +233,6 @@ f2 = (
 )
 f2.savefig("output\\all_cost.pdf", bbox_inches="tight")  #  save figure as PDF
 
-df_BT.loc[("coastal", 2018)]
-df_BT.loc[("coastal", 2019)]
-(CWP_v.loc[("coastal", 2019)] - CWP_v.loc[("coastal", 2018)])
-
 # Investment Value of water quality improvement in real terms (million DKK, 2018 prices)
 IV_v = c.valuation(df_BT, investment=True)
 IV_j = IV_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
