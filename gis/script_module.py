@@ -856,7 +856,7 @@ class Water_Quality:
             if suffix != "obs":
                 # Prepare for statistics and missing values graph
                 for t in dfEco.columns:
-                    # Precautionary conversion of imputed status to categorical scale
+                    # Precautionary conversion of eco imputed status to categorical scale
                     conditions = [
                         dfEco[t] < 1,  # Bad
                         (dfEco[t] >= 1) & (dfEco[t] < 2),  #  Poor
