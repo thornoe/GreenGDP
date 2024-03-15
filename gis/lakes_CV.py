@@ -74,11 +74,13 @@ def stepwise_selection(subset, dummies, data, dfDummies, years):
     # DataFrame for storing accuracy scores by year and calculating weighted average
     scores = pd.DataFrame(subset.count(), index=years, columns=["n"]).astype(int)
     scores.loc["Total", "n"] = np.nan  #  row to calculate weighted average of scores
+    scores_all = scores.copy()  #  scores for all predictors including inferior ones
 
     # DataFrame for storing ecological status by year and calculating weighted average
     status = pd.DataFrame(subset.count(), index=subset.columns, columns=["n"])
     status["Obs"] = (subset < 2.5).sum() / status["n"]  #  ecological status < good
     status.loc["Total", "Obs"] = (status["Obs"] * status["n"]).sum() / status["n"].sum()
+    status_all = status.copy()  #  eco status for all predictors including inferior ones
 
     while current_score == best_new_score:
         names = []  #  empty list for storing model names
