@@ -46,7 +46,7 @@ colors = {
 color_cycler = cycler(color=list(colors.values()))  #  color cycler with 7 colors
 linestyle_cycler = cycler(linestyle=["-", "--", "-.", ":", "-", "--", ":"])  #  7 styles
 plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))  #  set color and linestyle
-plt.rc("figure", figsize=[12, 7.4])  #  golden ratio for appendix with wide margins
+plt.rc("figure", figsize=[10, 6.2])  #  golden ratio
 
 
 # Function for accuracy score of predicted fauna class

@@ -1054,57 +1054,55 @@ class Water_Quality:
         """Heatmap visualizing observations of ecological status as either missing or using the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality respectively.
         Saves a figure of the heatmap."""
         try:
-            # Subset dataframe to for span of natural capital account & basis analysis
+            # Subset DataFrame to for span of natural capital account & basis analysis
             df = frame[self.years + ["basis"]]
 
             if suffix == "obs":
                 # Sort by eco status in basis analysis then number of observed values
-                df = frame.copy()
                 df["n"] = df.count(axis=1)
                 df = df.sort_values(["basis", "n"], ascending=False).drop(columns="n")
 
                 # Save index to reuse the order after imputing the missing values
                 index = df.index
 
-                # Specify heatmap to show missing values as gray (xkcd spells it "grey")
-                colors = ["grey", "red", "orange", "yellow", "green", "blue"]
-                uniqueValues = [-1, 0, 1, 2, 3, 4]
+                # Description for heatmap of observed eco status (instead of legend)
                 description = "Missing value (gray), Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
 
             else:
                 # Sort by status in basis analysis & number of observed values as above
                 df = df.reindex(index)
 
+                # Description for heatmap of imputed eco status (instead of legend)
+                description = "Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
+
+            # Check df for the presence of any missing values
+            if df.isna().sum().sum() > 0:
+                # Replace missing values with -1
+                df.fillna(-1, inplace=True)
+
+                # Specify heatmap to show missing values as gray (xkcd spells it "grey")
+                colors = ["grey", "red", "orange", "yellow", "green", "blue"]
+                uniqueValues = [-1, 0, 1, 2, 3, 4]
+
+            else:
                 # Specify heatmap without missing values
                 colors = ["red", "orange", "yellow", "green", "blue"]
                 uniqueValues = [0, 1, 2, 3, 4]
-                description = "Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
 
             # Plot heatmap
-            df.fillna(-1, inplace=True)
-            cm = sns.xkcd_palette(colors)
-            plt.figure(figsize=(12, 12))
+            colorMap = sns.xkcd_palette(colors)
+            plt.figure(figsize=(10, 10))
             ax = sns.heatmap(
                 df,
-                cmap=cm,
+                cmap=colorMap,
                 cbar=False,
                 cbar_kws={"ticks": uniqueValues},
             )
             ax.set(yticklabels=[])
-            plt.ylabel(
-                str(len(df)) + " " + j + " ordered by number of missing values",
-                fontsize=14,
-            )
-            plt.xlabel("")
-            plt.title(
-                ("Ecological status of " + j + "\n" + description),
-                fontsize=14,
-            )
+            plt.ylabel(str(len(df)) + " " + j + " ordered by number of missing values")
+            plt.title(description)
             plt.tight_layout()
-            plt.savefig(
-                "output\\" + j + "_eco_" + suffix + ".pdf",
-                bbox_inches="tight",
-            )
+            plt.savefig("output\\" + j + "_eco_" + suffix + ".pdf", bbox_inches="tight")
 
             return index
 
