@@ -143,7 +143,7 @@ stats_imp_MA_j = {}  #  using 5-year moving average for each water body to reduc
 c.get_fc_from_WFS(j)
 
 # Create a DataFrame with observed biophysical indicator by year
-# df_ind_obs, df_VP = c.observed_indicator(j)
+df_ind_obs, df_VP = c.observed_indicator(j)
 df_ind_obs = pd.read_csv("output\\" + j + "_ind_obs.csv", index_col="wb")
 df_ind_obs.columns = df_ind_obs.columns.astype(int)
 df_VP = pd.read_csv("output\\" + j + "_VP.csv", index_col="wb")
@@ -165,6 +165,8 @@ df_eco_imp_MA.columns = df_eco_imp_MA.columns.astype(int)
 # Set up df with variables by coastal catchment area for the Benefit Transfer equation
 frames_j[j], shores_j[j] = c.values_by_catchment_area(j, df_eco_imp_MA, df_VP)
 
+c.years + ["basis"] = c.years + ["basis"]
+
 
 ########################################################################################
 #   3.b Sandbox: Run the functions line-by-line
@@ -180,6 +182,88 @@ arcpy.Exists(fcStations)
 for field in arcpy.ListFields(j):
     field.name, field.type, field.length
 arcpy.Delete_management(j)
+
+
+
+# def observed_indicator(self, j, radius=15):
+"""Set up a longitudinal DataFrame for all water bodies of category j by year t.
+Assign monitoring stations to water bodies in water body plan via linkage table.
+For monitoring stations not included in the linkage table: Assign a station to a waterbody if the station's coordinates are located within said waterbody. For streams, if the station is within a radius of 15 meters of a stream where the name of the stream matches the location name attached to the monitoring station).
+Finally, construct the longitudinal DataFrame of observed biophysical indicator by year for all water bodies in the current water body plan. Separately, save the water body ID, typology, district ID, and shore length of each water body in VP3 using the feature classes collected via the get_fc_from_WFS() function."""
+radius = 0
+if j == "streams":
+    # Create longitudinal df for stations in streams by monitoring version
+    kwargs = dict(
+        f=c.data[j][1],
+        d="Dato",
+        x="Xutm_Euref89_Zone32",
+        y="Yutm_Euref89_Zone32",
+        valueCol="Indeks",
+        parameterCol="Indekstype",
+    )
+    DVFI_F = c.longitudinal(j, parameter="Faunaklasse, felt", **kwargs)
+    DVFI_M = c.longitudinal(j, parameter="DVFI, MIB", **kwargs)
+    DVFI = c.longitudinal(j, parameter="DVFI", **kwargs)
+    # Observations after 2020 (publiced after ODA database update Jan 2024)
+    DVFI2 = c.longitudinal(
+        j,
+        f=c.data[j][0],
+        d="Dato",
+        x="Målested X-UTM",
+        y="Målested Y-UTM)",
+        valueCol="Indeks",
+    )
+    # Obtain some of the missing coordinates
+    stations = pd.read_csv("linkage\\" + c.linkage[j][1]).astype(int)
+    stations.columns = ["station", "x", "y"]
+    stations.set_index("station", inplace=True)
+    DVFI2[["x", "y"]] = DVFI2[["x", "y"]].combine_first(stations)
+    # Group by station; keep last non-missing entry each year, DVFI>MIB>felt
+    long = pd.concat([DVFI_F, DVFI_M, DVFI, DVFI2]).groupby("station").last()
+else:
+    # Create longitudinal df for stations in lakes and coastal waters
+    long = c.longitudinal(
+        j,
+        f=c.data[j][0],
+        d="Startdato",
+        x="X_UTM32",
+        y="Y_UTM32",
+        valueCol="Resultat",
+    )
+    if j == "lakes":
+        # Obtain the few missing coordinates
+        stations = pd.read_csv("linkage\\" + c.linkage[j][1]).astype(int)
+        stations.columns = ["station", "x", "y"]
+        stations.set_index("station", inplace=True)
+        long[["x", "y"]] = long[["x", "y"]].combine_first(stations)
+# Read the linkage table
+dfLinkage = pd.read_csv("linkage\\" + c.linkage[j][0])
+# Convert station ID to integers
+dfLinkage = dfLinkage.copy()  #  to avoid SettingWithCopyWarning
+dfLinkage.loc[:, "station"] = dfLinkage["station_id"].str.slice(7).astype(int)
+# Merge longitudinal DataFrame with linkage table for water bodies in VP3
+df = long.merge(dfLinkage[["station", "ov_id"]], how="left", on="station")
+# Stations covered by the linkage tabel for the third water body plan VP3
+link = df.dropna(subset=["ov_id"])
+# Convert water body ID (wb) to integers
+link = link.copy()  #  to avoid SettingWithCopyWarning
+if j == "lakes":
+    link.loc[:, "wb"] = link["ov_id"].str.slice(6).astype(int)
+else:
+    link.loc[:, "wb"] = link["ov_id"].str.slice(7).astype(int)
+# Stations not covered by the linkage table for VP3
+noLink = df[df["ov_id"].isna()].drop(columns=["ov_id"])
+# Create a spatial reference object with same geographical coordinate system
+spatialRef = arcpy.SpatialReference("ETRS 1989 UTM Zone 32N")
+# Specify name of feature class for stations (points)
+fcStations = j + "_stations"
+# Create new feature class shapefile (will overwrite if it already exists)
+arcpy.CreateFeatureclass_management(
+    c.arcPath, fcStations, "POINT", spatial_reference=spatialRef
+)
+# (...)
+
+
 
 # def longitudinal(self, j, f, d, x, y, valueCol, parameterCol=0, parameter=0):
 """Set up a longitudinal DataFrame for all stations in category j by year t.
@@ -269,102 +353,15 @@ for t in df["year"].unique():
     # Merge into longitudinal df
     long = long.merge(dfYear, how="left", on="station")
 
-# def observed_indicator(self, j, radius=15):
-"""Set up a longitudinal DataFrame for all water bodies of category j by year t.
-Assign monitoring stations to water bodies in water body plan via linkage table.
-For monitoring stations not included in the linkage table: Assign a station to a waterbody if the station's coordinates are located within said waterbody. For streams, if the station is within a radius of 15 meters of a stream where the name of the stream matches the location name attached to the monitoring station).
-Finally, construct the longitudinal DataFrame of observed biophysical indicator by year for all water bodies in the current water body plan. Separately, save the water body ID, typology, district ID, and shore length of each water body in VP3 using the feature classes collected via the get_fc_from_WFS() function."""
-radius = 0
-if j == "streams":
-    # Create longitudinal df for stations in streams by monitoring version
-    kwargs = dict(
-        f=c.data[j][1],
-        d="Dato",
-        x="Xutm_Euref89_Zone32",
-        y="Yutm_Euref89_Zone32",
-        valueCol="Indeks",
-        parameterCol="Indekstype",
-    )
-    DVFI_F = c.longitudinal(j, parameter="Faunaklasse, felt", **kwargs)
-    DVFI_M = c.longitudinal(j, parameter="DVFI, MIB", **kwargs)
-    DVFI = c.longitudinal(j, parameter="DVFI", **kwargs)
-    # Observations after 2020 (publiced after ODA database update Jan 2024)
-    DVFI2 = c.longitudinal(
-        j,
-        f=c.data[j][0],
-        d="Dato",
-        x="Målested X-UTM",
-        y="Målested Y-UTM)",
-        valueCol="Indeks",
-    )
-    # Obtain some of the missing coordinates
-    stations = pd.read_csv("linkage\\" + c.linkage[j][1]).astype(int)
-    stations.columns = ["station", "x", "y"]
-    stations.set_index("station", inplace=True)
-    DVFI2[["x", "y"]] = DVFI2[["x", "y"]].combine_first(stations)
-    # Group by station; keep last non-missing entry each year, DVFI>MIB>felt
-    long = pd.concat([DVFI_F, DVFI_M, DVFI, DVFI2]).groupby("station").last()
-else:
-    # Create longitudinal df for stations in lakes and coastal waters
-    long = c.longitudinal(
-        j,
-        f=c.data[j][0],
-        d="Startdato",
-        x="X_UTM32",
-        y="Y_UTM32",
-        valueCol="Resultat",
-    )
-    if j == "lakes":
-        # Obtain the few missing coordinates
-        stations = pd.read_csv("linkage\\" + c.linkage[j][1]).astype(int)
-        stations.columns = ["station", "x", "y"]
-        stations.set_index("station", inplace=True)
-        long[["x", "y"]] = long[["x", "y"]].combine_first(stations)
-# Read the linkage table
-dfLinkage = pd.read_csv("linkage\\" + c.linkage[j][0])
-# Convert station ID to integers
-dfLinkage = dfLinkage.copy()  #  to avoid SettingWithCopyWarning
-dfLinkage.loc[:, "station"] = dfLinkage["station_id"].str.slice(7).astype(int)
-# Merge longitudinal DataFrame with linkage table for water bodies in VP3
-df = long.merge(dfLinkage[["station", "ov_id"]], how="left", on="station")
-# Stations covered by the linkage tabel for the third water body plan VP3
-link = df.dropna(subset=["ov_id"])
-# Convert water body ID (wb) to integers
-link = link.copy()  #  to avoid SettingWithCopyWarning
-if j == "lakes":
-    link.loc[:, "wb"] = link["ov_id"].str.slice(6).astype(int)
-else:
-    link.loc[:, "wb"] = link["ov_id"].str.slice(7).astype(int)
-# Stations not covered by the linkage table for VP3
-noLink = df[df["ov_id"].isna()].drop(columns=["ov_id"])
-# Create a spatial reference object with same geographical coordinate system
-spatialRef = arcpy.SpatialReference("ETRS 1989 UTM Zone 32N")
-# Specify name of feature class for stations (points)
-fcStations = j + "_stations"
-# Create new feature class shapefile (will overwrite if it already exists)
-arcpy.CreateFeatureclass_management(
-    c.arcPath, fcStations, "POINT", spatial_reference=spatialRef
-)
-# (...)
-# Specify shore length for each category j
-if j == "streams":
-    # Shore length is counted on both sides of the stream; convert to km
-    dfVP[["length"]] = dfVP[["Shape_Length"]] * 2 / 1000
-elif j == "lakes":
-    # Shore length is the circumference, i.e. Shape_Length; convert to km
-    dfVP[["length"]] = dfVP[["Shape_Length"]] / 1000
-else:  #  coastal waters
-    # Coastline by Zandersen et al.(2022) based on Corine Land Cover 2018
-    Geo = pd.read_excel("data\\" + c.data["shared"][2], index_col=0)
-    Geo.index.name = "wb"
-    # Merge with df for all water bodies in VP3
-    dfVP[["length"]] = Geo[["shore coastal"]]
 
 
 # def impute_missing(self, dfEcoObs, dfVP, index):
 """Impute ecological status for all water bodies from the observed indicator."""
 # DataFrames for observed biophysical indicator and typology
-dfEcoObs, dfVP, index, stats_j = df_eco_obs, df_VP, index_sorted, {}
+dfEcoObs, dfVP, index, stats_imp_j = df_eco_obs, df_VP, index_sorted, {}
+
+# Merge observed ecological status each year with basis analysis for VP3
+dfEco = dfEcoObs.merge(dfVP[["basis"]], on="wb")
 
 if j == "streams":
     # Create dummies for typology
@@ -458,32 +455,31 @@ else:  #  coastal waters
     cols = ["Sediment", "Deep"]
 
 # Merge DataFrame for observed values with DataFrame for dummies
-dfObsSelected = dfEcoObs.merge(typ[cols], on="wb")  #  with selected predictors
+dfEcoSelected = dfEco.merge(typ[cols], on="wb")  #  with selected predictors
 
 # Iterative imputer using BayesianRidge() estimator with increased tolerance
 imputer = IterativeImputer(tol=1e-1, max_iter=100, random_state=0)
 
 # Fit imputer, transform data iteratively, and limit to years of interest
 dfImp = pd.DataFrame(
-    imputer.fit_transform(np.array(dfObsSelected)),
-    index=dfObsSelected.index,
-    columns=dfObsSelected.columns,
+    imputer.fit_transform(np.array(dfEcoSelected)),
+    index=dfEcoSelected.index,
+    columns=dfEcoSelected.columns,
 )[dfEcoObs.columns]
 
 # Calculate a 5-year moving average (MA) for each water body to reduce noise
-MA = dfImp.T.rolling(window=5, min_periods=3, center=True).mean().T
-
-# Merge imputed ecological status each year with basis analysis for VP3
-dfImpMA = MA.merge(dfEcoObs["basis"], on="wb")
+dfImpMA = dfImp.T.rolling(window=5, min_periods=3, center=True).mean().T
 
 # Convert the imputed ecological status to categorical scale {0, 1, 2, 3, 4}
 impStats = c.ecological_status(j, dfImp, dfVP, "imp", index)
 
 # Convert moving average of the imputed eco status to categorical scale
-impStatsMA = c.ecological_status(j, dfImpMA[c.years], dfVP, "imp_MA", index)
+impStatsMA = c.ecological_status(j, dfImpMA, dfVP, "imp_MA", index)
 
+df_eco_imp, df_eco_imp_MA = dfImp[c.years], dfImpMA[c.years]
+stats_imp_j[j], stats_imp_MA_j[j] =  impStats, impStatsMA
 # return dfImp[c.years], dfImpMA[c.years], impStats, impStatsMA
-df_eco_imp_MA = dfImpMA[c.years]
+
 
 
 # def ecological_status(self, j, dfIndicator, dfTyp, suffix="obs", index=None):
@@ -494,54 +490,20 @@ Print the shore length and share of water bodies observed at least once."""
 # Report ecological status based on observed biophysical indicator
 dfIndicator, dfVP, suffix, index = df_ind_obs, df_VP, "obs", None
 # Convert the imputed ecological status to categorical scale {0, 1, 2, 3, 4}
-dfIndicator, dfVP, suffix, index = df_eco_imp, df_VP, "imp", index_sorted
+dfIndicator, dfVP, suffix, index = dfImp, df_VP, "imp", index_sorted
 # Convert moving average of the imputed eco status to categorical scale
-dfIndicator, dfVP, suffix, index = df_eco_imp_MA, df_VP, "imp_MA", index_sorted
-
-# Index for statistics by year and each ecological status
-indexStats = c.years
+dfIndicator, dfVP, suffix, index = dfImpMA, df_VP, "imp_MA", index_sorted
 
 if suffix == "obs":
     # Convert observed biophysical indicator to ecological status
     dfEcoObs = c.indicator_to_status(j, dfIndicator, dfVP)
 
-    # Specify the biophysical indicator for the current category
-    if j == "streams":
-        indicator = "til_oko_bb"  #  bottom fauna measured as DVFI index
-    else:  #  lakes and coastal waters
-        indicator = "til_oko_fy"  #  phytoplankton measured as chlorophyll
-
-    # Include ecological status as assessed in basis analysis for VP3
-    basis = dfVP[[indicator]].copy()
-
-    # Define a dictionary to map the Danish strings to an ordinal scale
-    status_dict = {
-        "Dårlig økologisk tilstand": 0,
-        "Ringe økologisk tilstand": 1,
-        "Moderat økologisk tilstand": 2,
-        "God økologisk tilstand": 3,
-        "Høj økologisk tilstand": 4,
-        "Dårligt økologisk potentiale": 0,
-        "Ringe økologisk potentiale": 1,
-        "Moderat økologisk potentiale": 2,
-        "Godt økologisk potentiale": 3,
-        "Maksimalt økologisk potentiale": 4,
-        "Ukendt": np.nan,
-    }
-
-    # Replace Danish strings in the df with the corresponding ordinal values
-    basis.replace(status_dict, inplace=True)
-    basis.columns = ["basis"]
-
-    # Merge observed ecological status each year with basis analysis for VP3
-    dfEco = dfEcoObs.merge(basis, on="wb")
-
-    # Add the basis analysis to the index for statistics by year and status
-    indexStats.append("basis")
-
 else:
     # Imputed ecological status using a continuous scale
-    dfEco = dfIndicator.copy()
+    dfEcoObs = dfIndicator.copy()
+
+# Merge observed ecological status each year with basis analysis for VP3
+dfEco = dfEcoObs.merge(dfVP[["basis"]], on="wb")
 
 # Save CSV of data on mean ecological status by water body and year
 dfEco.to_csv("output\\" + j + "_eco_" + suffix + ".csv")
@@ -572,12 +534,12 @@ totalLength = dfEcoLength["length"].sum()
 
 # Create an empty df for statistics
 stats = pd.DataFrame(
-    index=indexStats,
+    index=c.years + ["basis"],
     columns=["high", "good", "moderate", "poor", "bad", "not good", "known"],
 )
 
-# Calculate the above statistics for each year
-for t in indexStats:
+# Calculate the above statistics for span of natural capital account & basis
+for t in c.years + ["basis"]:
     y = dfEcoLength[[t, "length"]].reset_index(drop=True)
     y["high"] = np.select([y[t] == 4], [y["length"]])
     y["good"] = np.select([y[t] == 3], [y["length"]])
@@ -609,11 +571,7 @@ stats.to_csv("output\\" + j + "_eco_" + suffix + "_stats.csv")
 # Brief analysis of missing observations (not relevant for imputed data)
 if suffix == "obs":
     # Create df limited to water bodies that are observed at least one year
-    observed = dfVP[["length"]].merge(
-        dfEco.drop(columns="basis").dropna(how="all"),
-        how="inner",
-        on="wb",
-    )
+    observed = dfEcoObs.dropna(how="all").merge(dfVP[["length"]], how="inner", on="wb")
 
     # Report length and share of water bodies observed at least one year
     msg = "{0} km is the total shore length of {1} included in VP3, of which {2}% of {1} representing {3} km ({4}% of total shore length of {1}) have been assessed at least one year. On average, {5}% of {1} representing {6} km ({7}% of total shore length of {1}) are assessed each year.\n".format(
@@ -623,11 +581,16 @@ if suffix == "obs":
         round(observed["length"].sum()),
         round(100 * observed["length"].sum() / totalLength),
         round(100 * np.mean(dfEco[c.years].count() / len(dfEco))),
-        round(stats["known"].mean() / 100 * totalLength),
-        round(stats["known"].mean()),
+        round(stats.drop("basis")["known"].mean() / 100 * totalLength),
+        round(stats.drop("basis")["known"].mean()),
     )
     # print(msg)  # print statistics in Python
     arcpy.AddMessage(msg)  # return statistics in ArcGIS
+
+    df_eco_obs = dfEco[dfEcoObs.columns]
+    stats_obs_j[j] = stats["not good"]
+    index_sorted = indexSorted
+#     return dfEco[dfEcoObs.columns], stats["not good"], indexSorted
 
     # Elaborate column names of statistics for online presentation
     stats.columns = [
@@ -642,9 +605,8 @@ if suffix == "obs":
     # Save statistics as Markdown for online presentation
     stats.astype(int).to_html("output\\" + j + "_eco_obs_stats.md")
 
-#     return dfEco, stats["not good"], indexSorted
+# return dfEco[dfEcoObs.columns], stats["not good"]
 
-# return stats["not good"]
 
 
 # def indicator_to_status(self, j, dfIndicator, df_VP):
@@ -719,26 +681,29 @@ for t in dfIndicator.columns:
 df = df.drop(columns=cols)
 
 
+
 # def missing_values_graph(self, j, frame, suffix="obs", index=None):
 """Heatmap visualizing observations of ecological status as either missing or using the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality respectively.
 Saves a figure of the heatmap."""
 frame, suffix, index = dfEco, "obs", None
 frame, suffix, index = dfEco, "imp", index_sorted
+
+# Subset dataframe to for span of natural capital account & basis analysis
+df = frame[c.years + ["basis"]]
+
 if suffix == "obs":
-    # Sort water bodies by number of missing values across years of interest
-    df = frame.copy()
-    df["nan"] = df.shape[1] - df.count(axis=1)
-    df = df.sort_values(["basis", "nan"], ascending=False)[c.years]
+    # Sort by eco status in basis analysis then number of observed values
+    df["n"] = df.count(axis=1)
+    df = df.sort_values(["basis", "n"], ascending=False).drop(columns="n")
     # Save index to reuse the order after imputing the missing values
     index = df.index
-    # Specify heatmap to show missing values as gray
+    # Specify heatmap to show missing values as gray (xkcd spells it "grey")
     colors = ["grey", "red", "orange", "yellow", "green", "blue"]
     uniqueValues = [-1, 0, 1, 2, 3, 4]
     description = "Missing value (gray), Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
 else:
-    # Sort water bodies by number of missing values prior to imputation
-    df = frame.copy().reindex(index)[c.years]
-
+    # Sort by status in basis analysis & number of observed values as above
+    df = df.reindex(index)
     # Specify heatmap without missing values
     colors = ["red", "orange", "yellow", "green", "blue"]
     uniqueValues = [0, 1, 2, 3, 4]
@@ -770,6 +735,7 @@ plt.savefig(
     "output\\" + j + "_eco_" + suffix + ".pdf",
     bbox_inches="tight",
 )
+
 
 
 # def values_by_catchment_area(self, j, dfEcoImpMA, dfVP):
@@ -827,7 +793,7 @@ else:  #  streams and lakes to coastal catchment areas
     dfEcoImpCatch = dfEcoImp.merge(dfCatch.astype(int), on="wb")
 
 # Merge df for imputed ecological status w. shore length
-dfEco = dfEcoImpCatch.merge(dfVP[["length"]], on="wb")  #  length
+dfEco = dfEcoImpCatch.merge(dfVP[["length"]], on="wb")
 
 # List of coastal catchment areas where category j is present
 j_present = list(dfEco["v"].unique())
@@ -839,8 +805,8 @@ shores_v = dfEco[["v", "length"]].groupby("v").sum().iloc[:, 0]
 dem = pd.read_csv("data\\" + c.data["shared"][1], index_col=[0, 1]).sort_index()
 
 # Years used for interpolation of demographics
-t_old = np.arange(1990, 2018 + 1)
-t_new = np.arange(1990, 2020 + 1)
+t_old = np.arange(c.year_first + 1, 2018 + 1)
+t_new = np.arange(c.year_first + 1, c.year_last + 1)
 
 # For each coastal catchment area v, extrapolate demographics to 2019-2020
 frames_v = {}  #  dictionary to store df for each coastal catchment area v
@@ -925,13 +891,13 @@ shores = pd.read_csv("output\\all_VP_shore length.csv", index_col=0)
 shoresTotal = shores.sum()
 
 # Dictionary of stats for observed, imputed, and imputed with moving average respectively
-stats_j = {
+stats_method = {
     "obs_LessThanGood": stats_obs_j,
     "imp_LessThanGood": stats_imp_j,
     "imp_LessThanGood_MA": stats_imp_MA_j,
 }
 
-for key, dict in stats_j.items():
+for key, dict in stats_method.items():
     # Set up df of share < good status for each category j ∈ {coastal, lakes, streams}
     stats = pd.DataFrame(dict)
 
@@ -951,9 +917,12 @@ for key, dict in stats_j.items():
         + stats["streams"] * shoresTotal["streams"]
     ) / shoresTotal["shores all j"]
 
-    # Save statistics to csv
-    stats.to_csv("output\\all_eco_" + key + ".csv")
+    # Add df including "all j" columns to dictionary of stats by method
+    stats_method[key] = stats
 
+# Concatenate stats for observed, imputed, and imputed with moving average respectively
+dfStats = pd.concat(stats_method, axis=1)
+dfStats.to_excel("output\\all_eco_LessThanGood.xlsx")  #  manually delete row 3 in Excel
 
 ########################################################################################
 #   4.b Nominal cost of pollution and investment in water quality for national accounts

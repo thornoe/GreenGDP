@@ -214,31 +214,8 @@ for n in range(0, len(dfEcoObs.columns) + 1):
     n, round(100 * sum(dfEcoObs.notna().sum(axis=1) == n) / len(dfEcoObs), 2)  # percent
 dfEcoObs.count().count()
 
-
-# Include ecological status as assessed in basis analysis for VP3
-basis = dfVP[["til_oko_fy"]].copy()  #  phytoplankton measured as chlorophyll
-
-# Define a dictionary to map the Danish strings to an ordinal scale
-status_dict = {
-    "Dårlig økologisk tilstand": 0,
-    "Ringe økologisk tilstand": 1,
-    "Moderat økologisk tilstand": 2,
-    "God økologisk tilstand": 3,
-    "Høj økologisk tilstand": 4,
-    "Dårligt økologisk potentiale": 0,
-    "Ringe økologisk potentiale": 1,
-    "Moderat økologisk potentiale": 2,
-    "Godt økologisk potentiale": 3,
-    "Maksimalt økologisk potentiale": 4,
-    "Ukendt": np.nan,
-}
-
-# Replace the Danish strings in the DataFrame with the corresponding ordinal values
-basis.replace(status_dict, inplace=True)
-basis.columns = ["basis"]
-
 # Merge DataFrames for ecological status (observed and basis analysis for VP3)
-dfObs = dfEcoObs.merge(basis, on="wb")
+dfObs = dfEcoObs.merge(dfVP[["basis"]], on="wb")
 
 # Convert typology to integers
 typ = dfVP[["ov_typ"]].copy()

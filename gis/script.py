@@ -157,13 +157,13 @@ shores.to_csv("output\\all_VP_shore length.csv")  #  save to csv
 shoresTotal = shores.sum()
 
 # Dictionary of stats for observed, imputed, and imputed with moving average respectively
-stats_j = {
+stats_method = {
     "obs_LessThanGood": stats_obs_j,
     "imp_LessThanGood": stats_imp_j,
     "imp_LessThanGood_MA": stats_imp_MA_j,
 }
 
-for key, dict in stats_j.items():
+for key, dict in stats_method.items():
     # Set up df of share < good status for each category j ∈ {coastal, lakes, streams}
     stats = pd.DataFrame(dict)
 
@@ -183,9 +183,12 @@ for key, dict in stats_j.items():
         + stats["streams"] * shoresTotal["streams"]
     ) / shoresTotal["shores all j"]
 
-    # Save statistics to csv
-    stats.to_csv("output\\all_eco_" + key + ".csv")
+    # Add df including "all j" columns to dictionary of stats by method
+    stats_method[key] = stats
 
+# Concatenate stats for observed, imputed, and imputed with moving average respectively
+dfStats = pd.concat(stats_method, axis=1)
+dfStats.to_excel("output\\all_eco_LessThanGood.xlsx")  #  manually delete row 3 in Excel
 
 ########################################################################################
 #   4.b Nominal cost of pollution and investment in water quality for national accounts

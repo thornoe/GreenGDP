@@ -59,6 +59,8 @@ class Water_Quality:
         WFS_replaceFeatureClasses,
         keepGeodatabase,
     ):
+        self.year_first = yearFirst
+        self.year_last = yearLast
         self.years = list(range(yearFirst, yearLast + 1))
         self.data = dataFilenames
         self.linkage = linkageFilenames
@@ -442,21 +444,23 @@ class Water_Quality:
             # Group multiple stations in a water body: Take the median and round down
             waterbodies = allMatches.groupby("wb").median().apply(np.floor)
 
-            # Fields in fc that contain water body ID, typology, district, and length
-            fields = ["ov_id", "ov_typ", "distr_id"]
-
-            # Append field for ecological status as assessed in basis analysis for VP3
+            # Specify the biophysical indicator for the current category
             if j == "streams":
-                fields.append("til_oko_bb")  #  based on DVFI bottom fauna class
+                indicator = "til_oko_bb"  #  bottom fauna measured as DVFI index
             else:  #  lakes and coastal waters
-                fields.append("til_oko_fy")  #  based on chlorophyll concentration
+                indicator = "til_oko_fy"  #  phytoplankton measured as chlorophyll
 
-            # Append field for shape length
+            # Fields in fc that contain water body ID, typology, district, and length
+            fields = ["ov_id", "ov_typ", "distr_id", indicator]
+            fieldsTemp = ["ov_id", indicator]
+
             if j != "coastal":
-                fields.append("Shape_Length")  #  lakes circumference; streams polyline
+                for f in (fields, fieldsTemp):
+                    # Append field for shape length
+                    f.append("Shape_Length")  #  lakes circumference; streams polyline
 
-            # Append field for natural/artificial/strongly modified streams
             if j == "streams":
+                # Append field for natural/artificial/strongly modified streams
                 fields.append("na_kun_stm")
 
             # Create df from fc with characteristics of all waterbodies in VP
@@ -481,11 +485,9 @@ class Water_Quality:
             if j == "streams":
                 # Shore length is counted on both sides of the stream; convert to km
                 dfVP[["length"]] = dfVP[["Shape_Length"]] * 2 / 1000
-
             elif j == "lakes":
                 # Shore length is the circumference, i.e. Shape_Length; convert to km
                 dfVP[["length"]] = dfVP[["Shape_Length"]] / 1000
-
             else:  #  coastal waters
                 # Coastline by Zandersen et al.(2022) based on Corine Land Cover 2018
                 Geo = pd.read_excel("data\\" + self.data["shared"][2], index_col=0)
@@ -493,13 +495,38 @@ class Water_Quality:
                 # Merge with df for all water bodies in VP3
                 dfVP[["length"]] = Geo[["shore coastal"]]
 
+            # Convert ecological status as assessed in basis analysis for VP3
+            basis = dfVP[[indicator]].copy()
+
+            # Dictionary to map the Danish strings to ordinal scale of ecological status
+            status_dict = {
+                "Dårlig økologisk tilstand": 0,
+                "Ringe økologisk tilstand": 1,
+                "Moderat økologisk tilstand": 2,
+                "God økologisk tilstand": 3,
+                "Høj økologisk tilstand": 4,
+                "Dårligt økologisk potentiale": 0,
+                "Ringe økologisk potentiale": 1,
+                "Moderat økologisk potentiale": 2,
+                "Godt økologisk potentiale": 3,
+                "Maksimalt økologisk potentiale": 4,
+                "Ukendt": np.nan,
+            }
+
+            # Replace Danish strings in the df with the corresponding ordinal values
+            basis.replace(status_dict, inplace=True)
+            basis.columns = ["basis"]  # rename column for basis analysis
+
+            # Merge observed ecological status each year with basis analysis for VP3
+            dfVP = dfVP.merge(basis, on="wb")
+
             # Subset columns to relevant water body characteristics
-            dfVP = dfVP.drop(columns="ov_id")
+            dfVP = dfVP.drop(columns=fieldsTemp)
 
             # Save characteristics of water bodies to CSV for later work
             dfVP.to_csv("output\\" + j + "_VP.csv")
 
-            # Merge df for all water bodies in VP3 with df for observed status
+            # Merge index for all water bodies in VP3 with df for observed status
             allVP = dfVP[[]].merge(waterbodies, how="left", on="wb")
 
             # Save observations to CSV for later statistical work
@@ -657,6 +684,9 @@ class Water_Quality:
     def impute_missing(self, j, dfEcoObs, dfVP, index):
         """Impute ecological status for all water bodies from the observed indicator."""
         try:
+            # Merge observed ecological status each year with basis analysis for VP3
+            dfEco = dfEcoObs.merge(dfVP[["basis"]], on="wb")
+
             if j == "streams":
                 # Create dummies for typology
                 typ = pd.get_dummies(dfVP["ov_typ"]).astype(int)
@@ -764,28 +794,23 @@ class Water_Quality:
                 cols = ["Sediment", "Deep"]
 
             # Merge DataFrame for observed values with DataFrame for dummies
-            dfObsSelected = dfEcoObs.merge(typ[cols], on="wb")  #  selected predictors
+            dfEcoSelected = dfEco.merge(typ[cols], on="wb")  #  selected predictors
 
             # Iterative imputer using BayesianRidge() estimator with increased tolerance
             imputer = IterativeImputer(tol=1e-1, max_iter=100, random_state=0)
 
             # Fit imputer, transform data iteratively, and limit to years of interest
             dfImp = pd.DataFrame(
-                imputer.fit_transform(np.array(dfObsSelected)),
-                index=dfObsSelected.index,
-                columns=dfObsSelected.columns,
+                imputer.fit_transform(np.array(dfEcoSelected)),
+                index=dfEcoSelected.index,
+                columns=dfEcoSelected.columns,
             )[dfEcoObs.columns]
 
             # Calculate a 5-year moving average (MA) for each water body to reduce noise
-            MA = dfImp.T.rolling(window=5, min_periods=3, center=True).mean().T
-
-            # Merge imputed ecological status each year with basis analysis for VP3
-            dfImpMA = MA.merge(dfEcoObs["basis"], on="wb")
+            dfImpMA = dfImp.T.rolling(window=5, min_periods=3, center=True).mean().T
 
             # Convert the imputed ecological status to categorical scale {0, 1, 2, 3, 4}
-            dfImp2, impStats = self.ecological_status(
-                j, dfImp[self.years], dfVP, "imp", index
-            )
+            dfImp2, impStats = self.ecological_status(j, dfImp, dfVP, "imp", index)
 
             # Convert moving average of the imputed eco status to the categorical scale
             dfImpMA2, impStatsMA = self.ecological_status(
@@ -814,50 +839,16 @@ class Water_Quality:
 
         Print the shore length and share of water bodies observed at least once."""
         try:
-            # Index for statistics by year and each ecological status
-            indexStats = self.years
-
             if suffix == "obs":
                 # Convert observed biophysical indicator to ecological status
                 dfEcoObs = self.indicator_to_status(j, dfIndicator, dfVP)
 
-                # Specify the biophysical indicator for the current category
-                if j == "streams":
-                    indicator = "til_oko_bb"  #  bottom fauna measured as DVFI index
-                else:  #  lakes and coastal waters
-                    indicator = "til_oko_fy"  #  phytoplankton measured as chlorophyll
-
-                # Include ecological status as assessed in basis analysis for VP3
-                basis = dfVP[[indicator]].copy()
-
-                # Define a dictionary to map the Danish strings to an ordinal scale
-                status_dict = {
-                    "Dårlig økologisk tilstand": 0,
-                    "Ringe økologisk tilstand": 1,
-                    "Moderat økologisk tilstand": 2,
-                    "God økologisk tilstand": 3,
-                    "Høj økologisk tilstand": 4,
-                    "Dårligt økologisk potentiale": 0,
-                    "Ringe økologisk potentiale": 1,
-                    "Moderat økologisk potentiale": 2,
-                    "Godt økologisk potentiale": 3,
-                    "Maksimalt økologisk potentiale": 4,
-                    "Ukendt": np.nan,
-                }
-
-                # Replace Danish strings in the df with the corresponding ordinal values
-                basis.replace(status_dict, inplace=True)
-                basis.columns = ["basis"]
-
-                # Merge observed ecological status each year with basis analysis for VP3
-                dfEco = dfEcoObs.merge(basis, on="wb")
-
-                # Add the basis analysis to the index for statistics by year and status
-                indexStats.append("basis")
-
             else:
                 # Imputed ecological status using a continuous scale
-                dfEco = dfIndicator.copy()
+                dfEcoObs = dfIndicator.copy()
+
+            # Merge observed ecological status each year with basis analysis for VP3
+            dfEco = dfEcoObs.merge(dfVP[["basis"]], on="wb")
 
             # Save CSV of data on mean ecological status by water body and year
             dfEco.to_csv("output\\" + j + "_eco_" + suffix + ".csv")
@@ -888,7 +879,7 @@ class Water_Quality:
 
             # Create an empty df for statistics
             stats = pd.DataFrame(
-                index=indexStats,
+                index=self.years + ["basis"],
                 columns=[
                     "high",
                     "good",
@@ -900,8 +891,8 @@ class Water_Quality:
                 ],
             )
 
-            # Calculate the above statistics for each year
-            for t in indexStats:
+            # Calculate the above statistics for span of natural capital account & basis
+            for t in self.years + ["basis"]:
                 y = dfEcoLength[[t, "length"]].reset_index(drop=True)
                 y["high"] = np.select([y[t] == 4], [y["length"]])
                 y["good"] = np.select([y[t] == 3], [y["length"]])
@@ -933,8 +924,8 @@ class Water_Quality:
             # Brief analysis of missing observations (not relevant for imputed data)
             if suffix == "obs":
                 # Create df limited to water bodies that are observed at least one year
-                observed = dfVP[["length"]].merge(
-                    dfEco.drop(columns="basis").dropna(how="all"),
+                observed = dfEcoObs.dropna(how="all").merge(
+                    dfVP[["length"]],
                     how="inner",
                     on="wb",
                 )
@@ -947,22 +938,22 @@ class Water_Quality:
                     round(observed["length"].sum()),
                     round(100 * observed["length"].sum() / totalLength),
                     round(100 * np.mean(dfEco[self.years].count() / len(dfEco))),
-                    round(stats["known"].mean() / 100 * totalLength),
-                    round(stats["known"].mean()),
+                    round(stats.drop("basis")["known"].mean() / 100 * totalLength),
+                    round(stats.drop("basis")["known"].mean()),
                 )
                 # print(msg)  # print statistics in Python
                 arcpy.AddMessage(msg)  # return statistics in ArcGIS
 
-                return dfEco, stats["not good"], indexSorted
+                return dfEco[dfEcoObs.columns], stats["not good"], indexSorted
 
-            return dfEco, stats["not good"]
+            return dfEco[dfEcoObs.columns], stats["not good"]
 
         except:
             # Report severe error messages
             tb = sys.exc_info()[2]  # get traceback object for Python errors
             tbinfo = traceback.format_tb(tb)[0]
-            msg = "Could not create df with observed ecological status for {0}:\nTraceback info:\n{1}Error Info:\n{2}".format(
-                j, tbinfo, str(sys.exc_info()[1])
+            msg = "Could not create df with {0} ecological status for {1}:\nTraceback info:\n{2}Error Info:\n{3}".format(
+                suffix, j, tbinfo, str(sys.exc_info()[1])
             )
             print(msg)  # print error message in Python
             arcpy.AddError(msg)  # return error message in ArcGIS
@@ -1065,23 +1056,26 @@ class Water_Quality:
         """Heatmap visualizing observations of ecological status as either missing or using the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality respectively.
         Saves a figure of the heatmap."""
         try:
+            # Subset dataframe to for span of natural capital account & basis analysis
+            df = frame[self.years + ["basis"]]
+
             if suffix == "obs":
-                # Sort by eco status in basis analysis then number of missing values
+                # Sort by eco status in basis analysis then number of observed values
                 df = frame.copy()
-                df["nan"] = df.shape[1] - df.count(axis=1)
-                df = df.sort_values(["basis", "nan"], ascending=False)[self.years]
+                df["n"] = df.count(axis=1)
+                df = df.sort_values(["basis", "n"], ascending=False).drop(columns="n")
 
                 # Save index to reuse the order after imputing the missing values
                 index = df.index
 
-                # Specify heatmap to show missing values as gray
+                # Specify heatmap to show missing values as gray (xkcd spells it "grey")
                 colors = ["grey", "red", "orange", "yellow", "green", "blue"]
                 uniqueValues = [-1, 0, 1, 2, 3, 4]
                 description = "Missing value (gray), Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
 
             else:
-                # Sort water bodies by number of missing values prior to imputation
-                df = frame.copy().reindex(index)[self.years]
+                # Sort by status in basis analysis & number of observed values as above
+                df = df.reindex(index)
 
                 # Specify heatmap without missing values
                 colors = ["red", "orange", "yellow", "green", "blue"]
@@ -1120,8 +1114,8 @@ class Water_Quality:
             # Report severe error messages
             tb = sys.exc_info()[2]  # get traceback object for Python errors
             tbinfo = traceback.format_tb(tb)[0]
-            msg = "Could not create missing values graph (heatmap) for ecological status of {0}:\nTraceback info:\n{1}Error Info:\n{2}".format(
-                j, tbinfo, str(sys.exc_info()[1])
+            msg = "Could not create missing values graph (heatmap) for {0} ecological status of {1}:\nTraceback info:\n{2}Error Info:\n{3}".format(
+                suffix, j, tbinfo, str(sys.exc_info()[1])
             )
             print(msg)  # print error message in Python
             arcpy.AddError(msg)  # return error message in ArcGIS
@@ -1181,7 +1175,7 @@ class Water_Quality:
                 dfEcoImpCatch = dfEcoImp.merge(dfCatch.astype(int), on="wb")
 
             # Merge df for imputed ecological status w. shore length
-            dfEco = dfEcoImpCatch.merge(dfVP[["length"]], on="wb")  #  length
+            dfEco = dfEcoImpCatch.merge(dfVP[["length"]], on="wb")
 
             # List of coastal catchment areas where category j is present
             j_present = list(dfEco["v"].unique())
@@ -1195,8 +1189,8 @@ class Water_Quality:
             ).sort_index()
 
             # Years used for interpolation of demographics
-            t_old = np.arange(1990, 2018 + 1)
-            t_new = np.arange(1990, 2020 + 1)
+            t_old = np.arange(self.year_first + 1, 2018 + 1)
+            t_new = np.arange(self.year_first + 1, self.year_last + 1)
 
             # For each coastal catchment area v, extrapolate demographics to 2019-2020
             frames_v = {}  #  dictionary to store df for each coastal catchment area v
