@@ -810,14 +810,12 @@ class Water_Quality:
             dfImpMA = dfImp.T.rolling(window=5, min_periods=3, center=True).mean().T
 
             # Convert the imputed ecological status to categorical scale {0, 1, 2, 3, 4}
-            dfImp2, impStats = self.ecological_status(j, dfImp, dfVP, "imp", index)
+            impStats = self.ecological_status(j, dfImp, dfVP, "imp", index)
 
             # Convert moving average of the imputed eco status to the categorical scale
-            dfImpMA2, impStatsMA = self.ecological_status(
-                j, dfImpMA, dfVP, "imp_MA", index
-            )
+            impStatsMA = self.ecological_status(j, dfImpMA, dfVP, "imp_MA", index)
 
-            return dfImp2[self.years], dfImpMA2[self.years], impStats, impStatsMA
+            return dfImp[self.years], dfImpMA[self.years], impStats, impStatsMA
 
         except:
             ## Report severe error messages
@@ -946,7 +944,7 @@ class Water_Quality:
 
                 return dfEco[dfEcoObs.columns], stats["not good"], indexSorted
 
-            return dfEco[dfEcoObs.columns], stats["not good"]
+            return stats["not good"]
 
         except:
             # Report severe error messages

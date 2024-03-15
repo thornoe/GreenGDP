@@ -605,7 +605,7 @@ if suffix == "obs":
     # Save statistics as Markdown for online presentation
     stats.astype(int).to_html("output\\" + j + "_eco_obs_stats.md")
 
-# return dfEco[dfEcoObs.columns], stats["not good"]
+# return stats["not good"]
 
 
 
