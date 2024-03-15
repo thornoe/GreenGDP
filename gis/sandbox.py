@@ -840,10 +840,9 @@ Geo = Geo.loc[j_present].sort_index()
 # For each year t, create a df of variables needed for benefit transfer
 frames_t = {}  #  create empty dictionary to store a df for each year t
 
-# Truncate DataFrame for ecological status of water bodies from above/below
+# Truncate DataFrame for ecological status of water bodies from above
 Q = dfEco.copy()
 Q[c.years] = Q[c.years].mask(Q[c.years] > 3, 3)  #  above at Good
-Q[c.years] = Q[c.years].mask(Q[c.years] < 0, 0)  #  below at Bad
 
 # DataFrames with dummy for less than good ecological status
 SL = Q.copy()
