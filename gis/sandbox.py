@@ -165,7 +165,7 @@ df_eco_imp_MA.columns = df_eco_imp_MA.columns.astype(int)
 # Set up df with variables by coastal catchment area for the Benefit Transfer equation
 frames_j[j], shores_j[j] = c.values_by_catchment_area(j, df_eco_imp_MA, df_VP)
 
-c.years + ["basis"] = c.years + ["basis"]
+c.years + ["Basis"] = c.years + ["Basis"]
 
 
 ########################################################################################
@@ -361,7 +361,7 @@ for t in df["year"].unique():
 dfEcoObs, dfVP, index, stats_imp_j = df_eco_obs, df_VP, index_sorted, {}
 
 # Merge observed ecological status each year with basis analysis for VP3
-dfEco = dfEcoObs.merge(dfVP[["basis"]], on="wb")
+dfEco = dfEcoObs.merge(dfVP[["Basis"]], on="wb")
 
 if j == "streams":
     # Create dummies for typology
@@ -506,7 +506,7 @@ else:
 dfEcoObs.to_csv("output\\" + j + "_eco_" + suffix + ".csv")
 
 # Merge observed ecological status each year with basis analysis for VP3
-dfEco = dfEcoObs.merge(dfVP[["basis"]], on="wb")
+dfEco = dfEcoObs.merge(dfVP[["Basis"]], on="wb")
 
 if suffix != "obs":
     # Prepare for statistics and missing values graph
@@ -534,12 +534,12 @@ totalLength = dfEcoLength["length"].sum()
 
 # Create an empty df for statistics
 stats = pd.DataFrame(
-    index=c.years + ["basis"],
+    index=c.years + ["Basis"],
     columns=["high", "good", "moderate", "poor", "bad", "not good", "known"],
 )
 
 # Calculate the above statistics for span of natural capital account & basis
-for t in c.years + ["basis"]:
+for t in c.years + ["Basis"]:
     y = dfEcoLength[[t, "length"]].reset_index(drop=True)
     y["high"] = np.select([y[t] == 4], [y["length"]])
     y["good"] = np.select([y[t] == 3], [y["length"]])
@@ -581,8 +581,8 @@ if suffix == "obs":
         round(observed["length"].sum()),
         round(100 * observed["length"].sum() / totalLength),
         round(100 * np.mean(dfEco[c.years].count() / len(dfEco))),
-        round(stats.drop("basis")["known"].mean() / 100 * totalLength),
-        round(stats.drop("basis")["known"].mean()),
+        round(stats.drop("Basis")["known"].mean() / 100 * totalLength),
+        round(stats.drop("Basis")["known"].mean()),
     )
     # print(msg)  # print statistics in Python
     arcpy.AddMessage(msg)  # return statistics in ArcGIS
@@ -689,12 +689,12 @@ frame, suffix, index = dfEco, "obs", None
 frame, suffix, index = dfEco, "imp", index_sorted
 
 # Subset DataFrame to for span of natural capital account & basis analysis
-df = frame[c.years + ["basis"]].copy()
+df = frame[c.years + ["Basis"]].copy()
 
 if suffix == "obs":
     # Sort by eco status in basis analysis then number of observed values
     df["n"] = df.count(axis=1)
-    df = df.sort_values(["basis", "n"], ascending=False).drop(columns="n")
+    df = df.sort_values(["Basis", "n"], ascending=False).drop(columns="n")
     # Save index to reuse the order after imputing the missing values
     index = df.index
 else:

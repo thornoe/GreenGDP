@@ -208,7 +208,7 @@ sparse.count()  #  lowest number of non-missing values with support in all years
 sparse.count().sum()  #  994 non-missing values in total to loop over with LOO-CV
 
 # Merge DataFrames for ecological status (observed and basis analysis for VP3)
-dfObs = dfEcoObs.merge(dfVP[["basis"]], on="wb")
+dfObs = dfEcoObs.merge(dfVP[["Basis"]], on="wb")
 
 # Convert typology to integers
 typ = dfVP[["ov_typ"]].copy()

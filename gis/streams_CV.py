@@ -226,7 +226,7 @@ sparse.count()  #  lowest number of non-missing values with support in all years
 sparse.count().sum()  #  5453 non-missing values in total to loop over with LOO-CV
 
 # Merge DataFrames for ecological status (observed and basis analysis for VP3)
-dfObs = dfEcoObs.merge(dfVP[["basis"]], on="wb")
+dfObs = dfEcoObs.merge(dfVP[["Basis"]], on="wb")
 
 # Create dummies for typology
 typ = pd.get_dummies(dfVP["ov_typ"]).astype(int)
@@ -281,8 +281,8 @@ for a, b in zip([dfEcoObs, sparse], [dfDistrict, dfSparse]):
         d.loc["All in VP3", c] = len(dfDistrict[dfDistrict[c] == 1]) / len(dfVP)
 
     # Mean ecological status as assessed in basis analysis for VP3
-    d.loc["All obs", "basis"] = obs["Basis"].mean()  #  streams observed at least once
-    d.loc["All in VP3", "basis"] = dfDistrict["Basis"].mean()  #  all streams in VP3
+    d.loc["All obs", "Basis"] = obs["Basis"].mean()  #  streams observed at least once
+    d.loc["All in VP3", "Basis"] = dfDistrict["Basis"].mean()  #  all streams in VP3
 
     # Number of streams
     d["n"] = a.count().astype(int)  #  number of streams observed each year

@@ -515,7 +515,7 @@ class Water_Quality:
 
             # Replace Danish strings in the df with the corresponding ordinal values
             basis.replace(status_dict, inplace=True)
-            basis.columns = ["basis"]  # rename column for basis analysis
+            basis.columns = ["Basis"]  # rename column for basis analysis
 
             # Merge observed ecological status each year with basis analysis for VP3
             dfVP = dfVP.merge(basis, on="wb")
@@ -685,7 +685,7 @@ class Water_Quality:
         """Impute ecological status for all water bodies from the observed indicator."""
         try:
             # Merge observed ecological status each year with basis analysis for VP3
-            dfEco = dfEcoObs.merge(dfVP[["basis"]], on="wb")
+            dfEco = dfEcoObs.merge(dfVP[["Basis"]], on="wb")
 
             if j == "streams":
                 # Create dummies for typology
@@ -849,7 +849,7 @@ class Water_Quality:
             dfEcoObs.to_csv("output\\" + j + "_eco_" + suffix + ".csv")
 
             # Merge observed ecological status each year with basis analysis for VP3
-            dfEco = dfEcoObs.merge(dfVP[["basis"]], on="wb")
+            dfEco = dfEcoObs.merge(dfVP[["Basis"]], on="wb")
 
             if suffix != "obs":
                 # Prepare for statistics and missing values graph
@@ -877,7 +877,7 @@ class Water_Quality:
 
             # Create an empty df for statistics
             stats = pd.DataFrame(
-                index=self.years + ["basis"],
+                index=self.years + ["Basis"],
                 columns=[
                     "high",
                     "good",
@@ -890,7 +890,7 @@ class Water_Quality:
             )
 
             # Calculate the above statistics for span of natural capital account & basis
-            for t in self.years + ["basis"]:
+            for t in self.years + ["Basis"]:
                 y = dfEcoLength[[t, "length"]].reset_index(drop=True)
                 y["high"] = np.select([y[t] == 4], [y["length"]])
                 y["good"] = np.select([y[t] == 3], [y["length"]])
@@ -936,8 +936,8 @@ class Water_Quality:
                     round(observed["length"].sum()),
                     round(100 * observed["length"].sum() / totalLength),
                     round(100 * np.mean(dfEco[self.years].count() / len(dfEco))),
-                    round(stats.drop("basis")["known"].mean() / 100 * totalLength),
-                    round(stats.drop("basis")["known"].mean()),
+                    round(stats.drop("Basis")["known"].mean() / 100 * totalLength),
+                    round(stats.drop("Basis")["known"].mean()),
                 )
                 # print(msg)  # print statistics in Python
                 arcpy.AddMessage(msg)  # return statistics in ArcGIS
@@ -1055,12 +1055,12 @@ class Water_Quality:
         Saves a figure of the heatmap."""
         try:
             # Subset DataFrame to for span of natural capital account & basis analysis
-            df = frame[self.years + ["basis"]].copy()
+            df = frame[self.years + ["Basis"]].copy()
 
             if suffix == "obs":
                 # Sort by eco status in basis analysis then number of observed values
                 df["n"] = df.count(axis=1)
-                df = df.sort_values(["basis", "n"], ascending=False).drop(columns="n")
+                df = df.sort_values(["Basis", "n"], ascending=False).drop(columns="n")
 
                 # Save index to reuse the order after imputing the missing values
                 index = df.index

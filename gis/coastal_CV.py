@@ -220,7 +220,7 @@ for n in range(0, len(dfEcoObs.columns) + 1):
 dfEcoObs.count().count()
 
 # Merge DataFrames for ecological status (observed and basis analysis for VP3)
-dfObs = dfEcoObs.merge(dfVP[["basis"]], on="wb")
+dfObs = dfEcoObs.merge(dfVP[["Basis"]], on="wb")
 
 # Convert typology to integers
 typ = dfVP[["ov_typ"]].copy()
