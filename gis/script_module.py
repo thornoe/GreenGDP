@@ -845,11 +845,11 @@ class Water_Quality:
                 # Imputed ecological status using a continuous scale
                 dfEcoObs = dfIndicator.copy()
 
+            # Save CSV of data on mean ecological status by water body and year
+            dfEcoObs.to_csv("output\\" + j + "_eco_" + suffix + ".csv")
+
             # Merge observed ecological status each year with basis analysis for VP3
             dfEco = dfEcoObs.merge(dfVP[["basis"]], on="wb")
-
-            # Save CSV of data on mean ecological status by water body and year
-            dfEco.to_csv("output\\" + j + "_eco_" + suffix + ".csv")
 
             if suffix != "obs":
                 # Prepare for statistics and missing values graph

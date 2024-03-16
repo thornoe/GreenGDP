@@ -190,14 +190,14 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False
         s.loc["Total", "n"] = s["n"].sum()
 
     # Overwrite CSV of accuracy scores and share with less than good ecological status
-    if subset is sparse:
-        scores.to_csv("output/streams_eco_imp_accuracy_sparse.csv")
-        status.to_csv("output/streams_eco_imp_LessThanGood_sparse.csv")
-        scores_all.to_csv("output/streams_eco_imp_accuracy_sparse_all.csv")
-        status_all.to_csv("output/streams_eco_imp_LessThanGood_sparse_all.csv")
-    else:
-        scores.to_csv("output/streams_eco_imp_accuracy.csv")
-        status.to_csv("output/streams_eco_imp_LessThanGood.csv")
+    # if subset is sparse:
+    #     scores.to_csv("output/streams_eco_imp_accuracy_sparse.csv")
+    #     status.to_csv("output/streams_eco_imp_LessThanGood_sparse.csv")
+    #     scores_all.to_csv("output/streams_eco_imp_accuracy_sparse_all.csv")
+    #     status_all.to_csv("output/streams_eco_imp_LessThanGood_sparse_all.csv")
+    # else:
+    #     scores.to_csv("output/streams_eco_imp_accuracy.csv")
+    #     status.to_csv("output/streams_eco_imp_LessThanGood.csv")
 
     return selected, scores, status  #  selected predictors; scores and stats by year
 
@@ -310,26 +310,25 @@ with open("output/streams_VP_stats.tex", "w") as tf:
 #   2. Multivariate feature imputation (note: Forward Stepwise Selection takes ~5 days)
 ########################################################################################
 # # Example data for testing Forward Stepwise Selection with LOO-CV (takes ~5 seconds)
-# dfEcoObs = pd.DataFrame(
-#     {
-#         1988: [2.5, 3.0, 3.5, 4.0, np.nan, 5.0],
-#         1989: [2.6, 3.1, 3.6, np.nan, 4.6, 5.1],
-#         1990: [2.7, 3.2, np.nan, 4.2, 4.7, 5.2],
-#         1991: [2.8, np.nan, 3.8, 4.3, 4.8, 5.3],
-#         1992: [np.nan, 3.4, 3.9, 4.4, 4.9, 5.4],
-#         1993: [3.0, 3.5, 3.8, 4.4, 5.1, 5.5],
-#     }
-# )
-# dfEcoObs.index.name = "wb"
-# sparse = dfEcoObs[dfEcoObs.notna().sum(axis=1) == 5]
-# dfObs = dfEcoObs.copy()
-# dfTypology = dfObs.copy()
-# dfTypology["Small"] = [0, 0, 1, 1, 0, 0]  #  effect: 0.2 worse in 1993
-# dfNatural = dfTypology.copy()
-# dfNatural["Natural"] = [0, 0, 0, 1, 1, 0]  #  effect: 0.1 better in 1993
-# cols = ["Small", "Natural"]
-# years = list(range(1989, 1993 + 1))
-
+dfEcoObs = pd.DataFrame(
+    {
+        1988: [2.5, 3.0, 3.5, 4.0, np.nan, 5.0],
+        1989: [2.6, 3.1, 3.6, np.nan, 4.6, 5.1],
+        1990: [2.7, 3.2, np.nan, 4.2, 4.7, 5.2],
+        1991: [2.8, np.nan, 3.8, 4.3, 4.8, 5.3],
+        1992: [np.nan, 3.4, 3.9, 4.4, 4.9, 5.4],
+        1993: [3.0, 3.5, 3.8, 4.4, 5.1, 5.5],
+    }
+)
+dfEcoObs.index.name = "wb"
+sparse = dfEcoObs[dfEcoObs.notna().sum(axis=1) == 5]
+dfObs = dfEcoObs.copy()
+dfTypology = dfObs.copy()
+dfTypology["Small"] = [0, 0, 1, 1, 0, 0]  #  effect: 0.2 worse in 1993
+dfNatural = dfTypology.copy()
+dfNatural["Natural"] = [0, 0, 0, 1, 1, 0]  #  effect: 0.1 better in 1993
+cols = ["Small", "Natural"]
+years = list(range(1989, 1993 + 1))
 
 # Forward stepwise selection of dummies - CV over subset of sparsely observed streams
 kwargs = {"data": dfObs, "dfDummies": dfDistrict, "years": years}  #  shared arguments
