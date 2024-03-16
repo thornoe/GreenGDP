@@ -70,17 +70,18 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False
     predictors = ["No dummies"] + dummies  #  list of possible predictors to include
     selected = []  #  empty list for storing selected predictors
     current_score, best_new_score = 0.0, 0.0  #  initial scores
+    prefixes = ["streams_eco_imp_accuracy", "streams_eco_imp_LessThanGood"]  # CSV names
 
     # DataFrame for storing accuracy scores by year and calculating weighted average
     scores = pd.DataFrame(subset.count(), index=years, columns=["n"]).astype(int)
     scores.loc["Total", "n"] = np.nan  #  row to calculate weighted average of scores
-    scores_all = scores.copy()  #  scores for all predictors including inferior ones
+    scores_all = scores.copy()  #  scores for all sets of predictors being tested
 
     # DataFrame for storing ecological status by year and calculating weighted average
     status = pd.DataFrame(subset.count(), index=subset.columns, columns=["n"])
-    status["Obs"] = (subset < 4.5).sum() / status["n"]  #  ecological status < good
+    status["Obs"] = (subset < 2.5).sum() / status["n"]  #  ecological status < good
     status.loc["Total", "Obs"] = (status["Obs"] * status["n"]).sum() / status["n"].sum()
-    status_all = status.copy()  #  eco status for all predictors including inferior ones
+    status_all = status.copy()  #  eco status for all sets of predictors being tested
 
     while current_score == best_new_score:
         names = []  #  empty list for storing model names
@@ -107,7 +108,7 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False
             dfImpSubset = dfImp.loc[subset.index, subset.columns]
 
             # Store predicted share with less than good ecological status
-            sta[df.name] = (dfImpSubset[subset.columns] < 4.5).sum() / len(subset)
+            sta[df.name] = (dfImpSubset[subset.columns] < 2.5).sum() / len(subset)
 
             # loop over each year t and waterbody i in (subset of) observed waterbodies
             for t in tqdm.tqdm(years):  #  time each model and report progress in years
@@ -133,8 +134,9 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False
                 sco.loc[t, df.name] = accuracy
 
             # Total accuracy weighted by number of observations used for LOO-CV each year
-            for s in (sco, sta):
-                s.loc["Total", df.name] = (s[df.name] * s["n"]).sum() / s["n"].sum()
+            for a, b in zip([scores_all, status_all], [sco, sta]):
+                b.loc["Total", df.name] = (b[df.name] * b["n"]).sum() / b["n"].sum()
+                a[df.name] = b[df.name]  #  scores & status by year for all predictors
             scores_total.append(sco.loc["Total", df.name])  #  score for each predictor
 
             print(df.name, "used for imputation. Accuracy score:", scores_total[-1])
@@ -154,8 +156,9 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False
             selected.append(predictors.pop(0))
 
             # Save scores and status by year subject to the selected set of predictors
-            for a, b in zip([scores, status], [sco, sta]):
-                a[names[0]] = b[names[0]]  #  scores & status by year for predictor
+            for a, b, c in zip([scores, status], [sco, sta], prefixes):
+                a[names[i]] = b[names[i]]  #  scores & status by year for best predictor
+                a.to_csv("output/" + c + ".csv")  #  overwrite CSV
 
         elif best_new_score > current_score:
             current_score = best_new_score  #  update current score
@@ -165,8 +168,13 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False
             selected.append(predictors.pop(i))
 
             # Save scores and status by year subject to the selected set of predictors
-            for a, b in zip([scores, status], [sco, sta]):
+            for a, b, c in zip([scores, status], [sco, sta], prefixes):
                 a[names[i]] = b[names[i]]  #  scores & status by year for best predictor
+                a.to_csv("output/streams_eco_imp_" + c + "_sparse.csv")  # overwrite CSV
+
+            # Save scores and status by year for every set of predictors
+            for a, b in zip([scores_all, status_all], prefixes):
+                a.to_csv("output/streams_eco_imp_" + b + "_sparse_all.csv")  # overwrite
 
         else:  #  if best_new_score == current_score (i.e., identical accuracy score)
             break  #  stop selection (including the predictor would increase variance)
@@ -178,13 +186,15 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False
             break  #  stop stepwise selection
 
     # Total number of observations that LOO-CV was performed over
-    for s in (scores, status):
+    for s in (scores, status, scores_all, status_all):
         s.loc["Total", "n"] = s["n"].sum()
 
-    # Save accuracy scores and share with less than good ecological status to CSV
+    # Overwrite CSV of accuracy scores and share with less than good ecological status
     if subset is sparse:
         scores.to_csv("output/streams_eco_imp_accuracy_sparse.csv")
         status.to_csv("output/streams_eco_imp_LessThanGood_sparse.csv")
+        scores_all.to_csv("output/streams_eco_imp_accuracy_sparse_all.csv")
+        status_all.to_csv("output/streams_eco_imp_LessThanGood_sparse_all.csv")
     else:
         scores.to_csv("output/streams_eco_imp_accuracy.csv")
         status.to_csv("output/streams_eco_imp_LessThanGood.csv")
@@ -201,7 +211,7 @@ os.chdir(r"C:\Users\au687527\GitHub\GreenGDP\gis")
 # Limit LOO-CV to loop over years used directly for the natural capital account
 years = list(range(1989, 2020 + 1))
 
-# Read DataFrames for observed biophysical indicator and typology
+# Read DataFrames for observed ecological status and typology
 dfEcoObs = pd.read_csv("output/streams_eco_obs.csv", index_col="wb")
 dfEcoObs.columns = dfEcoObs.columns.astype(int)
 dfVP = pd.read_csv("output\\streams_VP.csv", index_col="wb")

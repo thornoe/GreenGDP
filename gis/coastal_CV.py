@@ -96,11 +96,13 @@ def stepwise_selection(subset, dummies, data, dfDummies, years):
     # DataFrame for storing accuracy scores by year and calculating weighted average
     scores = pd.DataFrame(subset.count(), index=years, columns=["n"]).astype(int)
     scores.loc["Total", "n"] = np.nan  #  row to calculate weighted average of scores
+    scores_all = scores.copy()  #  scores for all sets of predictors being tested
 
     # DataFrame for storing ecological status by year and calculating weighted average
     status = pd.DataFrame(subset.count(), index=subset.columns, columns=["n"])
     status["Obs"] = (subset < 2.5).sum() / status["n"]  #  ecological status < good
     status.loc["Total", "Obs"] = (status["Obs"] * status["n"]).sum() / status["n"].sum()
+    status_all = status.copy()  #  eco status for all sets of predictors being tested
 
     while current_score == best_new_score:
         names = []  #  empty list for storing model names
@@ -153,8 +155,9 @@ def stepwise_selection(subset, dummies, data, dfDummies, years):
                 sco.loc[t, df.name] = accuracy
 
             # Total accuracy weighted by number of observations used for LOO-CV each year
-            for s in (sco, sta):
-                s.loc["Total", df.name] = (s[df.name] * s["n"]).sum() / s["n"].sum()
+            for a, b in zip([scores_all, status_all], [sco, sta]):
+                b.loc["Total", df.name] = (b[df.name] * b["n"]).sum() / b["n"].sum()
+                a[df.name] = b[df.name]  #  scores & status by year for all predictors
             scores_total.append(sco.loc["Total", df.name])  #  score for each predictor
 
             print(df.name, "used for imputation. Accuracy score:", scores_total[-1])
@@ -185,12 +188,14 @@ def stepwise_selection(subset, dummies, data, dfDummies, years):
             break  #  stop stepwise selection
 
     # Total number of observations that LOO-CV was performed over
-    for s in (scores, status):
+    for s in (scores, status, scores_all, status_all):
         s.loc["Total", "n"] = s["n"].sum()
 
     # Save accuracy scores and share with less than good ecological status to CSV
     scores.to_csv("output/coastal_eco_imp_accuracy.csv")
     status.to_csv("output/coastal_eco_imp_LessThanGood.csv")
+    scores_all.to_csv("output/coastal_eco_imp_accuracy_all.csv")
+    status_all.to_csv("output/coastal_eco_imp_LessThanGood_all.csv")
 
     return selected, scores, status  #  selected predictors; scores and stats by year
 
