@@ -573,13 +573,19 @@ if suffix == "obs":
     # Create df limited to water bodies that are observed at least one year
     observed = dfEcoObs.dropna(how="all").merge(dfVP[["length"]], how="inner", on="wb")
 
-    # Report length and share of water bodies observed at least one year
-    msg = "{0} km is the total shore length of {1} included in VP3, of which {2}% of {1} representing {3} km ({4}% of total shore length of {1}) have been assessed at least one year. On average, {5}% of {1} representing {6} km ({7}% of total shore length of {1}) are assessed each year.\n".format(
+    # df of water bodies assessed at least one year or in the basis analysis for VP3
+    observedVP3 = dfEco.dropna(how="all").merge(dfVP[["length"]], how="inner", on="wb")
+
+    # Report length and share of water bodies observed at least one year (or with basis)
+    msg = "{0} km is the total shore length of {1} included in VP3, of which {2}% of {1} representing {3} km ({4}% of total shore length of {1}) have been assessed at least one year. Taking into account the basis analysis for VP3, {5}% of {1} representing {6} km ({7}% of total shore length of {1}) have been assessed. On average, {8}% of {1} representing {9} km ({10}% of total shore length of {1}) are assessed each year.\n".format(
         round(totalLength),
         j,
         round(100 * len(observed) / len(dfEco)),
         round(observed["length"].sum()),
         round(100 * observed["length"].sum() / totalLength),
+        round(100 * len(observedVP3) / len(dfEco)),
+        round(observedVP3["length"].sum()),
+        round(100 * observedVP3["length"].sum() / totalLength),
         round(100 * np.mean(dfEco[c.years].count() / len(dfEco))),
         round(stats.drop("Basis")["known"].mean() / 100 * totalLength),
         round(stats.drop("Basis")["known"].mean()),

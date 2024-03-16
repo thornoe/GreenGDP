@@ -155,10 +155,10 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False
             # Move the given dummy from the list of predictors to the list of selected
             selected.append(predictors.pop(0))
 
-            # Save scores and status by year subject to the selected set of predictors
-            for a, b, c in zip([scores, status], [sco, sta], prefixes):
-                a[names[i]] = b[names[i]]  #  scores & status by year for best predictor
-                a.to_csv("output/" + c + ".csv")  #  overwrite CSV
+            # Save scores and status by year for every set of predictors
+            for a, b, c in zip([scores, status], [scores_all, status_all], prefixes):
+                a[names[-1]] = b[names[-1]]  #  scores & status by year for predictor
+                b.to_csv("output/" + c + ".csv")  # overwrite CSV
 
         elif best_new_score > current_score:
             current_score = best_new_score  #  update current score
@@ -167,14 +167,14 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False
             # Move dummy with the best new score from the list of predictors to selected
             selected.append(predictors.pop(i))
 
-            # Save scores and status by year subject to the selected set of predictors
+            # # Save scores and status by year subject to the selected set of predictors
             for a, b, c in zip([scores, status], [sco, sta], prefixes):
                 a[names[i]] = b[names[i]]  #  scores & status by year for best predictor
-                a.to_csv("output/streams_eco_imp_" + c + "_sparse.csv")  # overwrite CSV
+                a.to_csv("output/" + c + "_sparse.csv")  # overwrite CSV
 
             # Save scores and status by year for every set of predictors
             for a, b in zip([scores_all, status_all], prefixes):
-                a.to_csv("output/streams_eco_imp_" + b + "_sparse_all.csv")  # overwrite
+                a.to_csv("output/" + b + "_sparse_all.csv")  # overwrite CSV
 
         else:  #  if best_new_score == current_score (i.e., identical accuracy score)
             break  #  stop selection (including the predictor would increase variance)
@@ -190,14 +190,14 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False
         s.loc["Total", "n"] = s["n"].sum()
 
     # Overwrite CSV of accuracy scores and share with less than good ecological status
-    # if subset is sparse:
-    #     scores.to_csv("output/streams_eco_imp_accuracy_sparse.csv")
-    #     status.to_csv("output/streams_eco_imp_LessThanGood_sparse.csv")
-    #     scores_all.to_csv("output/streams_eco_imp_accuracy_sparse_all.csv")
-    #     status_all.to_csv("output/streams_eco_imp_LessThanGood_sparse_all.csv")
-    # else:
-    #     scores.to_csv("output/streams_eco_imp_accuracy.csv")
-    #     status.to_csv("output/streams_eco_imp_LessThanGood.csv")
+    if subset is sparse:
+        scores.to_csv("output/streams_eco_imp_accuracy_sparse.csv")
+        status.to_csv("output/streams_eco_imp_LessThanGood_sparse.csv")
+        scores_all.to_csv("output/streams_eco_imp_accuracy_sparse_all.csv")
+        status_all.to_csv("output/streams_eco_imp_LessThanGood_sparse_all.csv")
+    else:
+        scores.to_csv("output/streams_eco_imp_accuracy.csv")
+        status.to_csv("output/streams_eco_imp_LessThanGood.csv")
 
     return selected, scores, status  #  selected predictors; scores and stats by year
 
@@ -223,7 +223,7 @@ for n in range(0, len(dfEcoObs.columns) + 1):
 # Subset of rows where only 1-3 values are non-missing
 sparse = dfEcoObs[dfEcoObs.notna().sum(axis=1).isin([1, 2, 3])]
 sparse.count()  #  lowest number of non-missing values with support in all years
-sparse.count().sum()  #  5453 non-missing values in total to loop over with LOO-CV
+sparse.count().sum()  #  5419 non-missing values in total to loop over with LOO-CV
 
 # Merge DataFrames for ecological status (observed and basis analysis for VP3)
 dfObs = dfEcoObs.merge(dfVP[["Basis"]], on="wb")
@@ -312,12 +312,12 @@ with open("output/streams_VP_stats.tex", "w") as tf:
 # # Example data for testing Forward Stepwise Selection with LOO-CV (takes ~5 seconds)
 dfEcoObs = pd.DataFrame(
     {
-        1988: [2.5, 3.0, 3.5, 4.0, np.nan, 5.0],
-        1989: [2.6, 3.1, 3.6, np.nan, 4.6, 5.1],
-        1990: [2.7, 3.2, np.nan, 4.2, 4.7, 5.2],
-        1991: [2.8, np.nan, 3.8, 4.3, 4.8, 5.3],
-        1992: [np.nan, 3.4, 3.9, 4.4, 4.9, 5.4],
-        1993: [3.0, 3.5, 3.8, 4.4, 5.1, 5.5],
+        1988: [0.5, 1.0, 1.5, 2.0, np.nan, 3.0],
+        1989: [0.6, 1.1, 1.6, np.nan, 2.6, 3.1],
+        1990: [0.7, 1.2, np.nan, 2.2, 2.7, 3.2],
+        1991: [0.8, np.nan, 1.8, 2.3, 2.8, 3.3],
+        1992: [np.nan, 1.4, 1.9, 2.4, 2.9, 3.4],
+        1993: [1.0, 1.5, 1.8, 2.4, 3.1, 3.5],
     }
 )
 dfEcoObs.index.name = "wb"
@@ -325,9 +325,9 @@ sparse = dfEcoObs[dfEcoObs.notna().sum(axis=1) == 5]
 dfObs = dfEcoObs.copy()
 dfTypology = dfObs.copy()
 dfTypology["Small"] = [0, 0, 1, 1, 0, 0]  #  effect: 0.2 worse in 1993
-dfNatural = dfTypology.copy()
-dfNatural["Natural"] = [0, 0, 0, 1, 1, 0]  #  effect: 0.1 better in 1993
-cols = ["Small", "Natural"]
+dfDistrict = dfTypology.copy()
+dfDistrict["DK1"] = [0, 0, 0, 1, 1, 0]  #  effect: 0.1 better in 1993
+cols = ["Small", "DK1"]
 years = list(range(1989, 1993 + 1))
 
 # Forward stepwise selection of dummies - CV over subset of sparsely observed streams
