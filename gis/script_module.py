@@ -708,7 +708,7 @@ class Water_Quality:
                 typ = typ.merge(natural, on="wb")
 
                 # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
-                cols = ["Soft bottom", "Natural", "Small"]
+                cols = ["Soft bottom", "Natural", "Large"]
 
             elif j == "lakes":
                 # Convert typology to integers
@@ -796,7 +796,7 @@ class Water_Quality:
             # Merge DataFrame for observed values with DataFrame for dummies
             dfEcoSelected = dfEco.merge(typ[cols], on="wb")  #  selected predictors
 
-            # Iterative imputer using BayesianRidge() estimator with increased tolerance
+            # Multivariate imputer using BayesianRidge estimator w. increased tolerance
             imputer = IterativeImputer(tol=1e-1, max_iter=100, random_state=0)
 
             # Fit imputer, transform data iteratively, and limit to years of interest

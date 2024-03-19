@@ -307,28 +307,28 @@ with open("output/streams_VP_stats.tex", "w") as tf:
 
 
 ########################################################################################
-#   2. Multivariate feature imputation (note: Forward Stepwise Selection takes ~5 days)
+#   2. Subset selection (note: CV takes ~30 hours for sparse + ~50 h for all observed)
 ########################################################################################
 # # Example data for testing Forward Stepwise Selection with LOO-CV (takes ~5 seconds)
-dfEcoObs = pd.DataFrame(
-    {
-        1988: [0.5, 1.0, 1.5, 2.0, np.nan, 3.0],
-        1989: [0.6, 1.1, 1.6, np.nan, 2.6, 3.1],
-        1990: [0.7, 1.2, np.nan, 2.2, 2.7, 3.2],
-        1991: [0.8, np.nan, 1.8, 2.3, 2.8, 3.3],
-        1992: [np.nan, 1.4, 1.9, 2.4, 2.9, 3.4],
-        1993: [1.0, 1.5, 1.8, 2.4, 3.1, 3.5],
-    }
-)
-dfEcoObs.index.name = "wb"
-sparse = dfEcoObs[dfEcoObs.notna().sum(axis=1) == 5]
-dfObs = dfEcoObs.copy()
-dfTypology = dfObs.copy()
-dfTypology["Small"] = [0, 0, 1, 1, 0, 0]  #  effect: 0.2 worse in 1993
-dfDistrict = dfTypology.copy()
-dfDistrict["DK1"] = [0, 0, 0, 1, 1, 0]  #  effect: 0.1 better in 1993
-cols = ["Small", "DK1"]
-years = list(range(1989, 1993 + 1))
+# dfEcoObs = pd.DataFrame(
+#     {
+#         1988: [0.5, 1.0, 1.5, 2.0, np.nan, 3.0],
+#         1989: [0.6, 1.1, 1.6, np.nan, 2.6, 3.1],
+#         1990: [0.7, 1.2, np.nan, 2.2, 2.7, 3.2],
+#         1991: [0.8, np.nan, 1.8, 2.3, 2.8, 3.3],
+#         1992: [np.nan, 1.4, 1.9, 2.4, 2.9, 3.4],
+#         1993: [1.0, 1.5, 1.8, 2.4, 3.1, 3.5],
+#     }
+# )
+# dfEcoObs.index.name = "wb"
+# sparse = dfEcoObs[dfEcoObs.notna().sum(axis=1) == 5]
+# dfObs = dfEcoObs.copy()
+# dfTypology = dfObs.copy()
+# dfTypology["Small"] = [0, 0, 1, 1, 0, 0]  #  effect: 0.2 worse in 1993
+# dfDistrict = dfTypology.copy()
+# dfDistrict["DK1"] = [0, 0, 0, 1, 1, 0]  #  effect: 0.1 better in 1993
+# cols = ["Small", "DK1"]
+# years = list(range(1989, 1993 + 1))
 
 # Forward stepwise selection of dummies - CV over subset of sparsely observed streams
 kwargs = {"data": dfObs, "dfDummies": dfDistrict, "years": years}  #  shared arguments
@@ -337,6 +337,8 @@ selectedSparse, scoresSparse, statusSparse = stepwise_selection(
 )
 scoresSparse
 statusSparse
+
+selectedSparse = ["Soft bottom", "Natural", "Large"]
 
 # Selection of dummies from the dummies selected above - CV over all observed values
 selected, scores, status = stepwise_selection(

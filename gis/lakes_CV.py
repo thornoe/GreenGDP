@@ -28,7 +28,7 @@ from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
 from sklearn.metrics import accuracy_score
 
-# Iterative imputer using the BayesianRidge() estimator with increased tolerance
+# Multivariate imputer using BayesianRidge() estimator with increased tolerance
 imputer = IterativeImputer(tol=1e-1, max_iter=100, random_state=0)
 
 # Color-blind-friendly color scheme for qualitative data by Tol: personal.sron.nl/~pault
