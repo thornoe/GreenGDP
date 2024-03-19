@@ -169,7 +169,189 @@ c.years + ["Basis"] = c.years + ["Basis"]
 
 
 ########################################################################################
-#   3.b Sandbox: Run the functions line-by-line
+#   4.a Stats for all categories j: Shore length and share of it where eco status < Good
+########################################################################################
+# Set up DataFrame of shore length for each category j ∈ {coastal, lakes, streams}
+# shores = pd.DataFrame(shores_j)
+# shores["shores all j"] = shores.sum(axis=1, skipna=True)
+# shores.to_csv("output\\all_VP_shore length.csv")  #  skip if reading it instead
+shores = pd.read_csv("output\\all_VP_shore length.csv", index_col=0)
+
+# Total shore length of each category j
+shoresTotal = shores.sum()
+
+# Dictionary of stats for observed, imputed, and imputed with moving average respectively
+stats_method = {
+    "obs_LessThanGood": stats_obs_j,
+    "imp_LessThanGood": stats_imp_j,
+    "imp_LessThanGood_MA": stats_imp_MA_j,
+}
+
+for key, dict in stats_method.items():
+    # Set up df of share < good status for each category j ∈ {coastal, lakes, streams}
+    stats = pd.DataFrame(dict)
+
+    # Plot share of category j with less than good ecological status by year
+    for format in (".pdf", ".png"):
+        f1 = (
+            stats[list(range(year_first + 1, year_last + 1))]
+            .plot(ylabel="Share of category with less than good ecological status")
+            .get_figure()
+        )
+        f1.savefig("output\\all_eco_" + key + format, bbox_inches="tight")
+
+    # Calculate share < eco good status across all categories j weighted by shore length
+    stats["all j"] = (
+        stats["coastal"] * shoresTotal["coastal"]
+        + stats["lakes"] * shoresTotal["lakes"]
+        + stats["streams"] * shoresTotal["streams"]
+    ) / shoresTotal["shores all j"]
+
+    # Add df including "all j" columns to dictionary of stats by method
+    stats_method[key] = stats
+
+# Concatenate stats for observed, imputed, and imputed with moving average respectively
+dfStats = pd.concat(stats_method, axis=1)
+dfStats.to_excel("output\\all_eco_LessThanGood.xlsx")  #  manually delete row 3 in Excel
+
+########################################################################################
+#   4.b Nominal cost of pollution and investment in water quality for national accounts
+########################################################################################
+# Concatenate DataFrames for each category j ∈ {coastal, lakes, streams}
+# df_BT = pd.concat(frames_j)
+# df_BT.index.names = ["j", "t", "v"]
+# df_BT.to_csv("output\\all_eco_imp.csv")  #  skip if reading it instead
+df_BT = pd.read_csv("output\\all_eco_imp.csv", index_col=[0, 1, 2])
+
+# Marginal willingness to pay (MWTP) for improvement of water quality to "Good"
+CWPn_j = c.valuation(df_BT, real=False)
+
+# Investment in water quality (net present value of infinite stream of MWTP for change)
+IVn_j = c.valuation(df_BT, real=False, investment=True)
+
+# Merge cost of pollution and investment value of increase (decrease) in water quality
+nominal = pd.concat([CWPn_j, IVn_j], axis=1)
+nominal.to_excel("output\\all_nominal.xlsx")  # manually Wrap Text row 1 & delete row 3
+
+########################################################################################
+#   4.c Real cost of water pollution and investment in water quality for journal article
+########################################################################################
+# Add adjustment factor due to using unitary income elasticity rather than estimated ε
+df_v = c.valuation(df_BT)
+df_BT_factor = df_BT.copy()
+df_BT_factor["factor"] = df_v["factor"]
+
+# Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices)
+CWP_v = df_v[["CWP"]]
+CWP_j = (
+    CWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
+)
+CWP_j.rename_axis([None, None], axis=1).to_csv("output\\all_cost.csv")  #  save CSV
+f2 = (
+    CWP_j.loc[:, "CWP"]
+    .rename_axis(None, axis=1)
+    .plot(ylabel="Cost of current water pollution (million DKK, 2018 prices)")
+    .get_figure()
+)
+f2.savefig("output\\all_cost.pdf", bbox_inches="tight")  #  save figure as PDF
+
+# Investment Value of water quality improvement in real terms (million DKK, 2018 prices)
+IV_v = c.valuation(df_BT, investment=True)
+IV_j = IV_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
+IV_j.rename_axis([None, None], axis=1).to_csv("output\\all_investment.csv")  #  save CSV
+f3 = (
+    IV_j.loc[:, "IV"]
+    .rename_axis(None, axis=1)
+    .plot(
+        kind="bar",
+        ylabel="Investment in water quality improvement (million DKK, 2018 prices)",
+    )
+    .get_figure()
+)
+f3.savefig("output\\all_investment.pdf", bbox_inches="tight")  #  save figure as PDF
+
+# Overview using real prices and the same declining discount rate for all years
+CWP_j.mean()  #  average yearly cost of water pollution
+IV_j.mean()  #  average yearly investment value in better (or worse) water quality
+
+
+########################################################################################
+#   5. Decompose development by holding everything else equal at 1990 level
+########################################################################################
+# create d as a transformation of the DataFrame dfBT with multiindex ["j", "t", "v"], such that each row ["j", "t", "v"] is replaced by the row ["j", 1990, "v"] if j != driver
+dfBT = df_BT.copy()
+driver = "lakes"
+nominal
+
+
+def replace_row(row):
+    j, t, v = row.name
+    if j != driver:
+        return dfBT.loc[(j, 1990, v)]
+    else:
+        return row
+
+
+# Fix remaining variables at 1990 level
+df = dfBT.apply(replace_row, axis=1)
+dfBT.loc[("streams", 1990)]
+
+# Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices)
+CWP = c.valuation(df).groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)
+CWP_j = (
+    CWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
+)
+
+
+CWP_j.rename_axis([None, None], axis=1).to_csv("output\\all_cost.csv")  #  save CSV
+
+
+IV = IV_j.sum(axis=1)  #  sum over j
+IV.mean()  #  average investment value over the period
+
+
+# Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices)
+CWP_v = c.valuation(df_BT)
+CWP_j = (
+    CWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)
+)  #  sum over v
+CWP_j.rename_axis([None, None], axis=1).to_csv("output\\all_cost.csv")
+f2 = (
+    CWP_j.loc[:, "CWP"]
+    .rename_axis(None, axis=1)
+    .plot(ylabel="Cost of current water pollution (million DKK, 2018 prices)")
+    .get_figure()
+)
+f2.savefig("output\\all_cost.pdf", bbox_inches="tight")
+
+
+# MultiIndex: see https://kanoki.org/2022/07/25/pandas-select-slice-rows-columns-multiindex-dataframe/#using-get_level_values
+Dem = Dem[Dem.index.get_level_values("v").isin(shores_v)]
+
+########################################################################################
+#   6. Robustness check: Treat DK as a single catchment area
+########################################################################################
+
+
+### DUMMY FOR AGE>45 BY CATCHMENT AREA
+
+# Average share of catchment areas with mean age > 45 years weighted by no. persons
+df = pd.DataFrame(
+    df.groupby(["aar"]).apply(lambda x: np.average(x["D_age"], weights=x["antal_pers"]))
+)
+
+# Extrapolate using a linear trend
+df = df.append(
+    pd.DataFrame([np.nan, np.nan, np.nan], index=[1989, 2019, 2020])
+).sort_index()
+kwargs = dict(method="index", fill_value="extrapolate", limit_direction="both")
+df.interpolate(**kwargs, inplace=True)
+
+# Save to CSV
+df.to_csv("output\\" + "D_age.csv")
+
+########################################################################################
+#   7. Sandbox: Run the functions line-by-line
 ########################################################################################
 arcpy.ListFeatureClasses()
 for fc in arcpy.ListFeatureClasses():
@@ -182,7 +364,6 @@ arcpy.Exists(fcStations)
 for field in arcpy.ListFields(j):
     field.name, field.type, field.length
 arcpy.Delete_management(j)
-
 
 
 # def observed_indicator(self, j, radius=15):
@@ -886,71 +1067,6 @@ frames_j[j] = dfBT
 shores_j[j] = shores_v
 
 
-########################################################################################
-#   4.a Stats for all categories j: Shore length and share of it where eco status < Good
-########################################################################################
-# Set up DataFrame of shore length for each category j ∈ {coastal, lakes, streams}
-# shores = pd.DataFrame(shores_j)
-# shores["shores all j"] = shores.sum(axis=1, skipna=True)
-# shores.to_csv("output\\all_VP_shore length.csv")  #  skip if reading it instead
-shores = pd.read_csv("output\\all_VP_shore length.csv", index_col=0)
-
-# Total shore length of each category j
-shoresTotal = shores.sum()
-
-# Dictionary of stats for observed, imputed, and imputed with moving average respectively
-stats_method = {
-    "obs_LessThanGood": stats_obs_j,
-    "imp_LessThanGood": stats_imp_j,
-    "imp_LessThanGood_MA": stats_imp_MA_j,
-}
-
-for key, dict in stats_method.items():
-    # Set up df of share < good status for each category j ∈ {coastal, lakes, streams}
-    stats = pd.DataFrame(dict)
-
-    # Plot share of category j with less than good ecological status by year
-    for format in (".pdf", ".png"):
-        f1 = (
-            stats[list(range(year_first + 1, year_last + 1))]
-            .plot(ylabel="Share of category with less than good ecological status")
-            .get_figure()
-        )
-        f1.savefig("output\\all_eco_" + key + format, bbox_inches="tight")
-
-    # Calculate share < eco good status across all categories j weighted by shore length
-    stats["all j"] = (
-        stats["coastal"] * shoresTotal["coastal"]
-        + stats["lakes"] * shoresTotal["lakes"]
-        + stats["streams"] * shoresTotal["streams"]
-    ) / shoresTotal["shores all j"]
-
-    # Add df including "all j" columns to dictionary of stats by method
-    stats_method[key] = stats
-
-# Concatenate stats for observed, imputed, and imputed with moving average respectively
-dfStats = pd.concat(stats_method, axis=1)
-dfStats.to_excel("output\\all_eco_LessThanGood.xlsx")  #  manually delete row 3 in Excel
-
-########################################################################################
-#   4.b Nominal cost of pollution and investment in water quality for national accounts
-########################################################################################
-# Concatenate DataFrames for each category j ∈ {coastal, lakes, streams}
-# df_BT = pd.concat(frames_j)
-# df_BT.index.names = ["j", "t", "v"]
-# df_BT.to_csv("output\\all_eco_imp.csv")  #  skip if reading it instead
-df_BT = pd.read_csv("output\\all_eco_imp.csv", index_col=[0, 1, 2])
-
-# Marginal willingness to pay (MWTP) for improvement of water quality to "Good"
-CWPn_j = c.valuation(df_BT, real=False)
-
-# Investment in water quality (net present value of infinite stream of MWTP for change)
-IVn_j = c.valuation(df_BT, real=False, investment=True)
-
-# Merge cost of pollution and investment value of increase (decrease) in water quality
-nominal = pd.concat([CWPn_j, IVn_j], axis=1)
-nominal.to_excel("output\\all_nominal.xlsx")  # manually Wrap Text row 1 & delete row 3
-
 
 def BT(df, elast=1):
     """Apply Benefit Transfer equation from meta study (Zandersen et al., 2022)"""
@@ -968,6 +1084,7 @@ def BT(df, elast=1):
     # Real MWTP per household (DKK, 2018 prices) using the meta study variance
     MWTP = np.exp(lnMWTP + (0.136 + 0.098) / 2)  #  variance components
     return MWTP
+
 
 
 # def valuation(self, dfBT, real=True, investment=False, factor=False):
@@ -1103,120 +1220,3 @@ else:
     )
 
 # return grouped  #  in prices of current year and preceding year respectively
-
-########################################################################################
-#   4.c Real cost of water pollution and investment in water quality for journal article
-########################################################################################
-# Add adjustment factor due to using unitary income elasticity rather than estimated ε
-df_v = c.valuation(df_BT)
-df_BT_factor = df_BT.copy()
-df_BT_factor["factor"] = df_v["factor"]
-
-# Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices)
-CWP_v = df_v[["CWP"]]
-CWP_j = (
-    CWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
-)
-CWP_j.rename_axis([None, None], axis=1).to_csv("output\\all_cost.csv")  #  save CSV
-f2 = (
-    CWP_j.loc[:, "CWP"]
-    .rename_axis(None, axis=1)
-    .plot(ylabel="Cost of current water pollution (million DKK, 2018 prices)")
-    .get_figure()
-)
-f2.savefig("output\\all_cost.pdf", bbox_inches="tight")  #  save figure as PDF
-
-# Investment Value of water quality improvement in real terms (million DKK, 2018 prices)
-IV_v = c.valuation(df_BT, investment=True)
-IV_j = IV_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
-IV_j.rename_axis([None, None], axis=1).to_csv("output\\all_investment.csv")  #  save CSV
-f3 = (
-    IV_j.loc[:, "IV"]
-    .rename_axis(None, axis=1)
-    .plot(
-        kind="bar",
-        ylabel="Investment in water quality improvement (million DKK, 2018 prices)",
-    )
-    .get_figure()
-)
-f3.savefig("output\\all_investment.pdf", bbox_inches="tight")  #  save figure as PDF
-
-# Overview using real prices and the same declining discount rate for all years
-CWP_j.mean()  #  average yearly cost of water pollution
-IV_j.mean()  #  average yearly investment value in better (or worse) water quality
-
-
-########################################################################################
-#   5. Decompose development by holding everything else equal at 1990 level
-########################################################################################
-# create d as a transformation of the DataFrame dfBT with multiindex ["j", "t", "v"], such that each row ["j", "t", "v"] is replaced by the row ["j", 1990, "v"] if j != driver
-dfBT = df_BT.copy()
-driver = "lakes"
-nominal
-
-
-def replace_row(row):
-    j, t, v = row.name
-    if j != driver:
-        return dfBT.loc[(j, 1990, v)]
-    else:
-        return row
-
-
-# Fix remaining variables at 1990 level
-df = dfBT.apply(replace_row, axis=1)
-dfBT.loc[("streams", 1990)]
-
-# Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices)
-CWP = c.valuation(df).groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)
-CWP_j = (
-    CWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
-)
-
-
-CWP_j.rename_axis([None, None], axis=1).to_csv("output\\all_cost.csv")  #  save CSV
-
-
-IV = IV_j.sum(axis=1)  #  sum over j
-IV.mean()  #  average investment value over the period
-
-
-# Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices)
-CWP_v = c.valuation(df_BT)
-CWP_j = (
-    CWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)
-)  #  sum over v
-CWP_j.rename_axis([None, None], axis=1).to_csv("output\\all_cost.csv")
-f2 = (
-    CWP_j.loc[:, "CWP"]
-    .rename_axis(None, axis=1)
-    .plot(ylabel="Cost of current water pollution (million DKK, 2018 prices)")
-    .get_figure()
-)
-f2.savefig("output\\all_cost.pdf", bbox_inches="tight")
-
-
-# MultiIndex: see https://kanoki.org/2022/07/25/pandas-select-slice-rows-columns-multiindex-dataframe/#using-get_level_values
-Dem = Dem[Dem.index.get_level_values("v").isin(shores_v)]
-
-########################################################################################
-#   6. Robustness check: Treat DK as a single catchment area
-########################################################################################
-
-
-### DUMMY FOR AGE>45 BY CATCHMENT AREA
-
-# Average share of catchment areas with mean age > 45 years weighted by no. persons
-df = pd.DataFrame(
-    df.groupby(["aar"]).apply(lambda x: np.average(x["D_age"], weights=x["antal_pers"]))
-)
-
-# Extrapolate using a linear trend
-df = df.append(
-    pd.DataFrame([np.nan, np.nan, np.nan], index=[1989, 2019, 2020])
-).sort_index()
-kwargs = dict(method="index", fill_value="extrapolate", limit_direction="both")
-df.interpolate(**kwargs, inplace=True)
-
-# Save to CSV
-df.to_csv("output\\" + "D_age.csv")

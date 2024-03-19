@@ -69,6 +69,7 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False
     """Forward stepwise selection of predictors p to include in the model."""
     predictors = ["No dummies"] + dummies  #  list of possible predictors to include
     selected = []  #  empty list for storing selected predictors
+    selected = ["Small"]  #  overwrite list for storing already selected predictors
     current_score, best_new_score = 0.0, 0.0  #  initial scores
     prefixes = ["streams_eco_imp_accuracy", "streams_eco_imp_LessThanGood"]  # CSV names
 
@@ -337,8 +338,6 @@ selectedSparse, scoresSparse, statusSparse = stepwise_selection(
 )
 scoresSparse
 statusSparse
-
-selectedSparse = ["Soft bottom", "Natural", "Large"]
 
 # Selection of dummies from the dummies selected above - CV over all observed values
 selected, scores, status = stepwise_selection(
