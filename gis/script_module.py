@@ -810,10 +810,12 @@ class Water_Quality:
             dfImpMA = dfImp.T.rolling(window=5, min_periods=3, center=True).mean().T
 
             # Stats if converting imputed status to categorical scale ∈ {0, 1, 2, 3, 4}
-            impStats = self.ecological_status(j, dfImp, dfVP, "imp", index)
+            dfImp, impStats = self.ecological_status(j, dfImp, dfVP, "imp", index)
 
             # Stats if converting moving average to categorical scale ∈ {0, 1, 2, 3, 4}
-            impStatsMA = self.ecological_status(j, dfImpMA, dfVP, "imp_MA", index)
+            dfImpMA, impStatsMA = self.ecological_status(
+                j, dfImpMA, dfVP, "imp_MA", index
+            )
 
             return dfImp[self.years], dfImpMA[self.years], impStats, impStatsMA
 
@@ -856,11 +858,11 @@ class Water_Quality:
                 for t in dfEco.columns:
                     # Convert imp status to categorical scale w. equidistant thresholds
                     conditions = [
-                        dfEco[t] < 0.5,  # Bad
-                        (dfEco[t] >= 0.5) & (dfEco[t] < 1.5),  #  Poor
-                        (dfEco[t] >= 1.5) & (dfEco[t] < 2.5),  #  Moderate
-                        (dfEco[t] >= 2.5) & (dfEco[t] < 3.5),  #  Good
-                        dfEco[t] >= 3.5,  #  High
+                        dfEco[t] < 1,  # Bad
+                        (dfEco[t] >= 1) & (dfEco[t] < 2),  #  Poor
+                        (dfEco[t] >= 2) & (dfEco[t] < 3),  #  Moderate
+                        (dfEco[t] >= 3) & (dfEco[t] < 4),  #  Good
+                        dfEco[t] >= 4,  #  High
                     ]
                     # Ecological status as a categorical index from Bad to High quality
                     dfEco[t] = np.select(conditions, [0, 1, 2, 3, 4], default=np.nan)
@@ -944,7 +946,7 @@ class Water_Quality:
 
                 return dfEco[dfEcoObs.columns], stats["not good"], indexSorted
 
-            return stats["not good"]
+            return dfEco[dfEcoObs.columns], stats["not good"]
 
         except:
             # Report severe error messages
