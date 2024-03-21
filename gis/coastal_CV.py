@@ -125,11 +125,11 @@ def stepwise_selection(subset, dummies, data, dfDummies, years):
                 imputer.fit_transform(np.array(df)), index=df.index, columns=df.columns
             )
 
-            # Subset to the waterbodies included in the subset
+            # Subset to the waterbodies included in the subset and drop predictors
             dfImpSubset = dfImp.loc[subset.index, subset.columns]
 
-            # Store predicted share with less than good ecological status
-            sta[df.name] = (dfImpSubset[subset.columns] < 2.5).sum() / len(subset)
+            # Predicted share with less than good ecological status for relevant years
+            sta[df.name] = (dfImpSubset[years] < 2.5).sum() / len(subset)
 
             # loop over each year t and waterbody i in (subset of) observed waterbodies
             for t in tqdm.tqdm(years):  #  time each model and report progress in years
@@ -278,7 +278,7 @@ d.loc[("Obs of n", "Obs of all", "All in VP3"), :].T  #  report in percent
 
 
 ########################################################################################
-#   2. Multivariate feature imputation (note: Forward Stepwise Selection takes ~1 day)
+#   2. Subset selection of dummies for multivariate imputation (note: CV takes ~ hours)
 ########################################################################################
 # Forward stepwise selection of dummies - CV over all observed values in coastal waters
 kwargs = {

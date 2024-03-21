@@ -103,11 +103,11 @@ def stepwise_selection(subset, dummies, data, dfDummies, years):
                 imputer.fit_transform(np.array(df)), index=df.index, columns=df.columns
             )
 
-            # Subset to the waterbodies included in the subset
+            # Subset to the waterbodies included in the subset and drop predictors
             dfImpSubset = dfImp.loc[subset.index, subset.columns]
 
-            # Store predicted share with less than good ecological status
-            sta[df.name] = (dfImpSubset[subset.columns] < 2.5).sum() / len(subset)
+            # Predicted share with less than good ecological status for relevant years
+            sta[df.name] = (dfImpSubset[years] < 2.5).sum() / len(subset)
 
             # loop over each year t and waterbody i in (subset of) observed waterbodies
             for t in tqdm.tqdm(years):  #  time each model and report progress in years
@@ -133,7 +133,7 @@ def stepwise_selection(subset, dummies, data, dfDummies, years):
                 sco.loc[t, df.name] = accuracy
 
             # Total accuracy weighted by number of observations used for LOO-CV each year
-            for a, b in zip([scores_all, status_all]):
+            for a, b in zip([scores_all, status_all], [sco, sta]):
                 b.loc["Total", df.name] = (b[df.name] * b["n"]).sum() / b["n"].sum()
                 a[df.name] = b[df.name]  #  scores & status by year for all predictors
             scores_total.append(sco.loc["Total", df.name])  #  score for each predictor
@@ -269,7 +269,7 @@ for a, b in zip([dfEcoObs, sparse], [dfDistrict, dfSparse]):
 VPstats  #  overrepresentation of Brown and Saline lakes in sparse (share is ~50% above)
 
 ########################################################################################
-#   2. Multivariate feature imputation (note: Forward Stepwise Selection takes ~6 hours)
+#   2. Subset selection (note: CV takes ~ hours for sparse + ~6h for all observations)
 ########################################################################################
 # # Example data for testing Forward Stepwise Selection with LOO-CV (takes ~5 seconds)
 # dfEcoObs = pd.DataFrame(
