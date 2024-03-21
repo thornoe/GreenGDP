@@ -1,4 +1,4 @@
-# Green GDP: Pollution of the water environment
+# Green GDP: Pollution of water ecosystem services
 This research project estimates the investment in natural capital and cost of pollution of water ecosystem services for the [Green National Accounts](https://susy.ku.dk/research/developing-and-implementing-green-national-accounts-and-the-green-gdp) of Denmark for 1990-2020. 
 
 For more information, see presentation of the ecological status of streams at [ThorNoe.GitHub.io/GreenGDP](https://thornoe.github.io/GreenGDP).
