@@ -99,8 +99,8 @@ def stepwise_selection(subset, dummies, data, dfDummies, years):
     scores_all = scores.copy()  #  scores for all sets of predictors being tested
 
     # DataFrame for storing ecological status by year and calculating weighted average
-    status = pd.DataFrame(subset.count(), index=subset.columns, columns=["n"])
-    status["Obs"] = (subset < 2.5).sum() / status["n"]  #  ecological status < good
+    status = scores.copy()  #  likewise, covers the years in the natural capital account
+    status["Obs"] = (subset[years] < 2.5).sum() / status["n"]  #  eco status < good
     status.loc["Total", "Obs"] = (status["Obs"] * status["n"]).sum() / status["n"].sum()
     status_all = status.copy()  #  eco status for all sets of predictors being tested
 
@@ -252,29 +252,52 @@ dicts = {**dict1, **dict2}
 
 # Dummies for typology
 cols = list(dicts.values())
-cols_names = list(dicts.keys())
+cols_abbreviations = list(dicts.keys())
 
 # Merge DataFrames for typology and observed ecological status
-dfTypology = dfObs.merge(dummies[cols], on="wb")
+dfTypology = dfObs.merge(dummies[cols_abbreviations], on="wb")
 
 # Subset dfTypology to waterbodies where ecological status is observed at least once
 obs = dfTypology.loc[dfEcoObs.notna().any(axis=1)]  #  96 out of 108 waterbodies
 
-# df for storing number of observed coastal waters and yearly distribution by dummies
-d = pd.DataFrame(dfEcoObs.count(), index=dfEcoObs.columns, columns=["n"]).astype(int)
+# Empty dfs for storing yearly share, share by dummy, and basis by dummy respectively
+d = pd.DataFrame(index=dfEcoObs.columns)  #  yearly number of obs and share by dummy
+VPstats = pd.DataFrame(columns=["Observed subset", "All in VP3"])  #  share by dummy
+VPbasis = VPstats.copy()  #  mean basis analysis by dummy
 
 # Yearly distribution of observed coastal waters by typology and district
-for c in cols:
-    d[c] = 100 * obs[obs[c] == 1].count() / obs.count()
-    d.loc["Obs of n", c] = 100 * len(obs[obs[c] == 1]) / len(obs)
-    d.loc["Obs of all", c] = 100 * len(obs[obs[c] == 1]) / len(dfVP)
-    d.loc["All in VP3", c] = 100 * len(dummies[dummies[c] == 1]) / len(dfVP)
-d.loc["Obs of n", "n"] = len(obs)  #  number of waterbodies observed at least once
-d.loc["Obs of all", "n"] = len(dfVP)  #  number of waterbodies in VP3
-d.loc["All in VP3", "n"] = len(dfVP)  #  number of waterbodies in VP3
-d = d.rename(columns=dicts)  #  rename columns to full names
-d.to_csv("output/coastal_VP_stats.csv")  #  save distributions to csv
-d.loc[("Obs of n", "Obs of all", "All in VP3"), :].T  #  report in percent
+for c in cols_abbreviations:
+    d[c] = obs[obs[c] == 1].count() / obs.count()
+    d.loc["All obs", c] = len(obs[obs[c] == 1]) / len(obs)
+    d.loc["All in VP3", c] = len(dummies[dummies[c] == 1]) / len(dummies)
+    VPbasis.loc[c, "Observed subset"] = obs[obs[c] == 1]["Basis"].mean()
+    VPbasis.loc[c, "All in VP3"] = dfTypology[dfTypology[c] == 1]["Basis"].mean()
+d["n"] = dfEcoObs.count().astype(int)  #  number of coastal waters observed each year
+d.loc["All obs", "n"] = len(obs)  #  total number of coastal waters obs at least once
+d.loc["All in VP3", "n"] = len(dfVP)  #  total number coastal waters in VP3
+d = d.rename(columns=dicts)  #  rename columns from abbreviations to full names
+
+# Save descriptive statistics by year to CSV
+d.to_csv("output/coastal_VP_stats_yearly.csv")  #  yearly distributions
+
+# Descriptive statistics by subset
+VPstats["Observed subset"] = d.loc["All obs", :]  # observed at least onces
+VPstats["All in VP3"] = d.loc["All in VP3", :]  #  distribution of all in VP3
+VPstats  #  Kattegat, Belt Sea, Baltic Sea, Water Exchange, Deep, Stratified less obs
+
+# Mean basis analysis by dummy and subset
+VPbasis = VPbasis.rename(index=dicts)  #  rename index from abbreviations to full names
+VPbasis.loc["All", "Observed subset"] = obs["Basis"].mean()  #  for observed subset
+VPbasis.loc["All", "All in VP3"] = dfTypology["Basis"].mean()  #  for all in VP3
+VPbasis.loc["n", :] = VPstats.loc["n", :]  #  number of coastal waters by subset
+VPbasis  #  eco status is higher for X streams, lower for Y
+
+# Save descriptive statistics and mean basis analysis to CSV and LaTeX
+for a, b in zip([VPstats, VPbasis], ["VP_stats", "VP_basis"]):
+    a.to_csv("output/coastal_" + b + ".csv")  #  save means by subset to CSV
+    f = {row: "{:0.0f}".format if row == "n" else "{:0.4f}".format for row in a.index}
+    with open("output/coastal_" + b + ".tex", "w") as tf:
+        tf.write(a.apply(f, axis=1).to_latex())  #  apply formatter and save to LaTeX
 
 
 ########################################################################################
@@ -283,9 +306,9 @@ d.loc[("Obs of n", "Obs of all", "All in VP3"), :].T  #  report in percent
 # Forward stepwise selection of dummies - CV over all observed values in coastal waters
 kwargs = {
     "subset": dfEcoObs,
-    "dummies": cols_names,
+    "dummies": cols_abbreviations,
     "data": dfObs,
-    "dfDummies": dfTypology.rename(columns=dicts),
+    "dfDummies": dfTypology,
     "years": years,
 }
 selected, scores, status = stepwise_selection(**kwargs)
@@ -301,7 +324,7 @@ status
 # status = pd.read_csv("output/coastal_eco_imp_LessThanGood.csv", index_col=0)
 
 # Accuracy score by year and selected predictors
-sco = scores.drop(columns="n").drop("Total")
+sco = scores.drop(columns="n").drop("Total").rename(columns=dicts)
 
 # Bar plot accuracy scores
 f1 = sco.plot(
@@ -309,12 +332,11 @@ f1 = sco.plot(
 ).get_figure()
 f1.savefig("output/coastal_eco_imp_accuracy.pdf", bbox_inches="tight")  #  save PDF
 
-# Coastal waters with less than good ecological status by year and selected predictors
+# Share of streams with less than good ecological status by year and selected predictors
 status.index = status.index.astype(str)  #  convert index to string (to mimic read_csv)
-listYears = [str(t) for t in range(1990, 2020 + 1)]  #  1990 to 2020 as strings
-status_years = status.loc[listYears, :]  #  subset to years in natural capital account
-imp = status_years.drop(columns=["n", "Obs"])  #  imputed status by selected predictors
-obs = status_years[["Obs"]]  #  eco status of coastal waters observed the given year
+status_years = status.drop("1989")  #  subset to years in natural capital account
+imp = status_years.drop(columns=["n", "Obs"]).rename(columns=dicts)  #  selected dummies
+obs = status_years[["Obs"]]  #  ecological status of streams observed the given year
 obs.columns = ["Observed"]  #  rename 'Obs' to 'Observed'
 sta = imp.merge(obs, left_index=True, right_index=True)  #  add Observed as last column
 

@@ -732,7 +732,7 @@ class Water_Quality:
                 typ["Deep"] = np.select(cond4, [1, np.nan], default=0)
 
                 # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
-                cols = ["Saline"]
+                cols = ["Saline", "Brown", "Alkalinity"]
 
             else:  #  coastal waters
                 # Get typology

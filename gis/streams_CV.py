@@ -69,8 +69,6 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False
     """Forward stepwise selection of predictors p to include in the model."""
     predictors = ["No dummies"] + dummies  #  list of possible predictors to include
     selected = []  #  empty list for storing selected predictors
-    predictors = [dummies[-1]]  #  only include the last element in the dummies list
-    selected = dummies[:-1]  #  slice to include all but the last element in dummies
     current_score, best_new_score = 0.0, 0.0  #  initial scores
     prefixes = ["streams_eco_imp_accuracy", "streams_eco_imp_LessThanGood"]  # CSV names
 
@@ -80,8 +78,8 @@ def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False
     scores_all = scores.copy()  #  scores for all sets of predictors being tested
 
     # DataFrame for storing ecological status by year and calculating weighted average
-    status = pd.DataFrame(subset.count(), index=subset.columns, columns=["n"])
-    status["Obs"] = (subset < 2.5).sum() / status["n"]  #  ecological status < good
+    status = scores.copy()  #  likewise, covers the years in the natural capital account
+    status["Obs"] = (subset[years] < 2.5).sum() / status["n"]  #  eco status < good
     status.loc["Total", "Obs"] = (status["Obs"] * status["n"]).sum() / status["n"].sum()
     status_all = status.copy()  #  eco status for all sets of predictors being tested
 
@@ -239,7 +237,7 @@ typ.columns = [
     "Large",
     "Small w. soft bottom",
     "Medium w. soft bottom",
-    "Soft bottom",
+    "Soft bottom",  #  only 1 out of 261 streams in basis analysis but it's not observed
 ]
 
 # List dummies for typology
@@ -261,51 +259,71 @@ distr = pd.get_dummies(dfVP["distr_id"]).astype(int)
 
 # Extend dfNatural with dummy for district DK2 (Sealand, Lolland, Falster, and Møn)
 dfDistrict = dfNatural.merge(distr["DK2"], on="wb")
-dfSparse = dfDistrict.merge(sparse[[]], on="wb")  #  subset w. status observed 1-3 times
-cols.append("DK2")  #  add to list of dummies
+cols.append("DK2")
 
-# Empty DataFrame for storing total distribution by dummies
-VPstats = pd.DataFrame(columns=["Sparse subset", "Observed subset", "All in VP3"])
+# Set up DataFrames for descriptive statistics
+dfSparse = dfDistrict.merge(sparse[[]], on="wb")  #  subset w. status observed 1-3 times
+
+# Empty dfs for storing distribution and mean basis analysis by dummy respectively
+VPstats = pd.DataFrame(
+    columns=["Sparse subset", "Basis analysis", "Observed subset", "All in VP3"]
+)
+VPbasis = VPstats.copy()  #  mean basis analysis by dummy
 
 # Yearly distribution of observed streams by typology and district
-for a, b in zip([dfEcoObs, sparse], [dfDistrict, dfSparse]):
-    # Subset dfDistrict to streams where ecological status is observed at least once
+for a, b in zip([sparse, dfEcoObs], [dfSparse, dfDistrict]):
+    # Subset b (dfDistrict or dfSparse) to streams covered by basis analysis
+    basis = b[b["Basis"].notna()]  #  5825 out of 6703 and 2336 out of 2565 respectively
+
+    # Subset b (dfDistrict or dfSparse) to streams where status is observed at least once
     obs = b.loc[a.notna().any(axis=1)]  #  6151 out of 6703 streams in dfDistrict
 
     # df for storing number of observed streams and yearly distribution by dummies
-    # d = pd.DataFrame(a.count(), index=a.columns, columns=["n"]).astype(int)
     d = pd.DataFrame(index=a.columns)
 
-    # Yearly distribution of observed streams by typology and district
+    # Yearly distribution of observed streams by dummy (typology and district)
     for c in cols:
-        d[c] = b[b[c] == 1].count() / b.count()  #  share w. typology c each year
+        d[c] = b[b[c] == 1].count() / b.count()  #  share w. dummy each year
+        d.loc["All basis", c] = len(basis[basis[c] == 1]) / len(basis)
         d.loc["All obs", c] = len(obs[obs[c] == 1]) / len(obs)
-        d.loc["All in VP3", c] = len(dfDistrict[dfDistrict[c] == 1]) / len(dfVP)
-
-    # Mean ecological status as assessed in basis analysis for VP3
-    d.loc["All obs", "Basis"] = obs["Basis"].mean()  #  streams observed at least once
-    d.loc["All in VP3", "Basis"] = dfDistrict["Basis"].mean()  #  all streams in VP3
+        d.loc["All in VP3", c] = len(b[b[c] == 1]) / len(b)
+        VPbasis.loc[c, "Basis analysis"] = basis[basis[c] == 1]["Basis"].mean()
+        VPbasis.loc[c, "Observed subset"] = obs[obs[c] == 1]["Basis"].mean()
+        VPbasis.loc[c, "All in VP3"] = b[b[c] == 1]["Basis"].mean()
 
     # Number of streams
     d["n"] = a.count().astype(int)  #  number of streams observed each year
+    d.loc["All basis", "n"] = len(basis)  #  number of streams covered by basis analysis
     d.loc["All obs", "n"] = len(obs)  #  number of streams observed at least once
     d.loc["All in VP3", "n"] = len(dfVP)  #  number of streams in VP3
 
-    if b is dfSparse:
-        VPstats["Sparse subset"] = d.loc["All obs", :]  #  only observed 1-3 times
-        d = d.rename(index={"All obs": "All sparse"})  #  specify it's the sparse subset
-        d.to_csv("output/streams_VP_stats_yearly_sparse.csv")  #  save yearly distribut.
-    else:
-        VPstats["Observed subset"] = d.loc["All obs", :]  # observed at least once
-        VPstats["All in VP3"] = d.loc["All in VP3", :]  #  distribution of all VP3
-        d.to_csv("output/streams_VP_stats_yearly.csv")  #  save yearly distributions
-VPstats  #  sparse has underrepresentation of Large and DK2 (share < 50% of average VP3)
+    # Mean ecological status as assessed in basis analysis for VP3 by dummy and subset
+    VPbasis.loc["All", "Basis analysis"] = basis["Basis"].mean()  #  for basis analysis
+    VPbasis.loc["All", "Observed subset"] = obs["Basis"].mean()  #  for observed subset
+    VPbasis.loc["All", "All in VP3"] = b["Basis"].mean()  #  for all streams in VP3
 
-# Save descriptive statistics by subset
-VPstats.to_csv("output/streams_VP_stats.csv")  #  save means to CSV
-f = {row: "{:0.0f}".format if row == "n" else "{:0.4f}".format for row in VPstats.index}
-with open("output/streams_VP_stats.tex", "w") as tf:
-    tf.write(VPstats.apply(f, axis=1).to_latex())  #  apply formatter and save to LaTeX
+    if a is sparse:
+        VPstats["Sparse subset"] = d.loc["All obs", :]  #  only observed 1-3 times
+        VPbasis["Sparse subset"] = VPbasis["Observed subset"]  #  observed 1-3 times
+        d = d.rename(index={"All basis": "Basis sparse"})  #  basis ∩ sparse subset
+        d = d.rename(index={"All obs": "All sparse"})  #  the sparse subset
+        d = d.drop("All in VP3")  #  only report distribution for the sparse subset
+        d.to_csv("output/streams_VP_stats_yearly_sparse.csv")  #  yearly distributions
+    else:
+        VPstats["Basis analysis"] = d.loc["All basis", :]  # covered by basis analysis
+        VPstats["Observed subset"] = d.loc["All obs", :]  # observed at least onces
+        VPstats["All in VP3"] = d.loc["All in VP3", :]  #  distribution of all in VP3
+        VPbasis.loc["n", :] = VPstats.loc["n", :]  #  number of streams by subset
+        d.to_csv("output/streams_VP_stats_yearly.csv")  #  save yearly distributions
+VPstats  #  underrepresentation of Large and DK2 in sparse (share < 50% of average VP3)
+VPbasis  #  ecological status is higher for Large streams but lower for streams in DK2
+
+# Save descriptive statistics and mean basis analysis to CSV and LaTeX
+for a, b in zip([VPstats, VPbasis], ["VP_stats", "VP_basis"]):
+    a.to_csv("output/streams_" + b + ".csv")  #  save means by subset to CSV
+    f = {row: "{:0.0f}".format if row == "n" else "{:0.4f}".format for row in a.index}
+    with open("output/streams_" + b + ".tex", "w") as tf:
+        tf.write(a.apply(f, axis=1).to_latex())  #  apply formatter and save to LaTeX
 
 
 ########################################################################################
@@ -366,8 +384,7 @@ f1.savefig("output/streams_eco_imp_accuracy.pdf", bbox_inches="tight")  #  save 
 
 # Share of streams with less than good ecological status by year and selected predictors
 status.index = status.index.astype(str)  #  convert index to string (to mimic read_csv)
-listYears = [str(t) for t in range(1990, 2020 + 1)]  #  1990 to 2020 as strings
-status_years = status.loc[listYears, :]  #  subset to years in natural capital account
+status_years = status.drop("1989")  #  subset to years in natural capital account
 imp = status_years.drop(columns=["n", "Obs"])  #  imputed status by selected predictors
 obs = status_years[["Obs"]]  #  ecological status of streams observed the given year
 obs.columns = ["Observed"]  #  rename 'Obs' to 'Observed'

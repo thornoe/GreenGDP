@@ -583,7 +583,7 @@ elif j == "lakes":
     cond4 = [typ["type"].isin(np.arange(2, 17, 2)), typ["type"] == 17]
     typ["Deep"] = np.select(cond4, [1, np.nan], default=0)
     # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
-    cols = ["Saline"]
+    cols = ["Saline", "Brown", "Alkalinity"]
 else:  #  coastal waters
     # Get typology
     typ = dfVP[["ov_typ"]].copy()
