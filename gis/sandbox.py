@@ -633,7 +633,7 @@ else:  #  coastal waters
     dicts = {**dict1, **dict2}  #  combine the dictionaries
     typ = typ.rename(columns=dicts)  #  rename columns to full names
     # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
-    cols = ["Sediment", "Deep"]
+    cols = ['Water exchange', 'Belt Sea', 'Kattegat', 'North Sea', 'Sediment', 'North Sea fjord', 'Baltic Sea', 'Fjord']
 
 # Merge DataFrame for observed values with DataFrame for dummies
 dfEcoSelected = dfEco.merge(typ[cols], on="wb")  #  with selected predictors
@@ -1087,14 +1087,13 @@ def BT(df, elast=1):
 
 
 
-# def valuation(self, dfBT, real=True, investment=False, factor=False):
+# def valuation(self, dfBT, real=True, investment=False):
 """Valuation as either Cost of Water Pollution (CWP) or Investment Value (IV).
 If not set to return real values (2018 prices), instead returns values in the prices of both the current year and the preceding year (for year-by-year chain linking)."""
 # Copy DataFrame with the variables needed for the benefit transfer equation
 df = df_BT.copy()
 real = False
-investment = True
-factor = False
+investment = False
 
 # Define a small constant to avoid RuntimeWarning due to taking the log of 0
 epsilon = 1e-6  #  a millionth part
@@ -1141,16 +1140,13 @@ kwargs = dict(how="left", left_index=True, right_index=True)
 df1 = df.merge(CPI_NPV, **kwargs)
 df1["unityMWTP"] = BT(df1)  #  MWTP assuming unitary income elasticity
 
-if factor is False:
-    # Calculate factor that MWTP is increased by if using estimated income ε
-    df2018 = df1[df1.index.get_level_values("t") == 2018].copy()
-    df2018["elastMWTP"] = BT(df2018, elast=1.453)  #  meta reg income ε
-    df2018["factor"] = df2018["elastMWTP"] / df2018["unityMWTP"]
-    df2018 = df2018.droplevel("t")
-    df2 = df1.merge(df2018[["factor"]], **kwargs)
-    df2 = df2.reorder_levels(["j", "t", "v"]).sort_index()
-else:
-    df2 = df1.copy()
+# Calculate factor that MWTP is increased by if using estimated income ε
+df2018 = df1[df1.index.get_level_values("t") == 2018].copy()
+df2018["elastMWTP"] = BT(df2018, elast=1.453)  #  meta reg income ε
+df2018["factor"] = df2018["elastMWTP"] / df2018["unityMWTP"]
+df2018 = df2018.droplevel("t")
+df2 = df1.merge(df2018[["factor"]], **kwargs)
+df2 = df2.reorder_levels(["j", "t", "v"]).sort_index()
 
 # Adjust with factor of actual ε over unitary ε; set MWTP to 0 for certain Q
 df2["MWTP"] = df2["unityMWTP"] * df2["factor"] * df2["nonzero"]
@@ -1175,10 +1171,7 @@ if investment is True:
         df2["IV"] = df2["CWP"]  #  million DKK (2018 prices)
 #         return df2[["IV"]]  #  return real investment value by j, t, and v
 # if real is True:
-#     if factor is True:
-#         return df2[["CWP"]]  #  real cost of water pollution by j, t, v
-#     else:
-#         return df2  #  return full df to use df2["factor"] for decomposition
+#     return df2[["CWP"]]  #  real cost of water pollution by j, t, v
 
 df2[df2["nonzero"] == 0]
 df2[(df2.index.get_level_values("j") == "coastal") & (df2["nonzero"] == 0)]
@@ -1199,22 +1192,22 @@ grouped = (
     .rename_axis([None, None], axis=1)
 )
 
-if investment is False:
-    # Rename nominal CWP in prices of current year, and preceding year respectively
-    grouped.columns = grouped.columns.set_levels(
-        [
-            "Cost (current year's prices, million DKK)",
-            "Cost (preceding year's prices, million DKK)",
-        ],
-        level=0,
-    )
-
-else:
+if investment is True:
     # Rename nominal IV in prices of current year, and preceding year respectively
     grouped.columns = grouped.columns.set_levels(
         [
             "Investment value (current year's prices, million DKK)",
             "Investment value (preceding year's prices, million DKK)",
+        ],
+        level=0,
+    )
+
+else:
+    # Rename nominal CWP in prices of current year, and preceding year respectively
+    grouped.columns = grouped.columns.set_levels(
+        [
+            "Cost (current year's prices, million DKK)",
+            "Cost (preceding year's prices, million DKK)",
         ],
         level=0,
     )

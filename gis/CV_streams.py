@@ -1,7 +1,7 @@
 """
-Name:       lakes_CV.py
+Name:       streams_CV.py
 
-Label:      Impute missing values in longitudinal data on ecological status of lakes.
+Label:      Impute missing values in longitudinal data on ecological status of streams.
 
 Summary:    ThorNoe.GitHub.io/GreenGDP explains the overall approach and methodology.
 
@@ -28,8 +28,8 @@ from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
 from sklearn.metrics import accuracy_score
 
-# Multivariate imputer using BayesianRidge() estimator with increased tolerance
-imputer = IterativeImputer(tol=1e-1, max_iter=1000, random_state=0)
+# Iterative imputer using the BayesianRidge() estimator with increased tolerance
+imputer = IterativeImputer(tol=1e-1, max_iter=100, random_state=0)
 
 # Color-blind-friendly color scheme for qualitative data by Tol: personal.sron.nl/~pault
 colors = {
@@ -37,7 +37,7 @@ colors = {
     "cyan": "#66CCEE",
     "green": "#228833",
     "yellow": "#CCBB44",
-    "grey": "#BBBBBB",  #  moved up to be used for ecological status of observed lakes
+    "grey": "#BBBBBB",  #  moved up to be used for ecological status of observed streams
     "red": "#EE6677",
     "purple": "#AA3377",
 }
@@ -45,11 +45,11 @@ colors = {
 # Set the default property-cycle and figure size for pyplots
 color_cycler = cycler(color=list(colors.values()))  #  color cycler with 7 colors
 linestyle_cycler = cycler(linestyle=["-", "--", "-.", ":", "-", "--", ":"])  #  7 styles
-plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
+plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))  #  set color and linestyle
 plt.rc("figure", figsize=[10, 6.2])  #  golden ratio
 
 
-# Function for accuracy score of predicted ecological status
+# Function for accuracy score of predicted fauna class
 def AccuracyScore(y_true, y_pred):
     """Convert continuous prediction of ecological status to categorical index and return accuracy score, i.e., the share of observed lakes each year where predicted ecological status matches the true ecological status (which LOO-CV omits from the dataset before applying imputation)."""
     eco_true, eco_pred = [], []  #  empy lists for storing transformed observations
@@ -65,18 +65,19 @@ def AccuracyScore(y_true, y_pred):
     return accuracy_score(eco_true[0], eco_pred[0])
 
 
-def stepwise_selection(subset, dummies, data, dfDummies, years):
+def stepwise_selection(subset, dummies, data, dfDummies, years, select_all=False):
     """Forward stepwise selection of predictors p to include in the model."""
     predictors = ["No dummies"] + dummies  #  list of possible predictors to include
     selected = []  #  empty list for storing selected predictors
     current_score, best_new_score = 0.0, 0.0  #  initial scores
+    prefixes = ["streams_eco_imp_accuracy", "streams_eco_imp_LessThanGood"]  # CSV names
 
-    # DataFrames for storing accuracy scores by year and calculating weighted average
+    # DataFrame for storing accuracy scores by year and calculating weighted average
     scores = pd.DataFrame(subset.count(), index=years, columns=["n"]).astype(int)
     scores.loc["Total", "n"] = np.nan  #  row to calculate weighted average of scores
     scores_all = scores.copy()  #  scores for all sets of predictors being tested
 
-    # DataFrames for storing ecological status by year and calculating weighted average
+    # DataFrame for storing ecological status by year and calculating weighted average
     status = scores.copy()  #  likewise, covers the years in the natural capital account
     status["Obs"] = (subset[years] < 2.5).sum() / status["n"]  #  eco status < good
     status.loc["Total", "Obs"] = (status["Obs"] * status["n"]).sum() / status["n"].sum()
@@ -143,43 +144,60 @@ def stepwise_selection(subset, dummies, data, dfDummies, years):
             if p == "No dummies":
                 break  #  save baseline model before stepwise selection of dummies
 
-        best_new_score = max(scores_total)  #  best score
+            elif select_all is True:
+                break  #  proceed to select every predictor in the order they are listed
 
-        if best_new_score > current_score:
+        best_new_score = max(scores_total)  #  best accuracy score among predictors
+
+        if select_all is True:
+            current_score = best_new_score  #  update current score to continue process
+
+            # Move the given dummy from the list of predictors to the list of selected
+            selected.append(predictors.pop(0))
+
+            # Save scores and status by year for every set of predictors
+            for a, b, c in zip([scores, status], [scores_all, status_all], prefixes):
+                a[names[-1]] = b[names[-1]]  #  scores & status by year for predictor
+                b.to_csv("output/" + c + ".csv")  # overwrite CSV
+
+        elif best_new_score > current_score:
             current_score = best_new_score  #  update current score
             i = scores_total.index(best_new_score)  #  index for predictor w. best score
 
             # Move dummy with the best new score from the list of predictors to selected
             selected.append(predictors.pop(i))
 
-            # Save scores and status by year subject to the selected set of predictors
-            for a, b in zip([scores, status], [sco, sta]):
+            # # Save scores and status by year subject to the selected set of predictors
+            for a, b, c in zip([scores, status], [sco, sta], prefixes):
                 a[names[i]] = b[names[i]]  #  scores & status by year for best predictor
+                a.to_csv("output/" + c + "_sparse.csv")  # overwrite CSV
 
-            if p == "No dummies":
-                selected = []  #  after baseline model, start actual stepwise selection
+            # Save scores and status by year for every set of predictors
+            for a, b in zip([scores_all, status_all], prefixes):
+                a.to_csv("output/" + b + "_sparse_all.csv")  # overwrite CSV
 
         else:  #  if best_new_score == current_score (i.e., identical accuracy score)
             break  #  stop selection (including the predictor would increase variance)
 
-        if predictors == []:  #  if all predictors have been included in the best model
+        if p == "No dummies":
+            selected = []  #  after baseline model, start actual stepwise selection
+
+        elif predictors == []:  #  if all predictors have been included
             break  #  stop stepwise selection
 
     # Total number of observations that LOO-CV was performed over
     for s in (scores, status, scores_all, status_all):
         s.loc["Total", "n"] = s["n"].sum()
 
-    # Save accuracy scores and share with less than good ecological status to CSV
+    # Overwrite CSV of accuracy scores and share with less than good ecological status
     if subset is sparse:
-        scores.to_csv("output/lakes_eco_imp_accuracy_sparse.csv")
-        status.to_csv("output/lakes_eco_imp_LessThanGood_sparse.csv")
-        scores_all.to_csv("output/lakes_eco_imp_accuracy_sparse_all.csv")
-        status_all.to_csv("output/lakes_eco_imp_LessThanGood_sparse_all.csv")
+        scores.to_csv("output/streams_eco_imp_accuracy_sparse.csv")
+        status.to_csv("output/streams_eco_imp_LessThanGood_sparse.csv")
+        scores_all.to_csv("output/streams_eco_imp_accuracy_sparse_all.csv")
+        status_all.to_csv("output/streams_eco_imp_LessThanGood_sparse_all.csv")
     else:
-        scores.to_csv("output/lakes_eco_imp_accuracy.csv")
-        status.to_csv("output/lakes_eco_imp_LessThanGood.csv")
-        scores_all.to_csv("output/lakes_eco_imp_accuracy_all.csv")
-        status_all.to_csv("output/lakes_eco_imp_LessThanGood_all.csv")
+        scores.to_csv("output/streams_eco_imp_accuracy.csv")
+        status.to_csv("output/streams_eco_imp_LessThanGood.csv")
 
     return selected, scores, status  #  selected predictors; scores and stats by year
 
@@ -194,117 +212,122 @@ os.chdir(r"C:\Users\au687527\GitHub\GreenGDP\gis")
 years = list(range(1989, 2020 + 1))
 
 # Read DataFrames for observed ecological status and typology
-dfEcoObs = pd.read_csv("output/lakes_eco_obs.csv", index_col="wb")
+dfEcoObs = pd.read_csv("output/streams_eco_obs.csv", index_col="wb")
 dfEcoObs.columns = dfEcoObs.columns.astype(int)
-dfVP = pd.read_csv("output\\lakes_VP.csv", index_col="wb")
+dfVP = pd.read_csv("output\\streams_VP.csv", index_col="wb")
 
 # Share of waterbodies by number of non-missing values
 for n in range(0, len(dfEcoObs.columns) + 1):
     n, round(100 * sum(dfEcoObs.notna().sum(axis=1) == n) / len(dfEcoObs), 2)  # percent
 
-# Subset of rows where only 1-4 values are non-missing
-sparse = dfEcoObs[dfEcoObs.notna().sum(axis=1).isin([1, 2, 3, 4])]
+# Subset of rows where only 1-3 values are non-missing
+sparse = dfEcoObs[dfEcoObs.notna().sum(axis=1).isin([1, 2, 3])]
 sparse.count()  #  lowest number of non-missing values with support in all years
-sparse.count().sum()  #  994 non-missing values in total to loop over with LOO-CV
+sparse.count().sum()  #  5419 non-missing values in total to loop over with LOO-CV
 
 # Merge DataFrames for ecological status (observed and basis analysis for VP3)
 dfObs = dfEcoObs.merge(dfVP[["Basis"]], on="wb")
 
-# Convert typology to integers
-typ = dfVP[["ov_typ"]].copy()
-typ.loc[:, "type"] = typ["ov_typ"].str.slice(6).astype(int)
-
-# Create dummies for high Alkalinity, Brown, Saline, and Deep lakes
-cond1 = [(typ["type"] >= 9) & (typ["type"] <= 16), typ["type"] == 17]
-typ["Alkalinity"] = np.select(cond1, [1, np.nan], default=0)
-cond2 = [typ["type"].isin([5, 6, 7, 8, 13, 14, 15, 16]), typ["type"] == 17]
-typ["Brown"] = np.select(cond2, [1, np.nan], default=0)
-cond3 = [typ["type"].isin([2, 3, 7, 8, 11, 12, 15, 16]), typ["type"] == 17]
-typ["Saline"] = np.select(cond3, [1, np.nan], default=0)
-cond4 = [typ["type"].isin(np.arange(2, 17, 2)), typ["type"] == 17]
-typ["Deep"] = np.select(cond4, [1, np.nan], default=0)
+# Create dummies for typology
+typ = pd.get_dummies(dfVP["ov_typ"]).astype(int)
+typ["Soft bottom"] = typ["RW4"] + typ["RW5"]
+typ.columns = [
+    "Small",
+    "Medium",
+    "Large",
+    "Small w. soft bottom",
+    "Medium w. soft bottom",
+    "Soft bottom",  #  only 1 out of 261 streams in basis analysis but it's not observed
+]
 
 # List dummies for typology
-cols = ["Alkalinity", "Brown", "Saline", "Deep"]
+cols = ["Small", "Medium", "Large", "Soft bottom"]
 
-# Merge DataFrames for typology and observed ecological status
+# Merge DataFrames for typology and observed biophysical indicator
 dfTypology = dfObs.merge(typ[cols], on="wb")
 
-# Create dummies for waterbody districts
+# Create dummies for natural, artificial, and heavily modified waterbodies
+natural = pd.get_dummies(dfVP["na_kun_stm"]).astype(int)
+natural.columns = ["Artificial", "Natural", "Heavily modified"]
+
+# Merge DataFrames for typology and natural waterbodies
+dfNatural = dfTypology.merge(natural["Natural"], on="wb")
+cols.append("Natural")  #  add to list of dummies
+
+# Create dummies for waterbody district
 distr = pd.get_dummies(dfVP["distr_id"]).astype(int)
 
-# Extend dfTypology with dummy for district DK2 (Sealand, Lolland, Falster, and Møn)
-dfDistrict = dfTypology.merge(distr["DK2"], on="wb")
+# Extend dfNatural with dummy for district DK2 (Sealand, Lolland, Falster, and Møn)
+dfDistrict = dfNatural.merge(distr["DK2"], on="wb")
 cols.append("DK2")
 
 # Set up DataFrames for descriptive statistics
-dfSparse = dfDistrict.merge(sparse[[]], on="wb")  #  subset w. status observed 1-4 times
-dfBasis = dfDistrict[dfDistrict["Basis"].notna()]
-basis = dfEcoObs.merge(dfBasis[[]], on="wb")
+dfSparse = dfDistrict.merge(sparse[[]], on="wb")  #  subset w. status observed 1-3 times
 
-# Empty dfs for storing distribution and mean basis analysis by dummy respectively
-VPstats = pd.DataFrame(
-    columns=["Sparse subset", "Observed subset", "Basis analysis", "All in VP3"]
+# Empty dfs for storing distribution and mean ecological status by dummy respectively
+VPstats = pd.DataFrame(columns=["Sparse subset", "Observed subset", "All in VP3"])
+VPbasis = pd.DataFrame(
+    columns=["Sparse subset", "Observed subset", "All in basis analysis"]  #  eco status
 )
-VPbasis = VPstats.copy()  #  mean basis analysis by dummy
 
-# Yearly distribution of observed lakes by typology and district
+# Yearly distribution of observed streams by typology and district
 for a, b in zip([sparse, dfEcoObs], [dfSparse, dfDistrict]):
-    # Subset b (dfDistrict or dfSparse) to lakes where status is observed at least once
-    obs = b.loc[a.notna().any(axis=1)]  #  779 out of 986 lakes in dfDistrict
+    # Subset b (dfDistrict or dfSparse) to streams where status is observed at least once
+    obs = b.loc[a.notna().any(axis=1)]  #  6151 out of 6703 the streams in VP3
 
-    # Subset b (dfDistrict or dfSparse) to lakes covered by basis analysis
-    basis = b[b["Basis"].notna()]  #  791 out of 986 and 423 out of 423 respectively
+    # Subset b (dfDistrict or dfSparse) to streams covered by basis analysis
+    basis = b[b["Basis"].notna()]  #  2336 out of 2565 and 5825 out of 6703 respectively
 
-    # df for storing number of observed lakes and yearly distribution by dummies
+    # Subset to intersection: basis ∩ observed
+    basisObs = basis.merge(obs, on="wb")  #  5776 out of 6151 obs streams in dfDistrict
+
+    # df for storing number of observed streams and yearly distribution by dummies
     d = pd.DataFrame(index=a.columns)
 
-    # Yearly distribution of observed lakes by dummy (typology and district)
     for c in cols:
+        # Yearly distribution of observed streams by dummy (typology and district)
         d[c] = b[b[c] == 1].count() / b.count()  #  share w. dummy each year
         d.loc["All obs", c] = len(obs[obs[c] == 1]) / len(obs)
-        d.loc["All basis", c] = len(basis[basis[c] == 1]) / len(basis)
         d.loc["All in VP3", c] = len(b[b[c] == 1]) / len(b)
-        VPbasis.loc[c, "Observed subset"] = obs[obs[c] == 1]["Basis"].mean()
-        VPbasis.loc[c, "Basis analysis"] = basis[basis[c] == 1]["Basis"].mean()
-        VPbasis.loc[c, "All in VP3"] = b[b[c] == 1]["Basis"].mean()
 
-    # Number of lakes
-    d["n"] = a.count().astype(int)  #  number of lakes observed each year
-    d.loc["All obs", "n"] = len(obs)  #  number of lakes observed at least once
-    d.loc["All basis", "n"] = len(basis)  #  number of lakes covered by basis analysis
-    d.loc["All in VP3", "n"] = len(dfVP)  #  number of lakes in VP3
+        # Mean ecological status in basis analysis by dummy (typology and district)
+        VPbasis.loc[c, "Observed subset"] = obs[obs[c] == 1]["Basis"].mean()
+        VPbasis.loc[c, "All in basis analysis"] = b[b[c] == 1]["Basis"].mean()
 
     # Mean ecological status as assessed in basis analysis for VP3 by dummy and subset
     VPbasis.loc["All", "Observed subset"] = obs["Basis"].mean()  #  for observed subset
-    VPbasis.loc["All", "Basis analysis"] = basis["Basis"].mean()  #  for basis analysis
-    VPbasis.loc["All", "All in VP3"] = b["Basis"].mean()  #  for all lakes in VP3
+    VPbasis.loc["All", "All in basis analysis"] = b["Basis"].mean()  # in basis analysis
+
+    # Number of streams
+    d["n"] = a.count().astype(int)  #  number of streams observed each year
+    d.loc["All obs", "n"] = len(obs)  #  number of streams observed at least once
+    d.loc["All in VP3", "n"] = len(a)  #  number of streams included in VP3
+    VPbasis.loc["n", "Observed subset"] = len(basisObs)  #  number in subset basis ∩ obs
+    VPbasis.loc["n", "All in basis analysis"] = len(basis)  # number of streams in basis
 
     if a is sparse:
-        VPstats["Sparse subset"] = d.loc["All obs", :]  #  only observed 1-4 times
-        VPbasis["Sparse subset"] = VPbasis["Observed subset"]  #  observed 1-4 times
-        d = d.rename(index={"All obs": "All sparse"})  #  the sparse subset
-        d = d.drop(["All basis", "All in VP3"])  #  irrelevant for sparse subset
-        d.to_csv("output/lakes_VP_stats_yearly_sparse.csv")  #  yearly distributions
+        VPstats["Sparse subset"] = d.loc["All obs", :].copy()  #  observed 1-3 times
+        VPbasis["Sparse subset"] = VPbasis["Observed subset"]  #  observed 1-3 times
+        d = d.drop("All obs")  #  sparse subset is already limited to observed streams
+        d = d.rename(index={"All in VP3": "All sparse"})  #  subset observed 1-3 times
+        d.to_csv("output/streams_VP_stats_yearly_sparse.csv")  #  yearly distributions
     else:
         VPstats["Observed subset"] = d.loc["All obs", :]  # observed at least onces
-        VPstats["Basis analysis"] = d.loc["All basis", :]  # covered by basis analysis
         VPstats["All in VP3"] = d.loc["All in VP3", :]  #  distribution of all in VP3
-        VPbasis.loc["n", :] = VPstats.loc["n", :]  #  number of lakes by subset
-        d.to_csv("output/lakes_VP_stats_yearly.csv")  #  save yearly distributions
-VPstats  #  overrepresentation of Brown and Saline lakes in sparse (share is ~50% above)
-VPbasis  #  eco status is higher for Deep but lower for DK2 and especially Brown, Saline
+        d.to_csv("output/streams_VP_stats_yearly.csv")  #  save yearly distributions
+VPstats  #  underrepresentation of Large and DK2 in sparse (share < 50% of average VP3)
+VPbasis  #  ecological status is higher for Large streams but lower for streams in DK2
 
 # Save descriptive statistics and mean basis analysis to CSV and LaTeX
 for a, b in zip([VPstats, VPbasis], ["VP_stats", "VP_basis"]):
-    a.to_csv("output/lakes_" + b + ".csv")  #  save means by subset to CSV
+    a.to_csv("output/streams_" + b + ".csv")  #  save means by subset to CSV
     f = {row: "{:0.0f}".format if row == "n" else "{:0.4f}".format for row in a.index}
-    with open("output/lakes_" + b + ".tex", "w") as tf:
+    with open("output/streams_" + b + ".tex", "w") as tf:
         tf.write(a.apply(f, axis=1).to_latex())  #  apply formatter and save to LaTeX
 
 
 ########################################################################################
-#   2. Subset selection (note: CV takes ~2 hours for sparse + ~11h for all observations)
+#   2. Subset selection (note: CV takes ~30hours for sparse + ~54h for all observations)
 ########################################################################################
 # # Example data for testing Forward Stepwise Selection with LOO-CV (takes ~5 seconds)
 # dfEcoObs = pd.DataFrame(
@@ -321,29 +344,34 @@ for a, b in zip([VPstats, VPbasis], ["VP_stats", "VP_basis"]):
 # sparse = dfEcoObs[dfEcoObs.notna().sum(axis=1) == 5]
 # dfObs = dfEcoObs.copy()
 # dfTypology = dfObs.copy()
-# dfTypology["Brown"] = [0, 0, 1, 1, 0, 0]  #  effect: 0.2 worse in 1993
+# dfTypology["Small"] = [0, 0, 1, 1, 0, 0]  #  effect: 0.2 worse in 1993
 # dfDistrict = dfTypology.copy()
 # dfDistrict["DK1"] = [0, 0, 0, 1, 1, 0]  #  effect: 0.1 better in 1993
-# cols = ["Brown", "DK1"]
+# cols = ["Small", "DK1"]
 # years = list(range(1989, 1993 + 1))
 
-# Forward stepwise selection of dummies - CV over subset of sparsely observed lakes
-kwargs = {"dummies": cols, "data": dfObs, "dfDummies": dfDistrict, "years": years}
-selectedSparse, scoresSparse, statusSparse = stepwise_selection(subset=sparse, **kwargs)
+# Forward stepwise selection of dummies - CV over subset of sparsely observed streams
+kwargs = {"data": dfObs, "dfDummies": dfDistrict, "years": years}  #  shared arguments
+selectedSparse, scoresSparse, statusSparse = stepwise_selection(
+    subset=sparse, dummies=cols, **kwargs
+)
 scoresSparse
 statusSparse
 
-# Forward stepwise selection of dummies - CV over all observed values in all lakes
-selected, scores, status = stepwise_selection(subset=dfEcoObs, **kwargs)
+# Selection of dummies from the dummies selected above - CV over all observed values
+selected, scores, status = stepwise_selection(
+    subset=dfEcoObs, dummies=selectedSparse, select_all=True, **kwargs
+)
 scores
 status
+
 
 ########################################################################################
 #   3. Visualization: Accuracy and share with less than good ecological status by year
 ########################################################################################
 # Skip step 2 by reading DataFrames of accuracy score and ecological status from CSV
-# scores = pd.read_csv("output/lakes_eco_imp_accuracy.csv", index_col=0)
-# status = pd.read_csv("output/lakes_eco_imp_LessThanGood.csv", index_col=0)
+# scores = pd.read_csv("output/streams_eco_imp_accuracy.csv", index_col=0)
+# status = pd.read_csv("output/streams_eco_imp_LessThanGood.csv", index_col=0)
 
 # Accuracy score by year and selected predictors
 sco = scores.drop(columns="n").drop("Total")
@@ -352,18 +380,18 @@ sco = scores.drop(columns="n").drop("Total")
 f1 = sco.plot(
     kind="bar", ylabel="Accuracy in predicting observed ecological status"
 ).get_figure()
-f1.savefig("output/lakes_eco_imp_accuracy.pdf", bbox_inches="tight")  #  save to PDF
+f1.savefig("output/streams_eco_imp_accuracy.pdf", bbox_inches="tight")  #  save PDF
 
-# Share of lakes with less than good ecological status by year and selected predictors
+# Share of streams with less than good ecological status by year and selected predictors
 status.index = status.index.astype(str)  #  convert index to string (to mimic read_csv)
 status_years = status.drop("1989")  #  subset to years in natural capital account
 imp = status_years.drop(columns=["n", "Obs"])  #  imputed status by selected predictors
-obs = status_years[["Obs"]]  #  ecological status of lakes observed the given year
+obs = status_years[["Obs"]]  #  ecological status of streams observed the given year
 obs.columns = ["Observed"]  #  rename 'Obs' to 'Observed'
 sta = imp.merge(obs, left_index=True, right_index=True)  #  add Observed as last column
 
-# Plot share of lakes with less than good ecological status
+# Plot share of streams with less than good ecological status
 f2 = sta.plot(
-    ylabel="Share of lakes with less than good ecological status"
+    ylabel="Share of streams with less than good ecological status"
 ).get_figure()
-f2.savefig("output/lakes_eco_imp_LessThanGood.pdf", bbox_inches="tight")  #  save to PDF
+f2.savefig("output/streams_eco_imp_LessThanGood.pdf", bbox_inches="tight")  #  save PDF

@@ -214,13 +214,8 @@ nominal.to_excel("output\\all_nominal.xlsx")  # manually Wrap Text row 1 & delet
 ########################################################################################
 #   4.c Real cost of water pollution and investment in water quality for journal article
 ########################################################################################
-# Add adjustment factor due to using unitary income elasticity rather than estimated ε
-df_v = c.valuation(df_BT)
-df_BT_factor = df_BT.copy()
-df_BT_factor["factor"] = df_v["factor"]
-
 # Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices)
-CWP_v = df_v[["CWP"]]
+CWP_v = c.valuation(df_BT)
 CWP_j = (
     CWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
 )

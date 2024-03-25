@@ -791,7 +791,16 @@ class Water_Quality:
                 typ = typ.rename(columns=dicts)  #  rename columns to full names
 
                 # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
-                cols = ["Sediment", "Deep"]
+                cols = [
+                    "North Sea",
+                    "Kattegat",
+                    "Belt Sea",
+                    "Baltic Sea",
+                    "Fjord",
+                    "North Sea fjord",
+                    "Water exchange",
+                    "Sediment",
+                ]
 
             # Merge DataFrame for observed values with DataFrame for dummies
             dfEcoSelected = dfEco.merge(typ[cols], on="wb")  #  selected predictors
@@ -1282,7 +1291,7 @@ class Water_Quality:
             arcpy.AddError(msg)  # return error message in ArcGIS
             sys.exit(1)
 
-    def valuation(self, dfBT, real=True, investment=False, factor=False):
+    def valuation(self, dfBT, real=True, investment=False):
         """Valuation as either Cost of Water Pollution (CWP) or Investment Value (IV).
         If not set to return real values (2018 prices), instead returns values in the prices of both the current year and the preceding year (for chain linking).
         """
@@ -1333,17 +1342,13 @@ class Water_Quality:
             df1 = df.merge(CPI_NPV, **kwargs)
             df1["unityMWTP"] = self.BT(df1)  #  MWTP assuming unitary income elasticity
 
-            if factor is False:
-                # Calculate factor that MWTP is increased by if using estimated income ε
-                df2018 = df1[df1.index.get_level_values("t") == 2018].copy()
-                df2018["elastMWTP"] = self.BT(df2018, elast=1.453)  #  meta reg income ε
-                df2018["factor"] = df2018["elastMWTP"] / df2018["unityMWTP"]
-                df2018 = df2018.droplevel("t")
-                df2 = df1.merge(df2018[["factor"]], **kwargs)
-                df2 = df2.reorder_levels(["j", "t", "v"]).sort_index()
-
-            else:
-                df2 = df1.copy()
+            # Calculate factor that MWTP is increased by if using estimated income ε
+            df2018 = df1[df1.index.get_level_values("t") == 2018].copy()
+            df2018["elastMWTP"] = self.BT(df2018, elast=1.453)  #  meta reg income ε
+            df2018["factor"] = df2018["elastMWTP"] / df2018["unityMWTP"]
+            df2018 = df2018.droplevel("t")
+            df2 = df1.merge(df2018[["factor"]], **kwargs)
+            df2 = df2.reorder_levels(["j", "t", "v"]).sort_index()
 
             # Adjust with factor of actual ε over unitary ε; set MWTP to 0 for certain Q
             df2["MWTP"] = df2["unityMWTP"] * df2["factor"] * df2["nonzero"]
@@ -1371,11 +1376,7 @@ class Water_Quality:
                     return df2[["IV"]]  #  return real investment value by j, t, v
 
             if real is True:
-                if factor is True:
-                    return df2[["CWP"]]  #  real cost of water pollution by j, t, v
-
-                else:
-                    return df2  #  return full df to use df2["factor"] for decomposition
+                return df2[["CWP"]]  #  real cost of water pollution by j, t, v
 
             # Aggregate nominal MWTP per hh over households in coastal catchment area
             df2["CWPn"] = df2["CWP"] * df2["CPI"] / CPI_NPV.loc[2018, "CPI"]
@@ -1393,22 +1394,22 @@ class Water_Quality:
                 .rename_axis([None, None], axis=1)
             )
 
-            if investment is False:
-                # Rename CWP in prices of current year, and preceding year respectively
-                grouped.columns = grouped.columns.set_levels(
-                    [
-                        "Cost (current year's prices, million DKK)",
-                        "Cost (preceding year's prices, million DKK)",
-                    ],
-                    level=0,
-                )
-
-            else:
+            if investment is True:
                 # Rename IV in prices of current year, and preceding year respectively
                 grouped.columns = grouped.columns.set_levels(
                     [
                         "Investment value (current year's prices, million DKK)",
                         "Investment value (preceding year's prices, million DKK)",
+                    ],
+                    level=0,
+                )
+
+            else:
+                # Rename CWP in prices of current year, and preceding year respectively
+                grouped.columns = grouped.columns.set_levels(
+                    [
+                        "Cost (current year's prices, million DKK)",
+                        "Cost (preceding year's prices, million DKK)",
                     ],
                     level=0,
                 )
