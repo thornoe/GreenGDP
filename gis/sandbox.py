@@ -144,29 +144,26 @@ c.get_fc_from_WFS(j)
 
 # Create a DataFrame with observed biophysical indicator by year
 # df_ind_obs, df_VP = c.observed_indicator(j)
-df_ind_obs = pd.read_csv("output\\" + j + "_ind_obs.csv", index_col="wb")
-df_ind_obs.columns = df_ind_obs.columns.astype(int)
+# df_ind_obs = pd.read_csv("output\\" + j + "_ind_obs.csv", index_col="wb")
+# df_ind_obs.columns = df_ind_obs.columns.astype(int)
 df_VP = pd.read_csv("output\\" + j + "_VP.csv", index_col="wb")
 
 # Report ecological status based on observed biophysical indicator
-df_eco_obs, stats_obs_j[j], index_sorted = c.ecological_status(j, df_ind_obs, df_VP)
+# df_eco_obs, stats_obs_j[j], index_sorted = c.ecological_status(j, df_ind_obs, df_VP)
 
 # if j == 'streams':
 #     # Create a map book with yearly maps of observed ecological status
 #     c.map_book(j, df_eco_obs)
 
 # Impute missing values for biophysical indicator and return ecological status
-df_eco_imp, df_eco_imp_MA, stats_imp_j[j], stats_imp_MA_j[j] = c.impute_missing(
-    j, df_eco_obs, df_VP, index_sorted
-)
-df_eco_imp_MA = pd.read_csv("output\\" + j + "_eco_imp.csv", index_col="wb")
+# df_eco_imp, df_eco_imp_MA, stats_imp_j[j], stats_imp_MA_j[j] = c.impute_missing(
+#     j, df_eco_obs, df_VP, index_sorted
+# )
+df_eco_imp_MA = pd.read_csv("output\\" + j + "_eco_imp_MA.csv", index_col="wb")
 df_eco_imp_MA.columns = df_eco_imp_MA.columns.astype(int)
 
 # Set up df with variables by coastal catchment area for the Benefit Transfer equation
 frames_j[j], shores_j[j] = c.values_by_catchment_area(j, df_eco_imp_MA, df_VP)
-
-c.years + ["Basis"] = c.years + ["Basis"]
-
 
 ########################################################################################
 #   4.a Stats for all categories j: Shore length and share of it where eco status < Good
@@ -445,7 +442,6 @@ arcpy.CreateFeatureclass_management(
 # (...)
 
 
-
 # def longitudinal(self, j, f, d, x, y, valueCol, parameterCol=0, parameter=0):
 """Set up a longitudinal DataFrame for all stations in category j by year t.
 Streams: For a given year, find the DVFI index value of bottom fauna for a station with multiple observations by taking the median and rounding down
@@ -533,7 +529,6 @@ for t in df["year"].unique():
         dfYear = dfd.groupby(dfd.index.year).mean().T
     # Merge into longitudinal df
     long = long.merge(dfYear, how="left", on="station")
-
 
 
 # def impute_missing(self, dfEcoObs, dfVP, index):
@@ -633,7 +628,16 @@ else:  #  coastal waters
     dicts = {**dict1, **dict2}  #  combine the dictionaries
     typ = typ.rename(columns=dicts)  #  rename columns to full names
     # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
-    cols = ['Water exchange', 'Belt Sea', 'Kattegat', 'North Sea', 'Sediment', 'North Sea fjord', 'Baltic Sea', 'Fjord']
+    cols = [
+        "Water exchange",
+        "Belt Sea",
+        "Kattegat",
+        "North Sea",
+        "Sediment",
+        "North Sea fjord",
+        "Baltic Sea",
+        "Fjord",
+    ]
 
 # Merge DataFrame for observed values with DataFrame for dummies
 dfEcoSelected = dfEco.merge(typ[cols], on="wb")  #  with selected predictors
@@ -658,9 +662,8 @@ impStats = c.ecological_status(j, dfImp, dfVP, "imp", index)
 impStatsMA = c.ecological_status(j, dfImpMA, dfVP, "imp_MA", index)
 
 df_eco_imp, df_eco_imp_MA = dfImp[c.years], dfImpMA[c.years]
-stats_imp_j[j], stats_imp_MA_j[j] =  impStats, impStatsMA
+stats_imp_j[j], stats_imp_MA_j[j] = impStats, impStatsMA
 # return dfImp[c.years], dfImpMA[c.years], impStats, impStatsMA
-
 
 
 # def ecological_status(self, j, dfIndicator, dfTyp, suffix="obs", index=None):
@@ -777,7 +780,7 @@ if suffix == "obs":
     df_eco_obs = dfEco[dfEcoObs.columns]
     stats_obs_j[j] = stats["not good"]
     index_sorted = indexSorted
-#     return dfEco[dfEcoObs.columns], stats["not good"], indexSorted
+    #     return dfEco[dfEcoObs.columns], stats["not good"], indexSorted
 
     # Elaborate column names of statistics for online presentation
     stats.columns = [
@@ -793,7 +796,6 @@ if suffix == "obs":
     stats.astype(int).to_html("output\\" + j + "_eco_obs_stats.md")
 
 # return stats["not good"]
-
 
 
 # def indicator_to_status(self, j, dfIndicator, df_VP):
@@ -868,7 +870,6 @@ for t in dfIndicator.columns:
 df = df.drop(columns=cols)
 
 
-
 # def missing_values_graph(self, j, frame, suffix="obs", index=None):
 """Heatmap visualizing observations of ecological status as either missing or using the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality respectively.
 Saves a figure of the heatmap."""
@@ -892,11 +893,11 @@ else:
 if df.isna().sum().sum() > 0:
     # Replace missing values with -1
     df.fillna(-1, inplace=True)
-    
+
     # Specify heatmap to show missing values as gray (xkcd spells it "grey")
     colors = ["grey", "red", "orange", "yellow", "green", "blue"]
     uniqueValues = [-1, 0, 1, 2, 3, 4]
-    
+
     # Description for heatmap of observed eco status (instead of fig legend)
     description = "Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue), missing value (gray)"
 
@@ -904,7 +905,9 @@ else:
     # Specify heatmap without any missing values (only for imputed coastal)
     colors = ["red", "orange", "yellow", "green", "blue"]
     uniqueValues = [0, 1, 2, 3, 4]
-    description = "Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
+    description = (
+        "Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
+    )
 
 # Plot heatmap
 colorMap = sns.xkcd_palette(colors)
@@ -923,7 +926,6 @@ plt.savefig("output\\" + j + "_eco_" + suffix + ".pdf", bbox_inches="tight")
 
 index_sorted = index
 # return index
-
 
 
 # def values_by_catchment_area(self, j, dfEcoImpMA, dfVP):
@@ -1067,7 +1069,6 @@ frames_j[j] = dfBT
 shores_j[j] = shores_v
 
 
-
 def BT(df, elast=1):
     """Apply Benefit Transfer equation from meta study (Zandersen et al., 2022)"""
     # ln MWTP for improvement from current ecological status to "Good"
@@ -1084,7 +1085,6 @@ def BT(df, elast=1):
     # Real MWTP per household (DKK, 2018 prices) using the meta study variance
     MWTP = np.exp(lnMWTP + (0.136 + 0.098) / 2)  #  variance components
     return MWTP
-
 
 
 # def valuation(self, dfBT, real=True, investment=False):
