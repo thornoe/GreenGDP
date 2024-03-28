@@ -644,14 +644,14 @@ else:  #  coastal waters
     typ = typ.rename(columns=dicts)  #  rename columns to full names
     # Dummies used for imputation chosen via Forward Stepwise Selection (CV)
     cols = [
-        "Water exchange",
-        "Belt Sea",
-        "Kattegat",
         "North Sea",
-        "Sediment",
-        "North Sea fjord",
+        "Kattegat",
+        "Belt Sea",
         "Baltic Sea",
         "Fjord",
+        "North Sea fjord",
+        "Water exchange",
+        "Sediment",
     ]
 
 # Merge DataFrame for observed values with DataFrame for dummies
