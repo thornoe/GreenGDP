@@ -7,9 +7,9 @@ Summary:    ThorNoe.GitHub.io/GreenGDP explains the overall approach and methodo
 
 Rqmts:      None.
 
-Usage:      This script draws on Byn_Lake_variables.csv created by Byn_Lake_data.py to 
-            valuate an improvement in ecological status for Byn Lake by Nissum Fjord.
-            See GitHub.com/ThorNoe/GreenGDP for instructions.
+Usage:      Draw on Byn_Lake_variables.csv created by Byn_Lake_data.py to valuate an
+            improvement in ecological status for Byn Lake by outer Nissum Fjord.
+            See GitHub.com/ThorNoe/GreenGDP/tree/Byn-Lake for instructions.
 
 License:    MIT Copyright (c) 2024
 Author:     Thor Donsby Noe

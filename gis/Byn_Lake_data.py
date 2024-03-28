@@ -1,15 +1,15 @@
 """
 Name:       Byn_Lake_data.py
 
-Label:      Set up data for Byn Lake by outer Nissum Fjord.
+Label:      Set up data for valuating ecological status of Byn Lake by Nissum Fjord.
 
 Summary:    ThorNoe.GitHub.io/GreenGDP explains the overall approach and methodology.
 
 Rqmts:      ArcGIS Pro must be installed on the system and be up to date.
 
 Usage:      This script draws on script_module.py to set up data for valuation of an 
-            improvement in ecological status for Byn Lake by Nissum Fjord.
-            See GitHub.com/ThorNoe/GreenGDP for instructions.
+            improvement in ecological status for Byn Lake by outer Nissum Fjord.
+            See GitHub.com/ThorNoe/GreenGDP/tree/Byn-Lake for instructions.
 
 License:    MIT Copyright (c) 2024
 Author:     Thor Donsby Noe
