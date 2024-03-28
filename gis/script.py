@@ -116,24 +116,19 @@ for j in ("coastal", "lakes", "streams"):
     c.get_fc_from_WFS(j)
 
     # df for observed biophysical indicator and waterbody characteristics respectively
-    # df_ind_obs, df_VP = c.observed_indicator(j)
-    # df_ind_obs = pd.read_csv("output\\" + j + "_ind_obs.csv", index_col="wb")
-    # df_ind_obs.columns = df_ind_obs.columns.astype(int)
-    df_VP = pd.read_csv("output\\" + j + "_VP.csv", index_col="wb")
+    df_ind_obs, df_VP = c.observed_indicator(j)
 
     # Report ecological status based on observed biophysical indicator
-    # df_eco_obs, stats_obs_j[j], index_sorted = c.ecological_status(j, df_ind_obs, df_VP)
+    df_eco_obs, stats_obs_j[j], index_sorted = c.ecological_status(j, df_ind_obs, df_VP)
 
     # if j == 'streams':
     #     # Create a map book with yearly maps of observed ecological status
     #     c.map_book(j, df_eco_obs)
 
     # Impute missing values for biophysical indicator and return ecological status
-    # df_eco_imp, df_eco_imp_MA, stats_imp_j[j], stats_imp_MA_j[j] = c.impute_missing(
-    #     j, df_eco_obs, df_VP, index_sorted
-    # )
-    df_eco_imp_MA = pd.read_csv("output\\" + j + "_eco_imp_MA.csv", index_col="wb")
-    df_eco_imp_MA.columns = df_eco_imp_MA.columns.astype(int)
+    df_eco_imp, df_eco_imp_MA, stats_imp_j[j], stats_imp_MA_j[j] = c.impute_missing(
+        j, df_eco_obs, df_VP, index_sorted
+    )
 
     # df with variables by coastal catchment area for the Benefit Transfer equation
     frames_j[j], shores_j[j] = c.values_by_catchment_area(j, df_eco_imp_MA, df_VP)
@@ -251,7 +246,7 @@ IV_j.mean()  #  average yearly investment value in better (or worse) water quali
 
 
 ########################################################################################
-#   5. Decompose development by holding everything else equal at 1990 level
+#   5. Decompose development by holding everything else equal at 2018 level
 ########################################################################################
 
 

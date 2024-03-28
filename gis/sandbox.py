@@ -139,31 +139,45 @@ stats_obs_j = {}
 stats_imp_j = {}
 stats_imp_MA_j = {}  #  using 5-year moving average for each water body to reduce noise
 
-# Get the feature class from the WFS service
-c.get_fc_from_WFS(j)
+# Loop over each category j ∈ {coastal, lakes, streams}
+for j in ("coastal", "lakes", "streams"):
+    # Get the feature class from the WFS service
+    c.get_fc_from_WFS(j)
 
-# df for observed biophysical indicator and waterbody characteristics respectively
-# df_ind_obs, df_VP = c.observed_indicator(j)
-# df_ind_obs = pd.read_csv("output\\" + j + "_ind_obs.csv", index_col="wb")
-# df_ind_obs.columns = df_ind_obs.columns.astype(int)
-df_VP = pd.read_csv("output\\" + j + "_VP.csv", index_col="wb")
+    # df for observed biophysical indicator and waterbody characteristics respectively
+    # df_ind_obs, df_VP = c.observed_indicator(j)
+    # df_ind_obs = pd.read_csv("output\\" + j + "_ind_obs.csv", index_col="wb")
+    # df_ind_obs.columns = df_ind_obs.columns.astype(int)
+    df_VP = pd.read_csv("output\\" + j + "_VP.csv", index_col="wb")
 
-# Report ecological status based on observed biophysical indicator
-# df_eco_obs, stats_obs_j[j], index_sorted = c.ecological_status(j, df_ind_obs, df_VP)
+    # Report ecological status based on observed biophysical indicator
+    # df_eco_obs, stats_obs_j[j], index_sorted = c.ecological_status(j, df_ind_obs, df_VP)
 
-# if j == 'streams':
-#     # Create a map book with yearly maps of observed ecological status
-#     c.map_book(j, df_eco_obs)
+    # if j == 'streams':
+    #     # Create a map book with yearly maps of observed ecological status
+    #     c.map_book(j, df_eco_obs)
 
-# Impute missing values for biophysical indicator and return ecological status
-# df_eco_imp, df_eco_imp_MA, stats_imp_j[j], stats_imp_MA_j[j] = c.impute_missing(
-#     j, df_eco_obs, df_VP, index_sorted
-# )
-df_eco_imp_MA = pd.read_csv("output\\" + j + "_eco_imp_MA.csv", index_col="wb")
-df_eco_imp_MA.columns = df_eco_imp_MA.columns.astype(int)
+    # Impute missing values for biophysical indicator and return ecological status
+    # df_eco_imp, df_eco_imp_MA, stats_imp_j[j], stats_imp_MA_j[j] = c.impute_missing(
+    #     j, df_eco_obs, df_VP, index_sorted
+    # )
+    df_eco_imp_MA = pd.read_csv("output\\" + j + "_eco_imp_MA.csv", index_col="wb")
+    df_eco_imp_MA.columns = df_eco_imp_MA.columns.astype(int)
 
-# Set up df with variables by coastal catchment area for the Benefit Transfer equation
-frames_j[j], shores_j[j] = c.values_by_catchment_area(j, df_eco_imp_MA, df_VP)
+    # df with variables by coastal catchment area for the Benefit Transfer equation
+    frames_j[j], shores_j[j] = c.values_by_catchment_area(j, df_eco_imp_MA, df_VP)
+
+    # Optional: Clean up after each iteration of loop
+    if keep_gdb != "true":
+        # Delete feature class
+        if arcpy.Exists(j):
+            arcpy.Delete_management(j)
+
+# Optional: Clean up geodatabase
+if keep_gdb != "true":
+    # Delete all feature classes in geodatabase
+    for fc in arcpy.ListFeatureClasses():
+        arcpy.Delete_management(fc)
 
 ########################################################################################
 #   4.a Stats for all categories j: Shore length and share of it where eco status < Good
@@ -273,9 +287,10 @@ IV_j.mean()  #  average yearly investment value in better (or worse) water quali
 
 
 ########################################################################################
-#   5. Decompose development by holding everything else equal at 1990 level
+#   5. Decompose development by holding everything else equal at 2018 level
 ########################################################################################
-# create d as a transformation of the DataFrame dfBT with multiindex ["j", "t", "v"], such that each row ["j", "t", "v"] is replaced by the row ["j", 1990, "v"] if j != driver
+df_BT = pd.read_csv("output\\all_eco_imp.csv", index_col=[0, 1, 2])
+# Create d as a transformation of the DataFrame dfBT with multiindex ["j", "t", "v"], such that each row ["j", "t", "v"] is replaced by the row ["j", 2018, "v"] if j != driver
 dfBT = df_BT.copy()
 driver = "lakes"
 nominal
