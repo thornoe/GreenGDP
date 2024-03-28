@@ -115,7 +115,7 @@ for j in ("coastal", "lakes", "streams"):
     # Get the feature class from the WFS service
     c.get_fc_from_WFS(j)
 
-    # Create a DataFrame with observed biophysical indicator by year
+    # df for observed biophysical indicator and waterbody characteristics respectively
     # df_ind_obs, df_VP = c.observed_indicator(j)
     # df_ind_obs = pd.read_csv("output\\" + j + "_ind_obs.csv", index_col="wb")
     # df_ind_obs.columns = df_ind_obs.columns.astype(int)
