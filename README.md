@@ -6,7 +6,7 @@ For a brief overview of the approach and the development in the ecological statu
 ## Using Byn Lake as an example
 The marginal willingness to pay for improving the ecological status of Byn Lake from Moderate to Good is estimated to be 92 DKK per household per year, amounting to a total cost of 238,997 DKK per year, using 2018 prices and demographics for the 2,575 households in the catchment area of outer Nissum Fjord.
 
-Thus, the investment value of improving the ecological status of Byn Lake from Moderate to Good is estimated to be 22,751 DKK per household, amounting to a total investment value of 58,586,158 DKK, using 2018 prices and demographics for the 2,575 households in the catchment area of outer Nissum Fjord and the net present value implied by the declining discount rate prescribed by the Ministry of Finance during 2014-2020.
+Thus, the investment value of improving the ecological status of Byn Lake from Moderate to Good is estimated to be 22,751 DKK per household, amounting to a total investment value of 58,586,158 DKK, using 2018 prices and demographics for the 2,575 households in the catchment area of outer Nissum Fjord and the net present value implied by the declining discount rate prescribed by the Ministry of Finance ([2021](https://fm.dk/media/18371/dokumentationsnotat-for-den-samfundsoekonomiske-diskonteringsrente_7-januar-2021.pdf)) during 2014-2020.
 
 This value does not capture the willingness to pay for reestablishing a habitat for endangered species. Arguably, households from all parts of Denmark would assign a significant existence and bequest value to preventing the extinction of native species.
 
