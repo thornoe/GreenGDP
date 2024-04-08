@@ -1268,9 +1268,9 @@ class Water_Quality:
                     df["ln PAL"] = Geo["ln PAL"]  #  proportion arable land
                     df["SL"] = SL_not_good / 1000  #  SL in 1,000 km
                     if j == "lakes":
-                        df["D lake"] = 1
+                        df["D lakes"] = 1
                     else:
-                        df["D lake"] = 0
+                        df["D lakes"] = 0
                     df["N"] = Dem.loc[t, "N"]  #  number of households
 
                 frames_t[t] = df  #  store df in dictionary of DataFrames
@@ -1312,6 +1312,9 @@ class Water_Quality:
                     np.log(3 - df["Q"] + epsilon),  #  log-transform difference good - Q
                 )
 
+                # lnΔQ = 0 if all water bodies of type j have ≥ good ecological status
+                df["Q"] = df["Q"] * df["nonzero"]
+
             else:
                 # Actual change in ecological status since preceding year
                 df = df.reorder_levels(["j", "v", "t"]).sort_index()  #  series by j & v
@@ -1332,7 +1335,7 @@ class Water_Quality:
 
             # Drop year 1989 and specify integer values
             df = df.drop(df[df.index.get_level_values("t") == 1989].index)
-            df[["D age", "D lake", "N"]] = df[["D age", "D lake", "N"]].astype(int)
+            df[["D age", "D lakes", "N"]] = df[["D age", "D lakes", "N"]].astype(int)
 
             # Consumer Price Index by year t (1990-2020)
             CPI_NPV = pd.read_excel("data\\" + self.data["shared"][0], index_col=0)
@@ -1373,10 +1376,12 @@ class Water_Quality:
                     # Rename CWP to IV (investment value of water quality improvements)
                     df2["IV"] = df2["CWP"]  #  million DKK (2018 prices)
 
-                    return df2[["IV"]]  #  return real investment value by j, t, v
+                    # Return real investment value (IV) by t, v, and j
+                    return df2["IV"].unstack(level=0)
 
             if real is True:
-                return df2[["CWP"]]  #  real cost of water pollution by j, t, v
+                #  Return real cost of water pollution (CWP) by t, v, and j
+                return df2["CWP"].unstack(level=0)
 
             # Aggregate nominal MWTP per hh over households in coastal catchment area
             df2["CWPn"] = df2["CWP"] * df2["CPI"] / CPI_NPV.loc[2018, "CPI"]
@@ -1439,7 +1444,7 @@ class Water_Quality:
                 + 0.121 * df["ln PSL"]
                 - 0.072 * df["ln PAL"]
                 - 0.005 * df["SL"]
-                - 0.378 * df["D lake"]
+                - 0.378 * df["D lakes"]
             )
 
             # Real MWTP per household (DKK, 2018 prices) using the meta study variance

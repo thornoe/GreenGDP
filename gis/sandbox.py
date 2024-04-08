@@ -110,8 +110,8 @@ wfs_fields = {
 
 # Specify a single category
 # j = "coastal"
-j = "lakes"
-# j = "streams"
+# j = "lakes"
+j = "streams"
 
 ########################################################################################
 #   3. Import module and run the functions
@@ -133,11 +133,7 @@ c = script_module.Water_Quality(
 )
 
 # Dictionaries to store DataFrame, shore length, and stats for each category j
-frames_j = {}
-shores_j = {}
-stats_obs_j = {}
-stats_imp_j = {}
-stats_imp_MA_j = {}  #  using 5-year moving average for each water body to reduce noise
+frames_j, shores_j, stats_obs_j, stats_imp_j, stats_imp_MA_j = {}, {}, {}, {}, {}
 
 # Loop over each category j ∈ {coastal, lakes, streams}
 for j in ("coastal", "lakes", "streams"):
@@ -204,12 +200,13 @@ for key, dict in stats_method.items():
 
     # Plot share of category j with less than good ecological status by year
     for format in (".pdf", ".png"):
-        f1 = (
+        fig = (
             stats[list(range(year_first + 1, year_last + 1))]
             .plot(ylabel="Share of category with less than good ecological status")
             .get_figure()
         )
-        f1.savefig("output\\all_eco_" + key + format, bbox_inches="tight")
+        fig.savefig("output\\all_eco_" + key + format, bbox_inches="tight")
+        plt.close(fig)  #  close figure to free up memory
 
     # Calculate share < eco good status across all categories j weighted by shore length
     stats["all j"] = (
@@ -247,98 +244,172 @@ nominal.to_excel("output\\all_nominal.xlsx")  # manually Wrap Text row 1 & delet
 ########################################################################################
 #   4.c Real cost of water pollution and investment in water quality for journal article
 ########################################################################################
-# Add adjustment factor due to using unitary income elasticity rather than estimated ε
-df_v = c.valuation(df_BT)
-df_BT_factor = df_BT.copy()
-df_BT_factor["factor"] = df_v["factor"]
+# Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices) by t, v, and j
+CWP_vj = c.valuation(df_BT)
 
-# Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices)
-CWP_v = df_v[["CWP"]]
-CWP_j = (
-    CWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
-)
-CWP_j.rename_axis([None, None], axis=1).to_csv("output\\all_cost.csv")  #  save CSV
-f2 = (
-    CWP_j.loc[:, "CWP"]
-    .rename_axis(None, axis=1)
-    .plot(ylabel="Cost of current water pollution (million DKK, 2018 prices)")
-    .get_figure()
-)
-f2.savefig("output\\all_cost.pdf", bbox_inches="tight")  #  save figure as PDF
+# Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices) by t and j
+CWP_j = CWP_vj.groupby("t").sum().rename_axis(None).rename_axis(None, axis=1)
+CWP_j.to_csv("output\\all_cost.csv")  #  save table as CSV
+CWP_label = "Cost of current water pollution (million DKK, 2018 prices)"
+fig = CWP_j.plot(ylabel=CWP_label).get_figure()
+fig.savefig("output\\all_cost.pdf", bbox_inches="tight")  #  save figure as PDF
+plt.close(fig)  #  close figure to free up memory
 
 # Investment Value of water quality improvement in real terms (million DKK, 2018 prices)
-IV_v = c.valuation(df_BT, investment=True)
-IV_j = IV_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
-IV_j.rename_axis([None, None], axis=1).to_csv("output\\all_investment.csv")  #  save CSV
-f3 = (
-    IV_j.loc[:, "IV"]
-    .rename_axis(None, axis=1)
-    .plot(
-        kind="bar",
-        ylabel="Investment in water quality improvement (million DKK, 2018 prices)",
-    )
-    .get_figure()
-)
-f3.savefig("output\\all_investment.pdf", bbox_inches="tight")  #  save figure as PDF
+IV_vj = c.valuation(df_BT, investment=True)
+
+# IV of water quality improvement in real terms (million DKK, 2018 prices) by t and j
+IV_j = IV_vj.groupby("t").sum().rename_axis(None).rename_axis(None, axis=1)
+IV_j.to_csv("output\\all_investment.csv")  #  save table as CSV
+IV_label = "Investment in water quality improvement (million DKK, 2018 prices)"
+fig = IV_j.plot(
+    kind="bar",
+    ylabel=IV_label,
+).get_figure()
+fig.savefig("output\\all_investment.pdf", bbox_inches="tight")  #  save figure as PDF
+plt.close(fig)  #  close figure to free up memory
 
 # Overview using real prices and the same declining discount rate for all years
 CWP_j.mean()  #  average yearly cost of water pollution
 IV_j.mean()  #  average yearly investment value in better (or worse) water quality
 
-
 ########################################################################################
 #   5. Decompose development by holding everything else equal at 2018 level
 ########################################################################################
-df_BT = pd.read_csv("output\\all_eco_imp.csv", index_col=[0, 1, 2])
-# Create d as a transformation of the DataFrame dfBT with multiindex ["j", "t", "v"], such that each row ["j", "t", "v"] is replaced by the row ["j", 2018, "v"] if j != driver
 dfBT = df_BT.copy()
-driver = "lakes"
-nominal
+baseYear = 2018
+
+df_BT[df_BT["Q"] == 3]
+df_BT.loc[("coastal", 2018, 1), :]
+df_BT[(df_BT["Q"] == 3) & (df_BT.index.get_level_values("t") == 2018)]
+
+# Cost of water pollution and investment value by each driver (other things equal)
+CWP_driver_v, CWP_driver_j, CWP_driver, IV_driver_v, IV_driver = decompose(df_BT)
+CWP_driver_v.tail(1)
+CWP_driver_j.tail(1)
+CWP_driver.tail(1)
+IV_driver_v.tail(1)
+IV_driver.tail(1)
+CWP_j.tail(1)
+CWP_vj.tail(1)
+
+# Total cost of water pollution (CWP) decomposed by driver (other things equal)
+for d, df in zip([CWP_driver_v, CWP_driver], [CWP_vj, CWP_j]):
+    d.columns = ["coastal", "lakes", "streams", "income", "age", "households"]
+    d["all"] = df.sum(axis=1)
+    d = d.rename_axis("driver", axis=1)
+ax = CWP_driver.plot(ylabel=CWP_label)
+ax.axhline(CWP_driver.loc[2018, "all"], color="black", linestyle=":", linewidth=0.5)
+fig = ax.get_figure()
+fig.savefig("output\\all_cost_decomposed.pdf", bbox_inches="tight")  #  save as PDF
+plt.close(fig)  #  close figure to free up memory
+for d, suffix in zip([CWP_driver_v, CWP_driver], ["_v", ""]):
+    d.loc["g (million DKK)", :] = d.loc[2020, :] - d.loc[1990, :]
+    d.loc["g (%)", :] = 100 * d.loc["g (million DKK)", :] / d.loc[1990, :]
+    d.loc["g yearly (%)", :] = 100 * (d.loc[2020, :] / d.loc[1990, :]) ** (1 / 30) - 100
+    d.to_csv("output\\all_cost_decomposed" + suffix + ".csv")  #  save table as CSV
+    print("Growth in CWP due to driver (other things equal at 2018 level)")
+    print(d.tail(3))
 
 
-def replace_row(row):
-    j, t, v = row.name
-    if j != driver:
-        return dfBT.loc[(j, 1990, v)]
-    else:
-        return row
+# Colors and line styles by category j - matching those used for total CWP decomposition
+cl1 = ["#4477AA", "#CCBB44", "#EE6677", "#AA3377", "#BBBBBB"]  #  5 colors for coastal
+cl2 = ["#66CCEE", "#CCBB44", "#EE6677", "#AA3377", "#BBBBBB"]  #  5 colors for lakes
+cl3 = ["#228833", "#CCBB44", "#EE6677", "#AA3377", "#BBBBBB"]  #  5 colors for streams
+lc1 = cycler(linestyle=["-", "-", "--", ":", "-."])  #  5 line styles for coastal
+lc2 = cycler(linestyle=["--", "-", "--", ":", "-."])  #  5 line styles for lakes
+lc3 = cycler(linestyle=[":", "-", "--", ":", "-."])  #  5 line styles for streams
+
+# Cost of water pollution of category j decomposed by driver (other things equal)
+for j, cl, ls in zip(["coastal", "lakes", "streams"], [cl1, cl2, cl3], [lc1, lc2, lc3]):
+    d = CWP_driver_j.loc[:, CWP_driver_j.columns.get_level_values(1) == j].copy()
+    d.columns = [j, "income", "age", "households"]
+    d["all"] = CWP_j.loc[:, j]
+    d = d.rename_axis("driver", axis=1)
+
+    # Figure by category j - matching the colors and line styles used for total CWP
+    fig, ax = plt.subplots()  #  create a new figure and axes
+    ax.set_prop_cycle(cycler(color=cl) + ls)  #  set the property cycle
+    ax = d.plot(ax=ax, ylabel=CWP_label)
+    ax.axhline(d.loc[2018, "all"], color="black", linestyle=":", linewidth=0.5)
+    fig.savefig("output\\" + j + "_cost_decomposed.pdf", bbox_inches="tight")
+    plt.close(fig)  #  close figure to free up memory
+
+    # Calculate growth (in 2018 prices and in %) and growth rate of CWP of j by driver
+    d.loc["g (million DKK)", :] = d.loc[2020, :] - d.loc[1990, :]
+    d.loc["g (%)", :] = 100 * d.loc["g (million DKK)", :] / d.loc[1990, :]
+    d.loc["g yearly (%)", :] = 100 * (d.loc[2020, :] / d.loc[1990, :]) ** (1 / 30) - 100
+    d.to_csv("output\\" + j + "_cost_decomposed.csv")  #  save table as CSV
+    print("Growth in CWP of", j, "due to driver (other things equal at 2018 level)")
+    print(d.tail(3))
+
+# Calculate growth (both in 2018 prices and in %) and growth rate of total CWP by driver
+for d in [CWP_driver]:
+    d.loc["g (million DKK)", :] = d.loc[2020, :] - d.loc[1990, :]
+    d.loc["g (%)", :] = 100 * d.loc["g (million DKK)", :] / d.loc[1990, :]
+    d.loc["g yearly (%)", :] = 100 * (d.loc[2020, :] / d.loc[1990, :]) ** (1 / 30) - 100
+    d.to_csv("output\\all_cost_decomposed.csv")  #  save table as CSV
+    print("Growth in total CWP due to driver (other things equal at 2018 level)")
+    print(d.tail(3))
+    d.tail(3).T
+
+# Calculate growth (in 2018 prices and in %) and growth rate of total CWP in v by driver
+CWP_driver_j
+for v in dv.index.get_level_values("v").unique():
+    dv.loc[("g (million DKK)", v), :] = dv.loc[(2020, v), :] - dv.loc[(1990, v), :]
+for v in dv.index.get_level_values("v").unique():
+    dv.loc[("g (%)", v), :] = (
+        100 * dv.loc[("g (million DKK, 2018 prices)", v), :] / dv.loc[(1990, v), :]
+    )
+for v in dv.index.get_level_values("v").unique():
+    dv.loc[("g yearly (%)", v), :] = (
+        100 * (dv.loc[(2020, v), :] / dv.loc[(1990, v), :]) ** (1 / 30) - 100
+    )
+dv.to_csv("output\\" + j + "_cost_decomposed_v.csv")  #  save table as CSV
+print("The 15 catchment areas with largest reduction in CWP of", j)
+print(dv.loc["g (%)", :].nsmallest(15, ("all")))
+print("The 10 catchment areas with largest increase in CWP of", j)
+print(dv.loc["g (%)", :].nlargest(10, ("all")), "\n")
 
 
-# Fix remaining variables at 1990 level
-df = dfBT.apply(replace_row, axis=1)
-dfBT.loc[("streams", 1990)]
+ts = [1990, 2020]
+vs = [17, 18, 68, 119, 120, 133, 221]
+dv.loc[(1990, vs), :]
+dv.loc[(2020, vs), :]
+dv.loc[("g (%)", vs), :]
+df_BT.loc[("coastal", ts, vs)]
 
-# Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices)
-CWP = c.valuation(df).groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)
-CWP_j = (
-    CWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)  #  sum over v
-)
+CWP_index_j = 100 * CWP_driver_j / CWP_driver_j.loc[2018]
+CWP_index = 100 * CWP_driver / CWP_driver.loc[2018]
 
+CWP_driver_j.tail(2)
+CWP_driver.loc["diff", :] = CWP_driver.loc[2020, :] - CWP_driver.loc[1990, :]
+CWP_driver.loc["g", :] = (CWP_driver.loc[2020, :] / CWP_driver.loc[1990, :]) ** (
+    1 / (year_last - year_first - 1)
+) - 1
 
-CWP_j.rename_axis([None, None], axis=1).to_csv("output\\all_cost.csv")  #  save CSV
+CWP_driver.head(2)
+IV_driver.head(2)
+CWP_index_j.head(2)
+CWP_index.head(2)
 
+# IV of water quality improvement decomposed by driver, other things equal at 2018 level
+fig = IV_driver.plot(kind="bar", ylabel=IV_label).get_figure()
+fig.savefig("output\\all_investment_decomposed.pdf", bbox_inches="tight")  #  save PDF
+plt.close(fig)  #  close figure to free up memory
 
-IV = IV_j.sum(axis=1)  #  sum over j
-IV.mean()  #  average investment value over the period
-
-
-# Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices)
-CWP_v = c.valuation(df_BT)
-CWP_j = (
-    CWP_v.groupby(["j", "t"]).sum().unstack(level=0).rename_axis(None)
-)  #  sum over v
-CWP_j.rename_axis([None, None], axis=1).to_csv("output\\all_cost.csv")
-f2 = (
-    CWP_j.loc[:, "CWP"]
-    .rename_axis(None, axis=1)
-    .plot(ylabel="Cost of current water pollution (million DKK, 2018 prices)")
-    .get_figure()
-)
-f2.savefig("output\\all_cost.pdf", bbox_inches="tight")
+# Calculate mean real investment value by driver and total for all categories j
+IV_driver["total"] = IV_driver.sum(axis=1)
+IV_driver.loc["mean IV", :] = IV_driver.mean()
+IV_driver.to_csv("output\\all_investment_decomposed.csv")  #  save table as CSV
 
 
 # MultiIndex: see https://kanoki.org/2022/07/25/pandas-select-slice-rows-columns-multiindex-dataframe/#using-get_level_values
-Dem = Dem[Dem.index.get_level_values("v").isin(shores_v)]
+df[df.index.get_level_values("v") == 1]
+CWP_driver_j = pd.concat(CWP_j, axis=1, names=["driver", "j"])
+IV_v[IV_v.index.get_level_values("v") == 1]
+CWP_driver_j.loc[:, CWP_driver_j.columns.get_level_values("j") == "coastal"]
+CWP_driver_j.loc[:, "coastal"].head(2)
 
 ########################################################################################
 #   6. Robustness check: Treat DK as a single catchment area
@@ -359,7 +430,6 @@ df = df.append(
 kwargs = dict(method="index", fill_value="extrapolate", limit_direction="both")
 df.interpolate(**kwargs, inplace=True)
 
-# Save to CSV
 df.to_csv("output\\" + "D_age.csv")
 
 ########################################################################################
@@ -1073,9 +1143,9 @@ for t in c.years:
         df["ln PAL"] = Geo["ln PAL"]  #  proportion arable land
         df["SL"] = SL_not_good / 1000  #  SL in 1,000 km
         if j == "lakes":
-            df["D lake"] = 1
+            df["D lakes"] = 1
         else:
-            df["D lake"] = 0
+            df["D lakes"] = 0
         df["N"] = Dem.loc[t, "N"]  #  number of households
     frames_t[t] = df  #  store df in dictionary of DataFrames
 dfBT = pd.concat(frames_t)
@@ -1095,136 +1165,199 @@ def BT(df, elast=1):
         + 0.121 * df["ln PSL"]
         - 0.072 * df["ln PAL"]
         - 0.005 * df["SL"]
-        - 0.378 * df["D lake"]
+        - 0.378 * df["D lakes"]
     )
     # Real MWTP per household (DKK, 2018 prices) using the meta study variance
     MWTP = np.exp(lnMWTP + (0.136 + 0.098) / 2)  #  variance components
     return MWTP
 
 
-# def valuation(self, dfBT, real=True, investment=False):
-"""Valuation as either Cost of Water Pollution (CWP) or Investment Value (IV).
-If not set to return real values (2018 prices), instead returns values in the prices of both the current year and the preceding year (for year-by-year chain linking)."""
-# Copy DataFrame with the variables needed for the benefit transfer equation
-df = df_BT.copy()
-real = False
-investment = False
+def valuation(dfBT, real=True, investment=False):
+    """Valuation as either Cost of Water Pollution (CWP) or Investment Value (IV).
+    If not set to return real values (2018 prices), instead returns values in the prices of both the current year and the preceding year (for year-by-year chain linking).
+    """
+    # Copy DataFrame with the variables needed for the benefit transfer equation
+    df = dfBT.copy()
 
-# Define a small constant to avoid RuntimeWarning due to taking the log of 0
-epsilon = 1e-6  #  a millionth part
+    # Define a small constant to avoid RuntimeWarning due to taking the log of 0
+    epsilon = 1e-6  #  a millionth part
 
-df[(df["Q"] > 3 - epsilon) & (df["Q"] < 3)]
+    if investment is False:
+        # MWTP = 0 if all water bodies of type j have ≥ good ecological status
+        df["nonzero"] = np.select([df["Q"] < 3 - epsilon], [1])  #  dummy
 
-if investment is False:
-    # MWTP = 0 if all water bodies of type j have ≥ good ecological status
-    df["nonzero"] = np.select([df["Q"] < 3 - epsilon], [1])  #  dummy
+        # Distance from current to Good: transform mean Q to lnΔQ ≡ ln(good - Q)
+        df["Q"] = df["Q"].mask(
+            df["Q"] < 3 - epsilon,  # if some water bodies have < good status
+            np.log(3 - df["Q"] + epsilon),  #  log-transform difference good - Q
+        )
 
-    # Distance from current to Good: transform mean Q to lnΔQ ≡ ln(good - Q)
-    df["Q"] = df["Q"].mask(
-        df["Q"] < 3 - epsilon,  # if some water bodies have < good status
-        np.log(3 - df["Q"] + epsilon),  #  log-transform difference good - Q
-    )
-
-else:
-    # Actual change in ecological status since preceding year
-    df = df.reorder_levels(["j", "v", "t"]).sort_index()  #  series by j & v
-    df["Q"] = df["Q"].diff()  #  transform Q to be the change in Q since t-1
-    df = df.reorder_levels(["j", "t", "v"]).sort_index()  #  series by j & t
-
-    # Dummy used to set MWTP = 0 if actual change in water quality is zero
-    df["nonzero"] = np.select([df["Q"] != 0], [1])  #  dummy
-
-    # Mark if actual change is negative (used to switch MWTP to negative)
-    df["neg"] = np.select([df["Q"] < 0], [1])  #  dummy
-
-    # Transform Q to the log of the actual change in water quality since t-1
-    df["Q"] = df["Q"].mask(
-        df["Q"] != 0,  #  if actual change in water quality is nonzero
-        np.log(np.abs(df["Q"]) + epsilon),  #  log-transform absolute value
-    )
-
-# Drop year 1989 and specify integer values
-df = df.drop(df[df.index.get_level_values("t") == 1989].index)
-df[["D age", "D lake", "N"]] = df[["D age", "D lake", "N"]].astype(int)
-
-# Consumer Price Index by year t (1990-2020)
-CPI_NPV = pd.read_excel("data\\" + c.data["shared"][0], index_col=0)
-
-# Merge data with CPI to correct for assumption of unitary income elasticity
-kwargs = dict(how="left", left_index=True, right_index=True)
-df1 = df.merge(CPI_NPV, **kwargs)
-df1["unityMWTP"] = BT(df1)  #  MWTP assuming unitary income elasticity
-
-# Calculate factor that MWTP is increased by if using estimated income ε
-df2018 = df1[df1.index.get_level_values("t") == 2018].copy()
-df2018["elastMWTP"] = BT(df2018, elast=1.453)  #  meta reg income ε
-df2018["factor"] = df2018["elastMWTP"] / df2018["unityMWTP"]
-df2018 = df2018.droplevel("t")
-df2 = df1.merge(df2018[["factor"]], **kwargs)
-df2 = df2.reorder_levels(["j", "t", "v"]).sort_index()
-
-# Adjust with factor of actual ε over unitary ε; set MWTP to 0 for certain Q
-df2["MWTP"] = df2["unityMWTP"] * df2["factor"] * df2["nonzero"]
-
-# Aggregate real MWTP per hh over households in coastal catchment area
-df2["CWP"] = df2["MWTP"] * df2["N"] / 1e06  #  million DKK (2018 prices)
-
-if investment is True:
-    # Switch MWTP to negative if actual change is negative
-    cond = [df2["neg"] == 1]
-    df2["CWP"] = np.select(cond, [-df2["CWP"]], default=df2["CWP"])
-
-    # Apply net present value (NPV) factor using different discount rates r
-    if real is False:
-        # r as prescribed by Ministry of Finance of Denmark the given year
-        df2["CWP"] = df2["CWP"] * df2["NPV"]
+        # lnΔQ = 0 if all water bodies of type j have ≥ good ecological status
+        df["Q"] = df["Q"] * df["nonzero"]
 
     else:
-        # Declining r as prescribed by Ministry of Finance during 2014-2020
-        df2["CWP"] = df2["CWP"] * CPI_NPV.loc[2018, "NPV"]
-        # Rename CWP to IV (investment value of water quality improvements)
-        df2["IV"] = df2["CWP"]  #  million DKK (2018 prices)
-#         return df2[["IV"]]  #  return real investment value by j, t, and v
-# if real is True:
-#     return df2[["CWP"]]  #  real cost of water pollution by j, t, v
+        # Actual change in ecological status since preceding year
+        df = df.reorder_levels(["j", "v", "t"]).sort_index()  #  series by j & v
+        df["Q"] = df["Q"].diff()  #  transform Q to be the change in Q since t-1
+        df = df.reorder_levels(["j", "t", "v"]).sort_index()  #  series by j & t
 
-df2[df2["nonzero"] == 0]
-df2[(df2.index.get_level_values("j") == "coastal") & (df2["nonzero"] == 0)]
+        # Dummy used to set MWTP = 0 if actual change in water quality is zero
+        df["nonzero"] = np.select([df["Q"] != 0], [1])  #  dummy
 
-# Aggregate nominal MWTP per hh over households in coastal catchment area
-df2["CWPn"] = df2["CWP"] * df2["CPI"] / CPI_NPV.loc[2018, "CPI"]
+        # Mark if actual change is negative (used to switch MWTP to negative)
+        df["neg"] = np.select([df["Q"] < 0], [1])  #  dummy
 
-# CWP in the prices of the preceding year (for year-by-year chain linking)
-df2["D"] = df2["CWPn"] * df2["CPI t-1"] / df2["CPI"]
+        # Transform Q to the log of the actual change in water quality since t-1
+        df["Q"] = df["Q"].mask(
+            df["Q"] != 0,  #  if actual change in water quality is nonzero
+            np.log(np.abs(df["Q"]) + epsilon),  #  log-transform absolute value
+        )
 
-# Aggregate over coastal catchment areas
-grouped = (
-    df2[["CWPn", "D"]]
-    .groupby(["j", "t"])
-    .sum()
-    .unstack(level=0)
-    .rename_axis(None)
-    .rename_axis([None, None], axis=1)
-)
+    # Drop year 1989 and specify integer values
+    df = df.drop(df[df.index.get_level_values("t") == 1989].index)
+    df[["D age", "D lakes", "N"]] = df[["D age", "D lakes", "N"]].astype(int)
 
-if investment is True:
-    # Rename nominal IV in prices of current year, and preceding year respectively
-    grouped.columns = grouped.columns.set_levels(
-        [
-            "Investment value (current year's prices, million DKK)",
-            "Investment value (preceding year's prices, million DKK)",
-        ],
-        level=0,
+    # Consumer Price Index by year t (1990-2020)
+    CPI_NPV = pd.read_excel("data\\" + data["shared"][0], index_col=0)
+
+    # Merge data with CPI to correct for assumption of unitary income elasticity
+    df1 = df.merge(CPI_NPV, "left", left_index=True, right_index=True)
+    df1["unityMWTP"] = BT(df1)  #  MWTP assuming unitary income elasticity
+
+    # Calculate factor that MWTP is increased by if using estimated income ε
+    df2018 = df1[df1.index.get_level_values("t") == 2018].copy()
+    df2018["elastMWTP"] = BT(df2018, elast=1.453)  #  meta reg income ε
+    df2018["factor"] = df2018["elastMWTP"] / df2018["unityMWTP"]
+    df2018 = df2018.droplevel("t")
+    df2 = df1.merge(df2018[["factor"]], "left", left_index=True, right_index=True)
+    df2 = df2.reorder_levels(["j", "t", "v"]).sort_index()
+
+    # Adjust with factor of actual ε over unitary ε; set MWTP to 0 for certain Q
+    df2["MWTP"] = df2["unityMWTP"] * df2["factor"] * df2["nonzero"]
+
+    # Aggregate real MWTP per hh over households in coastal catchment area
+    df2["CWP"] = df2["MWTP"] * df2["N"] / 1e06  #  million DKK (2018 prices)
+
+    if investment is True:
+        # Switch MWTP to negative if actual change is negative
+        cond = [df2["neg"] == 1]
+        df2["CWP"] = np.select(cond, [-df2["CWP"]], default=df2["CWP"])
+
+        # Apply net present value (NPV) factor using different discount rates r
+        if real is False:
+            # r as prescribed by Ministry of Finance of Denmark the given year
+            df2["CWP"] = df2["CWP"] * df2["NPV"]
+
+        else:
+            # Declining r as prescribed by Ministry of Finance during 2014-2020
+            df2["CWP"] = df2["CWP"] * CPI_NPV.loc[2018, "NPV"]
+            # Rename CWP to IV (investment value of water quality improvements)
+            df2["IV"] = df2["CWP"]  #  million DKK (2018 prices)
+
+            # Return real investment value (IV) by t, v, and j
+            return df2["IV"].unstack(level=0)
+
+    if real is True:
+        #  Return real cost of water pollution (CWP) by t, v, and j
+        return df2["CWP"].unstack(level=0)
+
+    df2[df2["nonzero"] == 0]
+    df2[(df2.index.get_level_values("j") == "coastal") & (df2["nonzero"] == 0)]
+
+    # Aggregate nominal MWTP per hh over households in coastal catchment area
+    df2["CWPn"] = df2["CWP"] * df2["CPI"] / CPI_NPV.loc[2018, "CPI"]
+
+    # CWP in the prices of the preceding year (for year-by-year chain linking)
+    df2["D"] = df2["CWPn"] * df2["CPI t-1"] / df2["CPI"]
+
+    # Aggregate over coastal catchment areas
+    grouped = (
+        df2[["CWPn", "D"]]
+        .groupby(["j", "t"])
+        .sum()
+        .unstack(level=0)
+        .rename_axis(None)
+        .rename_axis([None, None], axis=1)
     )
 
-else:
-    # Rename nominal CWP in prices of current year, and preceding year respectively
-    grouped.columns = grouped.columns.set_levels(
-        [
-            "Cost (current year's prices, million DKK)",
-            "Cost (preceding year's prices, million DKK)",
-        ],
-        level=0,
-    )
+    if investment is True:
+        # Rename nominal IV in prices of current year, and preceding year respectively
+        grouped.columns = grouped.columns.set_levels(
+            [
+                "Investment value (current year's prices, million DKK)",
+                "Investment value (preceding year's prices, million DKK)",
+            ],
+            level=0,
+        )
 
-# return grouped  #  in prices of current year and preceding year respectively
+    else:
+        # Rename nominal CWP in prices of current year, and preceding year respectively
+        grouped.columns = grouped.columns.set_levels(
+            [
+                "Cost (current year's prices, million DKK)",
+                "Cost (preceding year's prices, million DKK)",
+            ],
+            level=0,
+        )
+
+    return grouped  #  in prices of current year and preceding year respectively
+
+
+def decompose(dfBT, baseYear=2018):
+    """Decompose development by holding everything else equal at 2018 level"""
+
+    # Define a function to ready each row for decomposition analysis
+    def replace_row(row):
+        j, t, v = row.name
+
+        # Fix variables "Q", "ln PSL", and "SL" at base year level for j ≠ driver
+        if j != driver:
+            row[["Q", "ln PSL", "SL"]] = df.loc[(j, baseYear, v), ("Q", "ln PSL", "SL")]
+
+        # Fix "ln y", "D age", and "N" at base year level for variable ≠ driver
+        cols = [col for col in ["ln y", "D age", "N"] if col != driver]
+        row[cols] = df.loc[(j, baseYear, v), cols]
+
+        return row
+
+    # Empty dictionaries for decomposed costs of pollution and investment value
+    CWP_v, CWP_j, CWP, IV_v, IV = {}, {}, {}, {}, {}
+
+    for driver in ["coastal", "lakes", "streams", "ln y", "D age", "N"]:
+        # Copy df with the variables needed for the benefit transfer equation
+        df = dfBT.copy()
+
+        # Isolate changes related to driver by holding other things equal
+        df = df.apply(replace_row, axis=1)
+
+        # Apply valuation function to decompose the development by driver
+        CWP_vj = valuation(df)  #  CWP in catchment area v by category j
+
+        # Costs of Water Pollution in real terms (million DKK, 2018 prices)
+        CWP_v[driver] = CWP_vj.sum(axis=1)  #  total CWP in v
+        CWP_j[driver] = CWP_vj.groupby("t").sum().rename_axis(None)  #  CWP by j
+        CWP[driver] = CWP_j[driver].sum(axis=1)  #  total CWP
+
+        categories = ["coastal", "lakes", "streams"]
+
+        if driver in categories:
+            # Investment Value of water quality improvement in real terms
+            IV_v[driver] = valuation(df, investment=True)  #  IV in v by j
+
+            # Drop categories j where the given driver has no effect
+            for dict in [CWP_j, IV_v]:
+                cols = [col for col in categories if col != driver]
+                dict[driver] = dict[driver].drop(columns=cols)
+            IV_v[driver] = IV_v[driver][driver]  #  j is redundant
+
+            # Investment Value of water quality improvement in real terms by t and j
+            IV[driver] = IV_v[driver].groupby("t").sum().rename_axis(None)
+
+    # Concatenate DataFrames for each driver and name hierarchical index
+    CWPdriver_v = pd.concat(CWP_v, axis=1, names=["driver"])
+    CWPdriver_j = pd.concat(CWP_j, axis=1, names=["driver", "j"])
+    CWPdriver = pd.concat(CWP, axis=1, names=["driver"])
+    IVdriver_v = pd.concat(IV_v, axis=1, names=["driver"])
+    IVdriver = pd.concat(IV, axis=1, names=["driver"])
+
+    return CWPdriver_v, CWPdriver_j, CWPdriver, IVdriver_v, IVdriver
