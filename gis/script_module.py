@@ -1291,6 +1291,78 @@ class Water_Quality:
             arcpy.AddError(msg)  # return error message in ArcGIS
             sys.exit(1)
 
+    def decompose(self, dfBT, baseYear=2018):
+        """Decompose development by holding everything else equal at 2018 level"""
+        try:
+            # Define a function to ready each row for decomposition analysis
+            def replace_row(row):
+                j, t, v = row.name
+
+                # Fix variables "Q", "ln PSL", and "SL" at base year level for j ≠ driver
+                if j != driver:
+                    row[["Q", "ln PSL", "SL"]] = df.loc[
+                        (j, baseYear, v), ("Q", "ln PSL", "SL")
+                    ]
+
+                # Fix "ln y", "D age", and "N" at base year level for variable ≠ driver
+                cols = [col for col in ["ln y", "D age", "N"] if col != driver]
+                row[cols] = df.loc[(j, baseYear, v), cols]
+
+                return row
+
+            # Empty dictionaries for decomposed costs of pollution and investment value
+            CWP_v, CWP_j, CWP, IV_v, IV = {}, {}, {}, {}, {}
+
+            for driver in ["coastal", "lakes", "streams", "ln y", "D age", "N"]:
+                # Copy df with the variables needed for the benefit transfer equation
+                df = dfBT.copy()
+
+                # Isolate changes related to driver by holding other things equal
+                df = df.apply(replace_row, axis=1)
+
+                # Apply valuation function to decompose the development by driver
+                CWP_vj = self.valuation(df)  #  CWP in catchment area v by category j
+
+                # Costs of Water Pollution in real terms (million DKK, 2018 prices)
+                CWP_v[driver] = CWP_vj.sum(axis=1)  #  total CWP in v
+                CWP_j[driver] = CWP_vj.groupby("t").sum().rename_axis(None)  #  CWP by j
+                CWP[driver] = CWP_j[driver].sum(axis=1)  #  total CWP
+
+                categories = ["coastal", "lakes", "streams"]
+
+                if driver in categories:
+                    # Investment Value (IV) of water quality improvement in real terms
+                    IV_v[driver] = self.valuation(df, investment=True)  #  IV in v by j
+
+                    # Drop categories j where the given driver has no effect
+                    for dict in [CWP_j, IV_v]:
+                        cols = [col for col in categories if col != driver]
+                        dict[driver] = dict[driver].drop(columns=cols)
+                    IV_v[driver] = IV_v[driver][driver]  #  j is redundant (= driver)
+
+                    # IV of water quality improvement in real terms by t and j
+                    IV[driver] = IV_v[driver].groupby("t").sum().rename_axis(None)
+
+            # Concatenate DataFrames for each driver and name hierarchical index
+            CWPdriver_v = pd.concat(CWP_v, axis=1, names=["driver"])
+            CWPdriver_j = pd.concat(CWP_j, axis=1, names=["driver", "j"])
+            CWPdriver = pd.concat(CWP, axis=1, names=["driver"])
+            IVdriver_v = pd.concat(IV_v, axis=1, names=["driver"])
+            IVdriver = pd.concat(IV, axis=1, names=["driver"])
+
+            return CWPdriver_v, CWPdriver_j, CWPdriver, IVdriver_v, IVdriver
+
+        except:
+            # Report severe error messages
+            tb = sys.exc_info()[2]  # get traceback object for Python errors
+            tbinfo = traceback.format_tb(tb)[0]
+            msg = "Could not decompose development using {0} as a driver:\nTraceback info:\n{1}Error Info:\n{2}".format(
+                driver, tbinfo, str(sys.exc_info()[1])
+            )
+            print(msg)  # print error message in Python
+            arcpy.AddError(msg)  # return error message in ArcGIS
+            sys.exit(1)
+
     def valuation(self, dfBT, real=True, investment=False):
         """Valuation as either Cost of Water Pollution (CWP) or Investment Value (IV).
         If not set to return real values (2018 prices), instead returns values in the prices of both the current year and the preceding year (for chain linking).
@@ -1386,8 +1458,12 @@ class Water_Quality:
             # Aggregate nominal MWTP per hh over households in coastal catchment area
             df2["CWPn"] = df2["CWP"] * df2["CPI"] / CPI_NPV.loc[2018, "CPI"]
 
-            # CWP in the prices of the preceding year (for year-by-year chain linking)
+            # CWP in prices of the preceding year (for year-by-year chain linking)
             df2["D"] = df2["CWPn"] * df2["CPI t-1"] / df2["CPI"]
+
+            if investment is True:
+                # IV in prices of the preceding year (for year-by-year chain linking)
+                df2["D"] = df2["D"] * df2["NPV t-1"] / df2["NPV"]
 
             # Aggregate over coastal catchment areas
             grouped = (
