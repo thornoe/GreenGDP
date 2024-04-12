@@ -381,7 +381,7 @@ for d, df, suffix in zip([IV_driver, IV_driver_v], [IV_j, IV_vj], ["", "_v"]):
         mean = d[d.index.get_level_values("t") == "mean IV"].describe().drop("count").T
         mean.columns = ["mean", "std", "min", "25\%", "50\%", "75\%", "max"]
         f = {col: "{:0,.0f}".format for col in mean.columns}
-        with open("output\\all_investment_decomposed_v" + suffix + ".tex", "w") as tf:
+        with open("output\\all_investment_decomposed_v.tex", "w") as tf:
             tf.write(mean.apply(f).to_latex())  #  apply formatter and save to LaTeX
         print("The 15 catchment areas with lowest total IV per household")
         print(d.loc["mean IV", :].nsmallest(15, ("all")), "\n")
