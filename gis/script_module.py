@@ -18,8 +18,9 @@ Functions:  The class in this module contains 10 functions of which some are nes
                 - ecological_status(), which calls:
                     - indicator_to_status()
                     - missing_values_graph()
-            - valuation() calls:
-                - BT()
+            - decompose() calls:
+                - valuation(), which calls:
+                    - BT()
             Descriptions can be seen under each function.
 
 License:    MIT Copyright (c) 2024
@@ -1509,7 +1510,7 @@ class Water_Quality:
             sys.exit(1)
 
     def BT(self, df, elast=1):
-        """Apply Benefit Transfer equation from meta study (Zandersen et al., 2022)"""
+        """Apply Benefit Transfer function from meta study (Zandersen et al., 2022)"""
         try:
             # ln MWTP for improvement from current ecological status to "Good"
             lnMWTP = (

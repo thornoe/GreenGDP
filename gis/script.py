@@ -21,6 +21,7 @@ Author:     Thor Donsby Noe
 import os
 
 import arcpy
+import matplotlib.pyplot as plt
 import pandas as pd
 
 ########################################################################################
@@ -208,33 +209,29 @@ nominal.to_excel("output\\all_nominal.xlsx")  # manually Wrap Text row 1 & delet
 #   4.c Real cost of water pollution and investment in water quality for journal article
 ########################################################################################
 # Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices) by t, v, and j
-CWP_v = c.valuation(df_BT)
+CWP_vj = c.valuation(df_BT)
 
 # Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices) by t and j
-CWP_j = CWP_v.groupby("t").sum().rename_axis(None).rename_axis([None, None], axis=1)
+CWP_j = CWP_vj.groupby("t").sum().rename_axis(None).rename_axis(None, axis=1)
 CWP_j.to_csv("output\\all_cost.csv")  #  save table as CSV
-f2 = (
-    CWP_j.loc[:, "CWP"]
-    .plot(ylabel="Cost of current water pollution (million DKK, 2018 prices)")
-    .get_figure()
-)
-f2.savefig("output\\all_cost.pdf", bbox_inches="tight")  #  save figure as PDF
+CWP_label = "Cost of current water pollution (million DKK, 2018 prices)"
+fig = CWP_j.plot(ylabel=CWP_label).get_figure()
+fig.savefig("output\\all_cost.pdf", bbox_inches="tight")  #  save figure as PDF
+plt.close(fig)  #  close figure to free up memory
 
 # Investment Value of water quality improvement in real terms (million DKK, 2018 prices)
-IV_v = c.valuation(df_BT, investment=True)
+IV_vj = c.valuation(df_BT, investment=True)
 
 # IV of water quality improvement in real terms (million DKK, 2018 prices) by t and j
-IV_j = IV_v.groupby("t").sum().rename_axis(None).rename_axis([None, None], axis=1)
+IV_j = IV_vj.groupby("t").sum().rename_axis(None).rename_axis(None, axis=1)
 IV_j.to_csv("output\\all_investment.csv")  #  save table as CSV
-f3 = (
-    IV_j.loc[:, "IV"]
-    .plot(
-        kind="bar",
-        ylabel="Investment in water quality improvement (million DKK, 2018 prices)",
-    )
-    .get_figure()
-)
-f3.savefig("output\\all_investment.pdf", bbox_inches="tight")  #  save figure as PDF
+IV_label = "Investment in water quality improvement (million DKK, 2018 prices)"
+fig = IV_j.plot(
+    kind="bar",
+    ylabel=IV_label,
+).get_figure()
+fig.savefig("output\\all_investment.pdf", bbox_inches="tight")  #  save figure as PDF
+plt.close(fig)  #  close figure to free up memory
 
 # Overview using real prices and the same declining discount rate for all years
 CWP_j.mean()  #  average yearly cost of water pollution
@@ -243,7 +240,118 @@ IV_j.mean()  #  average yearly investment value in better (or worse) water quali
 ########################################################################################
 #   5. Decompose development by holding everything else equal at 2018 level
 ########################################################################################
+# Cost of water pollution and investment value by each driver (other things equal)
+CWP_driver_v, CWP_driver_j, CWP_driver, IV_driver_v, IV_driver = c.decompose(df_BT)
 
+# Total cost of water pollution (CWP) decomposed by driver (other things equal)
+for d, df, suffix in zip([CWP_driver, CWP_driver_v], [CWP_j, CWP_vj], ["", "_v"]):
+    # Add total CWP using all drivers (i.e., before decomposition)
+    d.columns = ["coastal", "lakes", "streams", "income", "age", "households"]
+    d["all"] = df.sum(axis=1)
+    d = d.rename_axis("driver", axis=1)
+
+    if suffix != "_v":
+        # Figure for total CWP decomposed by driver (other things equal at 2018 level)
+        ax = CWP_driver.plot(ylabel=CWP_label)
+        ax.axhline(CWP_driver.loc[2018, "all"], linestyle=":", linewidth=0.5)
+        fig = ax.get_figure()
+        fig.savefig("output\\all_cost_decomposed.pdf", bbox_inches="tight")  #  save PDF
+        plt.close(fig)  #  close figure to free up memory
+
+    # Growth (both in 2018 prices and in %) and growth rate of total CWP by driver
+    g = ["g (million DKK, 2018 prices)", "g (%)", "g rate (%)"]
+    if suffix != "_v":
+        d.loc[g[0], :] = d.loc[2020, :] - d.loc[1990, :]
+        d.loc[g[1], :] = 100 * d.loc[g[0], :] / d.loc[1990, :]
+        d.loc[g[2], :] = 100 * (d.loc[2020, :] / d.loc[1990, :]) ** (1 / 30) - 100
+        growth = d.tail(3).T
+        growth.columns = ["growth (million DKK)", "growth (\%)", "growth rate (\%)"]
+        f = {
+            col: "{:0,.0f}".format if col == growth.columns[0] else "{:0.2f}".format
+            for col in growth.columns
+        }
+        print("Growth in total CWP due to driver (other things equal at 2018 level)")
+        print(d.tail(3), "\n")
+    else:
+        for v in d.index.get_level_values("v").unique():
+            d.loc[(g[0], v), :] = d.loc[(2020, v), :] - d.loc[(1990, v), :]
+        for v in d.index.get_level_values("v").unique():
+            d.loc[(g[1], v), :] = 100 * d.loc[(g[0], v), :] / d.loc[(1990, v), :]
+        for v in d.index.get_level_values("v").unique():
+            d.loc[(g[2], v), :] = (
+                100 * (d.loc[(2020, v), :] / d.loc[(1990, v), :]) ** (1 / 30) - 100
+            )
+        growth = d[d.index.get_level_values("t") == "g (%)"].describe().drop("count").T
+        growth.columns = ["mean", "std", "min", "25\%", "50\%", "75\%", "max"]
+        f = {col: "{:0.2f}".format for col in growth.columns}
+        print("The 15 catchment areas with largest reduction in total CWP")
+        print(d.loc["g (%)", :].nsmallest(15, ("all")), "\n")
+        print("The 15 catchment areas with largest increase in total CWP")
+        print(d.loc["g (%)", :].nlargest(15, ("all")), "\n")
+    with open("output\\all_cost_decomposed_growth" + suffix + ".tex", "w") as tf:
+        tf.write(growth.apply(f).to_latex())  #  apply formatter and save to LaTeX
+    d.to_csv("output\\all_cost_decomposed" + suffix + ".csv")  #  save table as CSV
+
+# Colors and line styles by category j - matching those used for total CWP decomposition
+cl1 = ["#4477AA", "#CCBB44", "#EE6677", "#AA3377", "#BBBBBB"]  #  5 colors for coastal
+cl2 = ["#66CCEE", "#CCBB44", "#EE6677", "#AA3377", "#BBBBBB"]  #  5 colors for lakes
+cl3 = ["#228833", "#CCBB44", "#EE6677", "#AA3377", "#BBBBBB"]  #  5 colors for streams
+lc1 = cycler(linestyle=["-", "-", "--", ":", "-."])  #  5 line styles for coastal
+lc2 = cycler(linestyle=["--", "-", "--", ":", "-."])  #  5 line styles for lakes
+lc3 = cycler(linestyle=[":", "-", "--", ":", "-."])  #  5 line styles for streams
+
+# Cost of water pollution of category j decomposed by driver (other things equal)
+for j, cl, ls in zip(["coastal", "lakes", "streams"], [cl1, cl2, cl3], [lc1, lc2, lc3]):
+    d = CWP_driver_j.loc[:, CWP_driver_j.columns.get_level_values(1) == j].copy()
+    d.columns = [j, "income", "age", "households"]
+    d["all"] = CWP_j.loc[:, j]
+    d = d.rename_axis("driver", axis=1)
+
+    # Figure by category j - matching the colors and line styles used for total CWP
+    fig, ax = plt.subplots()  #  create a new figure and axes
+    ax.set_prop_cycle(cycler(color=cl) + ls)  #  set the property cycle
+    ax = d.plot(ax=ax, ylabel=CWP_label)
+    ax.axhline(d.loc[2018, "all"], color="black", linestyle=":", linewidth=0.5)
+    fig.savefig("output\\" + j + "_cost_decomposed.pdf", bbox_inches="tight")
+    plt.close(fig)  #  close figure to free up memory
+
+    # Calculate growth (in 2018 prices and in %) and growth rate of CWP of j by driver
+    d.loc["g (million DKK, 2018 prices)", :] = d.loc[2020, :] - d.loc[1990, :]
+    d.loc["g (%)", :] = 100 * d.loc["g (million DKK, 2018 prices)", :] / d.loc[1990, :]
+    d.loc["g yearly (%)", :] = 100 * (d.loc[2020, :] / d.loc[1990, :]) ** (1 / 30) - 100
+    d.to_csv("output\\" + j + "_cost_decomposed.csv")  #  save table as CSV
+    print("Growth in CWP of", j, "due to driver (other things equal at 2018 level)")
+    print(d.tail(3))
+
+# IV of water quality improvement decomposed by driver, other things equal at 2018 level
+fig = IV_driver.plot(kind="bar", ylabel=IV_label).get_figure()
+fig.savefig("output\\all_investment_decomposed.pdf", bbox_inches="tight")  #  save PDF
+plt.close(fig)  #  close figure to free up memory
+
+# Calculate mean real investment value by driver and total for all categories j
+for d, df, suffix in zip([IV_driver, IV_driver_v], [IV_j, IV_vj], ["", "_v"]):
+    d["all"] = df.sum(axis=1)  #  total IV, using demographics by year
+    if suffix != "_v":
+        d.loc["mean IV", :] = d.mean()
+    else:
+        # Calculate mean IV per household in v (DKK, 2018 prices)
+        N = df_BT[
+            (df_BT.index.get_level_values("j") == "coastal")
+            & (df_BT.index.get_level_values("t") != 1989)
+        ]["N"]
+        d = 1e6 * d.div(N, axis=0)  #  IV per household (DKK, 2018 prices)
+        for v in d.index.get_level_values("v").unique():
+            d.loc[("mean IV", v), :] = d[d.index.get_level_values("v") == v].mean()
+        mean = d[d.index.get_level_values("t") == "mean IV"].describe().drop("count").T
+        mean.columns = ["mean", "std", "min", "25\%", "50\%", "75\%", "max"]
+        f = {col: "{:0,.0f}".format for col in mean.columns}
+        with open("output\\all_investment_decomposed_v.tex", "w") as tf:
+            tf.write(mean.apply(f).to_latex())  #  apply formatter and save to LaTeX
+        print("The 15 catchment areas with lowest total IV per household")
+        print(d.loc["mean IV", :].nsmallest(15, ("all")), "\n")
+        print("The 15 catchment areas with highest total IV per household")
+        print(d.loc["mean IV", :].nlargest(15, ("all")), "\n")
+    d.to_csv("output\\all_investment_decomposed" + suffix + ".csv")  #  save as CSV
 
 ########################################################################################
 #   6. Robustness check: Treat DK as a single catchment area

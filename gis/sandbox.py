@@ -1133,7 +1133,7 @@ shores_j[j] = shores_v
 
 
 def BT(df, elast=1):
-    """Apply Benefit Transfer equation from meta study (Zandersen et al., 2022)"""
+    """Apply Benefit Transfer function from meta study (Zandersen et al., 2022)"""
     # ln MWTP for improvement from current ecological status to "Good"
     lnMWTP = (
         4.142
