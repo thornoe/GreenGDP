@@ -270,6 +270,7 @@ for d, df, suffix in zip([CWP_driver, CWP_driver_v], [CWP_j, CWP_vj], ["", "_v"]
             col: "{:0,.0f}".format if col == growth.columns[0] else "{:0.2f}".format
             for col in growth.columns
         }
+        col_f = "lrrr"  #  right-aligned column format; match number of columns
         print("Growth in total CWP due to driver (other things equal at 2018 level)")
         print(d.tail(3), "\n")
     else:
@@ -283,13 +284,14 @@ for d, df, suffix in zip([CWP_driver, CWP_driver_v], [CWP_j, CWP_vj], ["", "_v"]
             )
         growth = d[d.index.get_level_values("t") == "g (%)"].describe().drop("count").T
         growth.columns = ["mean", "std", "min", "25\%", "50\%", "75\%", "max"]
-        f = {col: "{:0.2f}".format for col in growth.columns}
+        f = {col: "{:0.2f}".format for col in growth.columns}  #  two decimals
+        col_f = "lrrrrrrr"  #  right-aligned column format; match number of columns
         print("The 15 catchment areas with largest reduction in total CWP")
         print(d.loc["g (%)", :].nsmallest(15, ("all")), "\n")
         print("The 15 catchment areas with largest increase in total CWP")
         print(d.loc["g (%)", :].nlargest(15, ("all")), "\n")
     with open("output\\all_cost_decomposed_growth" + suffix + ".tex", "w") as tf:
-        tf.write(growth.apply(f).to_latex())  #  apply formatter and save to LaTeX
+        tf.write(growth.apply(f).to_latex(column_format=col_f))  #  column alignment
     d.to_csv("output\\all_cost_decomposed" + suffix + ".csv")  #  save table as CSV
 
 # Colors and line styles by category j - matching those used for total CWP decomposition
@@ -346,7 +348,7 @@ for d, df, suffix in zip([IV_driver, IV_driver_v], [IV_j, IV_vj], ["", "_v"]):
         mean.columns = ["mean", "std", "min", "25\%", "50\%", "75\%", "max"]
         f = {col: "{:0,.0f}".format for col in mean.columns}
         with open("output\\all_investment_decomposed_v.tex", "w") as tf:
-            tf.write(mean.apply(f).to_latex())  #  apply formatter and save to LaTeX
+            tf.write(mean.apply(f).to_latex(column_format="lrrrrrrr"))  #  col alignment
         print("The 15 catchment areas with lowest total IV per household")
         print(d.loc["mean IV", :].nsmallest(15, ("all")), "\n")
         print("The 15 catchment areas with highest total IV per household")

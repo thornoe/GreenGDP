@@ -323,7 +323,7 @@ for a, b in zip([VPstats, VPbasis], ["VP_stats", "VP_basis"]):
     a.to_csv("output/streams_" + b + ".csv")  #  save means by subset to CSV
     f = {row: "{:0.0f}".format if row == "n" else "{:0.4f}".format for row in a.index}
     with open("output/streams_" + b + ".tex", "w") as tf:
-        tf.write(a.apply(f, axis=1).to_latex())  #  apply formatter and save to LaTeX
+        tf.write(a.apply(f, axis=1).to_latex(column_format="lccc"))  #  column alignment
 
 
 ########################################################################################
