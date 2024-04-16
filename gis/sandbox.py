@@ -270,8 +270,10 @@ fig.savefig("output\\all_investment.pdf", bbox_inches="tight")  #  save figure a
 plt.close(fig)  #  close figure to free up memory
 
 # Overview using real prices and the same declining discount rate for all years
-CWP_j.mean()  #  average yearly cost of water pollution
-IV_j.mean()  #  average yearly investment value in better (or worse) water quality
+for a, b in zip([CWP_j, IV_j], ["cost of pollution", "investment in water quality"]):
+    a["total"] = a.sum(axis=1)  #  sum of CWP or IV over all categories j (by year)
+    print("Average yearly", b, "(million DKK, 2018 prices)\n")
+    print(a.mean())  #  average yearly CWP or IV over all years (by category j & total)
 
 ########################################################################################
 #   5. Decompose development by holding everything else equal at 2018 level
