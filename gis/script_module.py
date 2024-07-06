@@ -1292,8 +1292,8 @@ class Water_Quality:
             arcpy.AddError(msg)  # return error message in ArcGIS
             sys.exit(1)
 
-    def decompose(self, dfBT, baseYear=2018):
-        """Decompose development by holding everything else equal at 2018 level"""
+    def decompose(self, dfBT, baseYear=1990):
+        """Decompose development by holding everything else equal at baseYear level"""
         try:
             # Define a function to ready each row for decomposition analysis
             def replace_row(row):

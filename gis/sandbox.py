@@ -1287,8 +1287,8 @@ def valuation(dfBT, real=True, investment=False):
     return grouped  #  in prices of current year and preceding year respectively
 
 
-def decompose(dfBT, baseYear=2018):
-    """Decompose development by holding everything else equal at 2018 level"""
+def decompose(dfBT, baseYear=1990):
+    """Decompose development by holding everything else equal at baseYear level"""
 
     # Define a function to ready each row for decomposition analysis
     def replace_row(row):
