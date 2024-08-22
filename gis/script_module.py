@@ -1127,7 +1127,7 @@ class Water_Quality:
 
     def values_by_catchment_area(self, j, dfEcoImp, dfVP):
         """Assign water bodies to coastal catchment areas and calculate the weighted arithmetic mean of ecological status after truncating from above at Good status.
-        For each year t, set up df with variables for the Benefit Transfer equation."""
+        For each year t, set up df with variables for the Benefit Transfer function."""
         try:
             if j == "coastal":
                 dfEcoImpCatch = dfEcoImp.copy()
@@ -1315,7 +1315,7 @@ class Water_Quality:
             CWP_v, CWP_j, CWP, IV_v, IV = {}, {}, {}, {}, {}
 
             for driver in ["coastal", "lakes", "streams", "ln y", "D age", "N"]:
-                # Copy df with the variables needed for the benefit transfer equation
+                # Copy df with the variables needed for the Benefit Transfer function
                 df = dfBT.copy()
 
                 # Isolate changes related to driver by holding other things equal
@@ -1369,7 +1369,7 @@ class Water_Quality:
         If not set to return real values (2018 prices), instead returns values in the prices of both the current year and the preceding year (for chain linking).
         """
         try:
-            # Copy DataFrame with the variables needed for the benefit transfer equation
+            # Copy DataFrame with the variables needed for the Benefit Transfer function
             df = dfBT.copy()
 
             # Define a small constant to avoid RuntimeWarning due to taking the log of 0
@@ -1533,7 +1533,7 @@ class Water_Quality:
             # Report severe error messages
             tb = sys.exc_info()[2]  # get traceback object for Python errors
             tbinfo = traceback.format_tb(tb)[0]
-            msg = "Could not apply benefit transfer equation to df {0} with elasticity {1}:\nTraceback info:\n{1}Error Info:\n{2}".format(
+            msg = "Could not apply Benefit Transfer function to df {0} with elasticity {1}:\nTraceback info:\n{1}Error Info:\n{2}".format(
                 df, tbinfo, str(sys.exc_info()[1])
             )
             print(msg)  # print error message in Python
