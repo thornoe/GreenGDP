@@ -235,7 +235,7 @@ df_BT = pd.read_csv("output\\all_eco_imp.csv", index_col=[0, 1, 2])
 #   4.c Real cost of water pollution and investment in water quality for journal article
 ########################################################################################
 # Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices) by t, v, and j
-CWP_vj, df_f = valuation(df_BT)  #  factor df_f for 
+CWP_vj, df_f = valuation(df_BT)  #  factor df_f for
 
 # Costs of Water Pollution (CWP) in real terms (million DKK, 2018 prices) by t and j
 CWP_j = CWP_vj.groupby("t").sum().rename_axis(None).rename_axis(None, axis=1)
