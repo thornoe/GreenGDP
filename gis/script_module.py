@@ -1292,7 +1292,7 @@ class Water_Quality:
             arcpy.AddError(msg)  # return error message in ArcGIS
             sys.exit(1)
 
-    def decompose(self, dfBT, baseYear=1990):
+    def decompose(self, dfBT, factor, baseYear=1990):
         """Decompose development by holding everything else equal at baseYear level"""
         try:
             # Define a function to ready each row for decomposition analysis
@@ -1322,9 +1322,9 @@ class Water_Quality:
                 df = df.apply(replace_row, axis=1)
 
                 # Apply valuation function to decompose the development by driver
-                CWP_vj = self.valuation(df)  #  CWP in catchment area v by category j
+                CWP_vj, f = self.valuation(df, factor=factor)  #  CWP in v by category j
 
-                # Costs of Water Pollution in real terms (million DKK, 2018 prices)
+                # Costs of Water Pollution in real terms (million DKK, 2023 prices)
                 CWP_v[driver] = CWP_vj.sum(axis=1)  #  total CWP in v
                 CWP_j[driver] = CWP_vj.groupby("t").sum().rename_axis(None)  #  CWP by j
                 CWP[driver] = CWP_j[driver].sum(axis=1)  #  total CWP
@@ -1364,7 +1364,7 @@ class Water_Quality:
             arcpy.AddError(msg)  # return error message in ArcGIS
             sys.exit(1)
 
-    def valuation(self, dfBT, real=True, investment=False):
+    def valuation(self, dfBT, real=True, investment=False, factor=None):
         """Valuation as either Cost of Water Pollution (CWP) or Investment Value (IV).
         If not set to return real values (2018 prices), instead returns values in the prices of both the current year and the preceding year (for chain linking).
         """
@@ -1418,12 +1418,14 @@ class Water_Quality:
             df1 = df.merge(CPI_NPV, **kwargs)
             df1["unityMWTP"] = self.BT(df1)  #  MWTP assuming unitary income elasticity
 
-            # Calculate factor that MWTP is increased by if using estimated income ε
-            df2018 = df1[df1.index.get_level_values("t") == 2018].copy()
-            df2018["elastMWTP"] = self.BT(df2018, elast=1.453)  #  meta reg income ε
-            df2018["factor"] = df2018["elastMWTP"] / df2018["unityMWTP"]
-            df2018 = df2018.droplevel("t")
-            df2 = df1.merge(df2018[["factor"]], **kwargs)
+            if factor is None:
+                # Calculate factor that MWTP is increased by if using estimated income ε
+                df2018 = df1[df1.index.get_level_values("t") == 2018].copy()
+                df2018["elastMWTP"] = BT(df2018, elast=1.453)  #  meta reg income ε
+                df2018["factor"] = df2018["elastMWTP"] / df2018["unityMWTP"]
+                df2018 = df2018.droplevel("t")
+                factor = df2018.loc[("coastal"), :][["factor"]]
+            df2 = df1.merge(factor, "left", left_index=True, right_index=True)
             df2 = df2.reorder_levels(["j", "t", "v"]).sort_index()
 
             # Adjust with factor of actual ε over unitary ε; set MWTP to 0 for certain Q
@@ -1431,6 +1433,11 @@ class Water_Quality:
 
             # Aggregate real MWTP per hh over households in coastal catchment area
             df2["CWP"] = df2["MWTP"] * df2["N"] / 1e06  #  million DKK (2018 prices)
+
+            # Real costs of water pollution (million DKK, 2023 prices) by j, t, and v
+            df2["CWP"] = (
+                df2["CWP"] * CPI_NPV.loc[2023, "CPI"] / CPI_NPV.loc[2018, "CPI"]
+            )
 
             if investment is True:
                 # Switch MWTP to negative if actual change is negative
@@ -1444,20 +1451,20 @@ class Water_Quality:
 
                 else:
                     # Declining r as prescribed by Ministry of Finance during 2014-2020
-                    df2["CWP"] = df2["CWP"] * CPI_NPV.loc[2018, "NPV"]
+                    df2["CWP"] = df2["CWP"] * CPI_NPV.loc[2020, "NPV"]
 
                     # Rename CWP to IV (investment value of water quality improvements)
-                    df2["IV"] = df2["CWP"]  #  million DKK (2018 prices)
+                    df2 = df2.rename(columns={"CWP": "IV"})  # million DKK (2023 prices)
 
                     # Return real investment value (IV) by t, v, and j
                     return df2["IV"].unstack(level=0)
 
             if real is True:
                 #  Return real cost of water pollution (CWP) by t, v, and j
-                return df2["CWP"].unstack(level=0)
+                return df2["CWP"].unstack(level=0), factor
 
             # Aggregate nominal MWTP per hh over households in coastal catchment area
-            df2["CWPn"] = df2["CWP"] * df2["CPI"] / CPI_NPV.loc[2018, "CPI"]
+            df2["CWPn"] = df2["CWP"] * df2["CPI"] / CPI_NPV.loc[2023, "CPI"]
 
             # CWP in prices of the preceding year (for year-by-year chain linking)
             df2["D"] = df2["CWPn"] * df2["CPI t-1"] / df2["CPI"]
