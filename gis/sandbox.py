@@ -279,7 +279,6 @@ IV_j.iloc[:, -1].plot(  #  line plot for total IV
     kind="line",
     ax=ax,
     color="black",
-    label="total",
     use_index=False,  #  ignore DatetimeIndex units for x-axis
 )
 IV_j.iloc[:, :-1].plot(kind="bar", stacked=True, ax=ax)  #  stacked bar plot (same axis)
@@ -354,38 +353,6 @@ for d, df, suffix in zip([CWP_driver, CWP_driver_v], [CWP_j, CWP_vj], ["", "_v"]
     with open("output\\all_cost_decomposed_growth" + suffix + ".tex", "w") as tf:
         tf.write(growth.apply(f).to_latex(column_format=col_f))  #  column alignment
 
-# Colors and line styles by category j - matching those used for total CWP decomposition
-cl1 = ["#4477AA", "#CCBB44", "#EE6677", "#AA3377", "black"]  #  5 colors for coastal
-cl2 = ["#66CCEE", "#CCBB44", "#EE6677", "#AA3377", "black"]  #  5 colors for lakes
-cl3 = ["#228833", "#CCBB44", "#EE6677", "#AA3377", "black"]  #  5 colors for streams
-lc1 = cycler(linestyle=["-", "-", "--", ":", "-."])  #  5 line styles for coastal
-lc2 = cycler(linestyle=["--", "-", "--", ":", "-."])  #  5 line styles for lakes
-lc3 = cycler(linestyle=[":", "-", "--", ":", "-."])  #  5 line styles for streams
-
-# Real cost of water pollution of category j decomposed by driver (other things equal)
-for j, cl, ls in zip(["coastal", "lakes", "streams"], [cl1, cl2, cl3], [lc1, lc2, lc3]):
-    d = CWP_driver_j.loc[:, CWP_driver_j.columns.get_level_values(1) == j].copy()
-    d.columns = [j, "income", "age", "households"]
-    d["total"] = CWP_j.loc[:, j]
-    d = d.rename_axis("driver", axis=1)
-
-    # Figure by category j - matching the colors and line styles used for total CWP
-    fig, ax = plt.subplots()  #  create a new figure and axes
-    ax.set_prop_cycle(cycler(color=cl) + ls)  #  set the property cycle
-    ax = d.plot(ax=ax, ylabel=CWP_label)
-    fig.savefig("output\\" + j + "_cost_decomposed.pdf", bbox_inches="tight")
-    plt.close(fig)  #  close figure to free up memory
-
-    # Calculate growth (in 2023 prices and in %) and growth rate of CWP of j by driver
-    d.loc["g (million DKK, 2023 prices)", :] = d.loc[2020, :] - d.loc[1990, :]
-    d.loc["g (%)", :] = 100 * d.loc["g (million DKK, 2023 prices)", :] / d.loc[1990, :]
-    d.loc["g yearly (%)", :] = 100 * (d.loc[2020, :] / d.loc[1990, :]) ** (1 / 30) - 100
-    d.to_csv("output\\" + j + "_cost_decomposed.csv")  #  save table as CSV
-    print("Growth in CWP of", j, "due to driver (other things equal at 1990 level)")
-    print(d.tail(3), "\n")
-
-d = IV_driver_v.copy()
-df = IV_vj.copy()
 # Mean real investment value (IV) decomposed by driver (other things equal at 1990 level)
 IV_j_driver = pd.DataFrame()  #  df to store decomposed mean IV for each category j
 for d, df, suffix in zip([IV_driver, IV_driver_v], [IV_j, IV_vj], ["", "_v"]):
@@ -399,7 +366,6 @@ for d, df, suffix in zip([IV_driver, IV_driver_v], [IV_j, IV_vj], ["", "_v"]):
             kind="line",
             ax=ax,
             color="black",
-            label="total",
             use_index=False,  #  ignore DatetimeIndex units for x-axis
         )
         d.iloc[:, :-1].plot(kind="bar", stacked=True, ax=ax)  # stacked bar plot
@@ -423,29 +389,22 @@ for d, df, suffix in zip([IV_driver, IV_driver_v], [IV_j, IV_vj], ["", "_v"]):
             IV_driver_j = pd.DataFrame()
             IV_driver_j["water quality"] = d[j]
             IV_driver_j["demographics"] = df[j] - d[j]
-            IV_driver_j["total IV for j"] = df[j]
-            IV_driver_j["demographics (%)"] = 100 * (1 - d[j] / df[j])
+            IV_driver_j["total"] = df[j]
+            IV_driver_j["demographics (\%)"] = 100 * (1 - d[j] / df[j])
             dict_j[j] = IV_driver_j
         IV_j_driver = pd.concat(dict_j, axis=1, names=["j", "driver"])
         print("Yearly IV for j due to water quality improvements & demog. respectively")
         print(IV_j_driver, "\n")
-
-        # Decomposed IV for each category j
-        table_df = pd.DataFrame(
-            {
-                "driver": [
-                    "water quality",
-                    "demographics",
-                    "total IV for j",
-                    "demographics (\%)",
-                ],
-                "IV for coastal": IV_j_driver["coastal"].values.T.tolist(),
-                "IV for lakes": IV_j_driver["lakes"].values.T.tolist(),
-                "IV for streams": IV_j_driver["streams"].values.T.tolist(),
-            }
-        )
-        with open("output\\iv_table.tex", "w") as tf:  #  save as a TeX file
-            tf.write(table_df.to_latex(index=False, column_format="lrrr", escape=False))
+        # Mean yearly IV for each category j decomposed by water quality and demographics
+        mean = IV_j_driver.loc["mean IV", :].unstack(level=0).T
+        f = {
+            col: "{:0.2f}".format if col == mean.columns[-1] else "{:0,.0f}".format
+            for col in mean.columns
+        }
+        with open(
+            "output\\all_investment_decomposed.tex", "w"
+        ) as tf:  #  save as a TeX file
+            tf.write(mean.apply(f).T.to_latex(column_format="lrrr"))
 
     d.to_csv("output\\all_investment_decomposed" + suffix + ".csv")  #  save as CSV
 
@@ -457,7 +416,6 @@ for d, df, suffix in zip([IV_driver, IV_driver_v], [IV_j, IV_vj], ["", "_v"]):
         ]["N"]
         d = 1e6 * d.div(N, axis=0)  #  decomposed IV per household (DKK, 2023 prices)
         df = 1e6 * df.div(N, axis=0)  #  IV per household (DKK, 2023 prices)
-        d["demographics (\%)"] = 100 * d["demographics"] / d["total"]  #  % of total IV
         for v in d.index.get_level_values("v").unique():
             d.loc[("mean IV", v), :] = d[d.index.get_level_values("v") == v].mean()
             df.loc[("mean IV", v), :] = df[df.index.get_level_values("v") == v].mean()
@@ -466,6 +424,7 @@ for d, df, suffix in zip([IV_driver, IV_driver_v], [IV_j, IV_vj], ["", "_v"]):
         f = {col: "{:0,.0f}".format for col in mean.columns}
         with open("output\\all_investment_decomposed_v.tex", "w") as tf:
             tf.write(mean.apply(f).to_latex(column_format="lrrrrrrr"))  #  col alignment
+        d["demographics (%)"] = 100 * d["demographics"] / d["total"]  #  % of total IV
         d = d.merge(names, left_on="v", right_index=True)  #  catchment area names
         d = d.rename_axis("driver", axis=1)
         print("The 15 catchment areas with lowest mean total IV per household")
@@ -476,13 +435,56 @@ for d, df, suffix in zip([IV_driver, IV_driver_v], [IV_j, IV_vj], ["", "_v"]):
             m = pd.DataFrame()  #  df to store decomposed mean IV for each category j
             m["water quality"] = d.loc["mean IV", j]
             m["demographics"] = df.loc["mean IV", j] - m["water quality"]
-            m["total IV for j"] = df.loc["mean IV", j]
-            m["demographics (%)"] = 100 * (1 - m["water quality"] / m["total IV for j"])
+            m["total for j"] = df.loc["mean IV", j]
+            m["demographics (%)"] = 100 * (1 - m["water quality"] / m["total for j"])
             m["Catchment area name"] = names
             print("The 10 catchment areas with lowest mean IV per household for", j)
             print(m.nsmallest(10, ("total for j")), "\n")
             print("The 10 catchment areas with highest mean IV per household for", j)
             print(m.nlargest(10, ("total for j")), "\n")
+
+# Colors and line styles by category j - matching those used for total CWP decomposition
+cl1 = ["#4477AA", "#CCBB44", "#EE6677", "#AA3377", "black"]  #  5 colors for coastal
+cl2 = ["#66CCEE", "#CCBB44", "#EE6677", "#AA3377", "black"]  #  5 colors for lakes
+cl3 = ["#228833", "#CCBB44", "#EE6677", "#AA3377", "black"]  #  5 colors for streams
+lc1 = ["-", "-", "--", ":", "-."]  #  5 line styles for coastal
+lc2 = ["--", "-", "--", ":", "-."]  #  5 line styles for lakes
+lc3 = [":", "-", "--", ":", "-."]  #  5 line styles for streams
+categories = {
+    "coastal": (cl1, ["#4477AA", "#CCBB44"], lc1),
+    "lakes": (cl2, ["#66CCEE", "#CCBB44"], lc2),
+    "streams": (cl3, ["#228833", "#CCBB44"], lc3),
+}
+
+# Real cost of water pollution of category j decomposed by driver (other things equal)
+for j, (c1, c2, ls) in categories.items():
+    # CWP by category j - matching the colors and line styles used for total CWP
+    d = CWP_driver_j.loc[:, CWP_driver_j.columns.get_level_values(1) == j].copy()
+    d.columns = [j, "income", "age", "households"]
+    d["total"] = CWP_j.loc[:, j]
+    d = d.rename_axis("driver", axis=1)
+    fig, ax = plt.subplots()  # create a new figure and axes
+    ax.set_prop_cycle(cycler(color=c1) + cycler(linestyle=ls))  # set the property cycle
+    ax = d.plot(ax=ax, ylabel=CWP_label)
+    fig.savefig(f"output\\{j}_cost_decomposed.pdf", bbox_inches="tight")
+    plt.close(fig)  # close figure to free up memory
+
+    # Figure: IV by category j - matching the colors used for total IV
+    df = IV_j_driver.loc[:, IV_j_driver.columns.get_level_values(0) == j].copy()
+    df = df.iloc[:-1, :2][j]  # drop "mean IV", "total", and "demographics (\%)"
+    fig, ax = plt.subplots()  # create a new figure and axes
+    df.plot(kind="bar", stacked=True, ax=ax, color=c2, ylabel=IV_label)  # stacked bars
+    ax.yaxis.set_major_formatter(FuncFormatter(y_f))  #  y-axis thousands delimiter
+    fig.savefig(f"output\\{j}_investment_decomposed.pdf", bbox_inches="tight")
+    plt.close(fig)  # close figure to free up memory
+
+    # Calculate growth (in 2023 prices and in %) and growth rate of CWP of j by driver
+    d.loc["g (million DKK, 2023 prices)", :] = d.loc[2020, :] - d.loc[1990, :]
+    d.loc["g (%)", :] = 100 * d.loc["g (million DKK, 2023 prices)", :] / d.loc[1990, :]
+    d.loc["g yearly (%)", :] = 100 * (d.loc[2020, :] / d.loc[1990, :]) ** (1 / 30) - 100
+    d.to_csv("output\\" + j + "_cost_decomposed.csv")  #  save table as CSV
+    print("Growth in CWP of", j, "due to driver (other things equal at 1990 level)")
+    print(d.tail(3), "\n")
 
 ########################################################################################
 #   6. Robustness check: Treat DK as a single catchment area
