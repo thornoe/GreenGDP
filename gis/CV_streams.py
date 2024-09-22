@@ -1,5 +1,5 @@
 """
-Name:       streams_CV.py
+Name:       CV_streams.py
 
 Label:      Impute missing values in longitudinal data on ecological status of streams.
 
@@ -290,13 +290,13 @@ for a, b in zip([sparse, dfEcoObs], [dfSparse, dfDistrict]):
         d.loc["All obs", c] = len(obs[obs[c] == 1]) / len(obs)
         d.loc["All in VP3", c] = len(b[b[c] == 1]) / len(b)
 
-        # Mean ecological status in basis analysis by dummy (typology and district)
-        VPbasis.loc[c, "Observed subset"] = obs[obs[c] == 1]["Basis"].mean()
-        VPbasis.loc[c, "All in basis analysis"] = b[b[c] == 1]["Basis"].mean()
+        # Basis analysis share with less than good ecological status (< GES) by dummy
+        VPbasis.loc[c, "Observed subset"] = (obs[obs[c] == 1]["Basis"] < 3).mean()
+        VPbasis.loc[c, "All in basis analysis"] = (b[b[c] == 1]["Basis"] < 3).mean()
 
-    # Mean ecological status as assessed in basis analysis for VP3 by dummy and subset
-    VPbasis.loc["All", "Observed subset"] = obs["Basis"].mean()  #  for observed subset
-    VPbasis.loc["All", "All in basis analysis"] = b["Basis"].mean()  # in basis analysis
+    # Share with < GES as assessed in the basis analysis for VP3 by dummy and subset
+    VPbasis.loc["All", "Observed subset"] = (obs["Basis"] < 3).mean()  # observed subset
+    VPbasis.loc["All", "All in basis analysis"] = (b["Basis"] < 3).mean()  # in basis a.
 
     # Number of streams
     d["n"] = a.count().astype(int)  #  number of streams observed each year
@@ -316,12 +316,12 @@ for a, b in zip([sparse, dfEcoObs], [dfSparse, dfDistrict]):
         VPstats["All in VP3"] = d.loc["All in VP3", :]  #  distribution of all in VP3
         d.to_csv("output/streams_VP_stats_yearly.csv")  #  save yearly distributions
 VPstats  #  underrepresentation of Large and DK2 in sparse (share < 50% of average VP3)
-VPbasis  #  ecological status is higher for Large streams but lower for streams in DK2
+VPbasis  #  in sparse, GES is overrepresented for Large streams but otherwise ±.02 of BA
 
 # Save descriptive statistics and mean basis analysis to CSV and LaTeX
 for a, b in zip([VPstats, VPbasis], ["VP_stats", "VP_basis"]):
     a.to_csv("output/streams_" + b + ".csv")  #  save means by subset to CSV
-    f = {row: "{:0.0f}".format if row == "n" else "{:0.4f}".format for row in a.index}
+    f = {row: "{:0,.0f}".format if row == "n" else "{:0.2f}".format for row in a.index}
     with open("output/streams_" + b + ".tex", "w") as tf:
         tf.write(a.apply(f, axis=1).to_latex(column_format="lccc"))  #  column alignment
 
@@ -374,24 +374,21 @@ status
 # status = pd.read_csv("output/streams_eco_imp_LessThanGood.csv", index_col=0)
 
 # Accuracy score by year and selected predictors
-sco = scores.drop(columns="n").drop("Total")
-
-# Bar plot accuracy scores
-f1 = sco.plot(
+scores.index = scores.index.astype(str)  #  convert index to string (to mimic read_csv)
+sco = scores.drop(columns="n").drop(["1989", "Total"])  #  subset to relevant years
+f1 = sco.plot(  #  bar plot accuracy scores
     kind="bar", ylabel="Accuracy in predicting observed ecological status"
 ).get_figure()
 f1.savefig("output/streams_eco_imp_accuracy.pdf", bbox_inches="tight")  #  save PDF
 
 # Share of streams with less than good ecological status by year and selected predictors
 status.index = status.index.astype(str)  #  convert index to string (to mimic read_csv)
-status_years = status.drop("1989")  #  subset to years in natural capital account
+status_years = status.drop(["1989", "Total"])  #  cover years in natural capital account
 imp = status_years.drop(columns=["n", "Obs"])  #  imputed status by selected predictors
 obs = status_years[["Obs"]]  #  ecological status of streams observed the given year
 obs.columns = ["Observed"]  #  rename 'Obs' to 'Observed'
 sta = imp.merge(obs, left_index=True, right_index=True)  #  add Observed as last column
-
-# Plot share of streams with less than good ecological status
-f2 = sta.plot(
+f2 = sta.plot(  #  plot share of streams with less than good ecological status
     ylabel="Share of streams with less than good ecological status"
 ).get_figure()
 f2.savefig("output/streams_eco_imp_LessThanGood.pdf", bbox_inches="tight")  #  save PDF

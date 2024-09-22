@@ -50,7 +50,8 @@ plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
 plt.rc("figure", figsize=[10, 6.2])  #  golden ratio
 
 # Set the default display format for floating-point numbers
-pd.options.display.float_format = "{:.2f}".format
+# pd.options.display.float_format = "{:.2f}".format
+# pd.reset_option("display.float_format")
 
 ########################################################################################
 #   1. Setup
@@ -396,15 +397,13 @@ for d, df, suffix in zip([IV_driver, IV_driver_v], [IV_j, IV_vj], ["", "_v"]):
         print("Yearly IV for j due to water quality improvements & demog. respectively")
         print(IV_j_driver, "\n")
         # Mean yearly IV for each category j decomposed by water quality and demographics
-        mean = IV_j_driver.loc["mean IV", :].unstack(level=0).T
+        mean = IV_j_driver.loc["mean IV", :].unstack(level=0)
         f = {
-            col: "{:0.2f}".format if col == mean.columns[-1] else "{:0,.0f}".format
-            for col in mean.columns
+            row: "{:0.2f}".format if row == mean.index[-1] else "{:0,.0f}".format
+            for row in mean.index
         }
-        with open(
-            "output\\all_investment_decomposed.tex", "w"
-        ) as tf:  #  save as a TeX file
-            tf.write(mean.apply(f).T.to_latex(column_format="lrrr"))
+        with open("output\\all_investment_decomposed.tex", "w") as tf:  #  save TeX file
+            tf.write(mean.apply(f).to_latex(column_format="lrrr"))
 
     d.to_csv("output\\all_investment_decomposed" + suffix + ".csv")  #  save as CSV
 

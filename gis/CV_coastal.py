@@ -1,5 +1,5 @@
 """
-Name:       coastal_CV.py
+Name:       CV_coastal.py
 
 Label:      Impute missing longitudinal data on ecological status of coastal waters.
 
@@ -97,7 +97,6 @@ def stepwise_selection(subset, dummies, data, dfDummies, years):
     predictors = ["No dummies"] + dummies  #  list of possible predictors to include
     selected = []  #  empty list for storing selected predictors
     current_score, best_new_score = 0.0, 0.0  #  initial scores
-
     # DataFrame for storing accuracy scores by year and calculating weighted average
     scores = pd.DataFrame(subset.count(), index=years, columns=["n"]).astype(int)
     scores.loc["Total", "n"] = np.nan  #  row to calculate weighted average of scores
@@ -277,8 +276,12 @@ for c in cols_abbreviations:
     d[c] = obs[obs[c] == 1].count() / obs.count()
     d.loc["All obs", c] = len(obs[obs[c] == 1]) / len(obs)
     d.loc["All in VP3", c] = len(dummies[dummies[c] == 1]) / len(dummies)
-    VPbasis.loc[c, "Observed subset"] = obs[obs[c] == 1]["Basis"].mean()
-    VPbasis.loc[c, "All in basis analysis"] = dfTyp[dfTyp[c] == 1]["Basis"].mean()
+    # Basis analysis share with less than good ecological status (< GES) by dummy
+    VPbasis.loc[c, "Observed subset"] = (obs[obs[c] == 1]["Basis"] < 3).mean()
+    VPbasis.loc[c, "All in basis analysis"] = (dfTyp[dfTyp[c] == 1]["Basis"] < 3).mean()
+# Share with < GES as assessed in the basis analysis for VP3 by dummy and subset
+VPbasis.loc["All", "Observed subset"] = (obs["Basis"] < 3).mean()  # observed subset
+VPbasis.loc["All", "All in basis analysis"] = (dfTyp["Basis"] < 3).mean()  # in basis a.
 d["n"] = dfEcoObs.count().astype(int)  #  number of coastal waters observed each year
 d.loc["All obs", "n"] = len(obs)  #  96 coastal waters are observed at least once
 d.loc["All in VP3", "n"] = len(dfVP)  #  108 is the total number coastal waters in VP3
@@ -294,21 +297,19 @@ VPstats  #  Kattegat, Belt Sea, Baltic Sea, Water Exchange, Deep, Stratified les
 
 # Mean ecological status in basis analysis by dummy and subset
 VPbasis = VPbasis.rename(index=dicts)  #  rename index from abbreviations to full names
-VPbasis.loc["All", "Observed subset"] = obs["Basis"].mean()  #  for observed subset
-VPbasis.loc["All", "All in basis analysis"] = dfTyp["Basis"].mean()  # in basis analysis
+VPbasis.loc["n", "Observed subset"] = obs["Basis"].mean()  #  for observed subset
+VPbasis.loc["n", "All in basis analysis"] = dfTyp["Basis"].mean()  # in basis analysis
 VPbasis.iloc[-1, :] = VPstats.iloc[-1, :]  #  number of coastal waters by subset
-VPbasis  # eco status is above average for the dummies Kattegat, Belt Sea, & Deep
-# eco status is below average for North Sea, Baltic Sea, Fjord, North Sea fjord, & Tide
-# eco status is average (±.07) for Water exchange, Freshwater inflow, Stratified, Saline
+VPbasis  # GES is overrepresented in observed subset for dummies Kattegat
+# GES is slightly underrepresented in observed subset for Water exchange and Saline
+# Besides, share < GES is about the same (±.02) for the observed subset given the dummy
 
-VPbasis["All in basis analysis"] - VPbasis.loc["All", "All in basis analysis"]
 # Save descriptive statistics and mean basis analysis to CSV and LaTeX
 for a, b in zip([VPstats, VPbasis], ["VP_stats", "VP_basis"]):
     a.to_csv("output/coastal_" + b + ".csv")  #  save means by subset to CSV
-    f = {row: "{:0.0f}".format if row == "n" else "{:0.4f}".format for row in a.index}
+    f = {row: "{:0.0f}".format if row == "n" else "{:0.2f}".format for row in a.index}
     with open("output/coastal_" + b + ".tex", "w") as tf:
         tf.write(a.apply(f, axis=1).to_latex(column_format="lcc"))  #  column alignment
-
 
 ########################################################################################
 #   2. Subset selection of dummies for multivariate imputation (note: CV takes ~53hours)
@@ -336,10 +337,9 @@ selected = ["Vu", "B", "K", "No", "Se", "Vf", "Ø", "Fj"]
 # status = pd.read_csv("output/coastal_eco_imp_LessThanGood.csv", index_col=0)
 
 # Accuracy score by year and selected predictors
-sco = scores.drop(columns="n").drop("Total")
-
-# Bar plot accuracy scores
-f1 = (
+scores.index = scores.index.astype(str)  #  convert index to string (to mimic read_csv)
+sco = scores.drop(columns="n").drop(["1989", "Total"])  #  subset to relevant years
+f1 = (  #  bar plot accuracy scores
     sco.plot(kind="bar", ylabel="Accuracy in predicting observed ecological status")
     .legend(loc="lower left")
     .get_figure()
@@ -348,14 +348,12 @@ f1.savefig("output/coastal_eco_imp_accuracy.pdf", bbox_inches="tight")  #  save 
 
 # Share of streams with less than good ecological status by year and selected predictors
 status.index = status.index.astype(str)  #  convert index to string (to mimic read_csv)
-status_years = status.drop("1989")  #  subset to years in natural capital account
-imp = status_years.drop(columns=["n", "Obs"])  #  selected dummies
+status_years = status.drop(["1989", "Total"])  #  cover years in natural capital account
+imp = status_years.drop(columns=["n", "Obs"])  #  imputed status by selected predictors
 obs = status_years[["Obs"]]  #  ecological status of streams observed the given year
 obs.columns = ["Observed"]  #  rename 'Obs' to 'Observed'
 sta = imp.merge(obs, left_index=True, right_index=True)  #  add Observed as last column
-
-# Plot share of coastal waters with less than good ecological status
-f2 = sta.plot(
+f2 = sta.plot(  # Plot share of coastal waters with less than good ecological status
     ylabel="Share of coastal waters with less than good ecological status"
 ).get_figure()
 f2.savefig("output/coastal_eco_imp_LessThanGood.pdf", bbox_inches="tight")  #  save PDF
