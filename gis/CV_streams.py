@@ -315,7 +315,7 @@ for a, b in zip([sparse, dfEcoObs], [dfSparse, dfDistrict]):
         VPstats["Observed subset"] = d.loc["All obs", :]  # observed at least onces
         VPstats["All in VP3"] = d.loc["All in VP3", :]  #  distribution of all in VP3
         d.to_csv("output/streams_VP_stats_yearly.csv")  #  save yearly distributions
-VPstats  #  underrepresentation of Large and DK2 in sparse (share < 50% of average VP3)
+VPstats  #  underrepresentation of Medium, Large, DK2 in sparse (share < 50% of mean VP3)
 VPbasis  #  in sparse, GES is overrepresented for Large streams but otherwise ±.02 of BA
 
 # Save descriptive statistics and mean basis analysis to CSV and LaTeX
