@@ -1,7 +1,7 @@
 """
-Name:       script_line-by-line.py
+Name:       sandbox.py
 
-Label:      Construct and map longitudinal data of ecological status of water bodies.
+Label:      Line-by-line implementation for developing script.py and script_module.py.
 
 Summary:    ThorNoe.GitHub.io/GreenGDP explains the overall approach and methodology.
 
@@ -50,7 +50,7 @@ plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
 plt.rc("figure", figsize=[10, 6.2])  #  golden ratio
 
 # Set the default display format for floating-point numbers
-# pd.options.display.float_format = "{:.2f}".format
+pd.options.display.float_format = "{:.2f}".format
 # pd.reset_option("display.float_format")
 
 ########################################################################################
@@ -114,9 +114,9 @@ wfs_fields = {
 }
 
 # Specify a single category
-# j = "coastal"
+j = "coastal"
 # j = "lakes"
-j = "streams"
+# j = "streams"
 
 ########################################################################################
 #   3. Import module and run the functions
@@ -381,8 +381,8 @@ for d, df, suffix in zip([IV_driver, IV_driver_v], [IV_j, IV_vj], ["", "_v"]):
         for dataFrame in d, df:
             dataFrame.loc["mean IV", :] = dataFrame.mean()  #  mean yearly IV by driver
         d["demographics (%)"] = 100 * d["demographics"] / d["total"]  #  % of total IV
-        print("Yearly IV due to water quality improvements & demographics respectively")
-        print(d, "\n")
+        print("Yearly IV due to demographics (residual after water qual. improvements)")
+        print(d.loc["mean IV", "demographics (%)"], "\n")
 
         # How many % of IV for category j is due to demographics?
         dict_j = {}  #  dictionary to store df of decomposed IV for each category j
@@ -394,16 +394,26 @@ for d, df, suffix in zip([IV_driver, IV_driver_v], [IV_j, IV_vj], ["", "_v"]):
             IV_driver_j["demographics (\%)"] = 100 * (1 - d[j] / df[j])
             dict_j[j] = IV_driver_j
         IV_j_driver = pd.concat(dict_j, axis=1, names=["j", "driver"])
-        print("Yearly IV for j due to water quality improvements & demog. respectively")
-        print(IV_j_driver, "\n")
+        for col in IV_j_driver.columns:
+            if col[1] == "demographics (\%)":
+                print(
+                    "{0}% of yearly IV due to demographics for {1}\n".format(
+                        round(IV_j_driver.loc["mean IV", col]), col[0]
+                    )
+                )
         # Mean yearly IV for each category j decomposed by water quality and demographics
         mean = IV_j_driver.loc["mean IV", :].unstack(level=0)
         f = {
-            row: "{:0.2f}".format if row == mean.index[-1] else "{:0,.0f}".format
-            for row in mean.index
+            "demographics": "{:0.2f}",
+            "water quality": "{:0,.0f}",
+            "total": "{:0,.0f}",
+            "demographics (\%)": "{:0.2f}",
         }
+        for row in mean.index:
+            if row in f:
+                mean.loc[row] = mean.loc[row].map(lambda x: f[row].format(x))
         with open("output\\all_investment_decomposed.tex", "w") as tf:  #  save TeX file
-            tf.write(mean.apply(f).to_latex(column_format="lrrr"))
+            tf.write(mean.to_latex(column_format="lrrr"))
 
     d.to_csv("output\\all_investment_decomposed" + suffix + ".csv")  #  save as CSV
 
@@ -486,28 +496,68 @@ for j, (c1, c2, ls) in categories.items():
     print(d.tail(3), "\n")
 
 ########################################################################################
-#   6. Robustness check: Treat DK as a single catchment area
+#   6. Descriptive statistics for geographical variables; Box plot demographics
 ########################################################################################
-
-
-### DUMMY FOR AGE>45 BY CATCHMENT AREA
-
-# Average share of catchment areas with mean age > 45 years weighted by no. persons
-df = pd.DataFrame(
-    df.groupby(["aar"]).apply(lambda x: np.average(x["D_age"], weights=x["antal_pers"]))
+# Geographical data (assumed time-invariant)
+SL = pd.read_excel(  #  total shore length by category j (regardless of water quality)
+    "data\\" + data["shared"][2], sheet_name="all_VP_shore length", index_col=0
 )
+SL.columns = [
+    "Coastline",
+    "Shore length of lakes in VP3",
+    "Shore length of streams in VP3",
+    "Shore length of all water bodies in VP3",
+]
+PAL = pd.read_excel(
+    "data\\" + data["shared"][2], index_col=0
+)  #  proportion arable land
+PAL["Proportion of arable land"] = np.exp(PAL["ln PAL"])
 
-# Extrapolate using a linear trend
-df = df.append(
-    pd.DataFrame([np.nan, np.nan, np.nan], index=[1989, 2019, 2020])
-).sort_index()
-kwargs = dict(method="index", fill_value="extrapolate", limit_direction="both")
-df.interpolate(**kwargs, inplace=True)
+# Descriptive statistics for geographical variables
+Geo = SL.merge(PAL[["Proportion of arable land"]], on="v").describe().T
+Geo.rename(
+    columns={"count": "n", "25%": "25\%", "50%": "50\%", "75%": "75\%"}, inplace=True
+)
+f = {col: "{:0,.0f}".format if col == "n" else "{:0.2f}".format for col in Geo.columns}
+col_f = "lrrrrrrrr"  #  right-aligned column format; match number of columns
+with open("output\\all_VP_shore length_stats.tex", "w") as tf:
+    tf.write(Geo.apply(f).to_latex(column_format=col_f))  #  column alignment
 
-df.to_csv("output\\" + "D_age.csv")
+# Demographics by catchment area v and year t (extrapolated for 2019-2020)
+Dem = pd.read_csv("output\\all_demographics.csv")  #  reset index (no v & t multiindex)
+Dem["N"] = Dem["N"] / 100000  #  convert number of households to 100,000
+
+# Box plot demographics for each year (distribution of age, income, n by catchment area)
+fig, axes = plt.subplots(3, 1, figsize=(10, 16.18))  #  create 3 subplots (golden ratio)
+
+# Box plot for income
+sns.boxplot(ax=axes[0], x="t", y="y", data=Dem, palette=["#CCBB44"])
+axes[0].set_title("A: Distribution of mean real household income over catchment areas")
+axes[0].set_xlabel("")  #  hide x-axis label
+axes[0].set_ylabel("Mean real household income (100,000 DKK, 2018 prices)")
+axes[0].set_xticklabels(axes[0].get_xticklabels(), rotation=90)
+
+# Box plot for age
+sns.boxplot(ax=axes[1], x="t", y="age", data=Dem, palette=["#EE6677"])
+axes[1].set_title("B: Distribution of mean age over catchment areas")
+axes[1].set_xlabel("")  #  hide x-axis label
+axes[1].set_ylabel("Mean age")
+axes[1].set_yticks([35, 40, 45, 50, 55])  # set specific tick positions on y-axis
+axes[1].set_xticklabels(axes[0].get_xticklabels(), rotation=90)
+
+# Box plot for N
+sns.boxplot(ax=axes[2], x="t", y="N", data=Dem, palette=["#AA3377"])
+axes[2].set_title("C: Distribution of households over catchment areas")
+axes[2].set_xlabel("")  #  hide x-axis label
+axes[2].set_ylabel("Number of households (100,000)")
+axes[2].set_xticklabels(axes[0].get_xticklabels(), rotation=90)
+
+# Adjust layout and save the figure
+fig.savefig("output\\all_demographics.pdf", bbox_inches="tight")  #  save figure as PDF
+plt.close(fig)  #  close figure to free up memory
 
 ########################################################################################
-#   7. Sandbox: Run the functions line-by-line
+#   7. Sandbox: Run the functions in script_module.py line-by-line
 ########################################################################################
 arcpy.ListFeatureClasses()
 for fc in arcpy.ListFeatureClasses():
@@ -531,7 +581,7 @@ radius = 0
 if j == "streams":
     # Create longitudinal df for stations in streams by monitoring version
     kwargs = dict(
-        f=c.data[j][1],
+        f=data[j][1],
         d="Dato",
         x="Xutm_Euref89_Zone32",
         y="Yutm_Euref89_Zone32",
@@ -544,7 +594,7 @@ if j == "streams":
     # Observations after 2020 (publiced after ODA database update Jan 2024)
     DVFI2 = c.longitudinal(
         j,
-        f=c.data[j][0],
+        f=data[j][0],
         d="Dato",
         x="Målested X-UTM",
         y="Målested Y-UTM)",
@@ -561,7 +611,7 @@ else:
     # Create longitudinal df for stations in lakes and coastal waters
     long = c.longitudinal(
         j,
-        f=c.data[j][0],
+        f=data[j][0],
         d="Startdato",
         x="X_UTM32",
         y="Y_UTM32",
@@ -605,7 +655,7 @@ arcpy.CreateFeatureclass_management(
 """Set up a longitudinal DataFrame for all stations in category j by year t.
 Streams: For a given year, find the DVFI index value of bottom fauna for a station with multiple observations by taking the median and rounding down
 Lakes and coastal waters: For a given year, estimate the chlorophyll summer average for every station monitored at least four times during May-September by linear interpolating of daily data from May 1 to September 30 (or extrapolate by inserting the first/last observation from May/September if there exist no observations outside of said period that are no more than 6 weeks away from the first/last observation in May/September)."""
-f = c.data[j][0]
+f = data[j][0]
 d = "Startdato"
 x = "X_UTM32"
 y = "Y_UTM32"
@@ -1151,37 +1201,47 @@ j_present = list(dfEco["v"].unique())
 shores_v = dfEco[["v", "length"]].groupby("v").sum().iloc[:, 0]
 
 # Demographics by coastal catchment area v and year t (1990-2018)
-dem = pd.read_csv("data\\" + c.data["shared"][1], index_col=[0, 1]).sort_index()
+if "all_demographics.csv" in os.listdir("output"):
+    Dem = pd.read_csv("output\\all_demographics.csv", index_col=[0, 1])
 
-# Years used for interpolation of demographics
-t_old = np.arange(c.year_first + 1, 2018 + 1)
-t_new = np.arange(c.year_first + 1, c.year_last + 1)
+else:
+    dem = pd.read_csv("data\\" + data["shared"][1], index_col=[0, 1]).sort_index()
+    # Existing demographics data for extrapolating demographics to 2018-2020
+    t_old = np.arange(year_first + 1, 2018 + 1)  #  existing demographics data 1990-2018
+    t_new = np.arange(year_first + 1, year_last + 1)  #  extrapolate data for 2019-2020
+    # For each catchment area v, extrapolate demographics data to 2019-2020
+    frames_v = {}  #  dictionary to store df for each coastal catchment area v
+    for v in dem.index.get_level_values("v").unique():
+        df = pd.DataFrame(index=t_new)  #  empty df to store values by year t
+        for col in dem.columns:
+            # Function for linear extrapolation
+            f = interpolate.interp1d(t_old, dem.loc[v, col], fill_value="extrapolate")
+            df[col] = f(t_new)
+        frames_v[v] = df  #  store df in dictionary of DataFrames by area v
+    dfDem = pd.concat(frames_v).sort_index()
+    dfDem.index.names = ["v", "t"]
 
-# For each coastal catchment area v, extrapolate demographics to 2019-2020
-frames_v = {}  #  dictionary to store df for each coastal catchment area v
-for v in dem.index.get_level_values("v").unique():
-    df = pd.DataFrame(index=t_new)  #  empty df to store values for each year t
-    for col in dem.columns:
-        # Function for linear extrapolation
-        f = interpolate.interp1d(t_old, dem.loc[v, col], fill_value="extrapolate")
-        df[col] = f(t_new)
-    frames_v[v] = df  #  store df in dictionary of DataFrames
-dfDem = pd.concat(frames_v).sort_index()
-dfDem.index.names = ["v", "t"]
+    # Consumer Price Index by year t (1990-2020)
+    CPI = pd.read_excel("data\\" + data["shared"][0], index_col=0)
 
-# Consumer Price Index by year t (1990-2020)
-CPI = pd.read_excel("data\\" + c.data["shared"][0], index_col=0)
+    # Merge CPI with demographics by v and t (households, age, and hh income)
+    Dem = dfDem[["N", "age"]].merge(
+        CPI["CPI"], "left", left_index=True, right_index=True
+    )
+    Dem["D age"] = np.select([Dem["age"] > 45], [1])  # dummy mean age > 45 in v
 
-# Merge CPI with demographics by v and t (households, age, and hh income)
-Dem = dfDem[["N"]].merge(CPI["CPI"], "left", left_index=True, right_index=True)
-Dem["D age"] = np.select([dfDem["age"] > 45], [1])  # dummy mean age > 45
-# Mean gross real household income (100,000 DKK, 2018 prices) by v and t
-Dem["y"] = dfDem["income"] * CPI.loc[2018, "CPI"] / Dem["CPI"] / 100000
-Dem["ln y"] = np.log(Dem["y"])  #  log mean gross real household income
+    # Mean gross real household income (100,000 DKK, 2018 prices) by v and t
+    Dem["y"] = dfDem["income"] * CPI.loc[2018, "CPI"] / Dem["CPI"] / 100000
+    Dem["ln y"] = np.log(Dem["y"])  #  log mean gross real household income
+    Dem = Dem.drop(columns=["CPI"])  #  drop CPI column
+
+    Dem.to_csv("output\\all_demographics.csv")  #  save for next iteration
+
+# Limit demographics data to cover the catchment areas where category j is present
 Dem = Dem.loc[j_present].reorder_levels([1, 0]).sort_index()
 
 # Geographical data by coastal catchment area v (assumed time-invariant)
-Geo = pd.read_excel("data\\" + c.data["shared"][2], index_col=0)
+Geo = pd.read_excel("data\\" + data["shared"][2], index_col=0)
 Geo.index.name = "v"
 Geo = Geo.loc[j_present].sort_index()
 

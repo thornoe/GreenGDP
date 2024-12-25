@@ -1188,44 +1188,53 @@ class Water_Quality:
             shores_v = dfEco[["v", "length"]].groupby("v").sum().iloc[:, 0]
 
             # Demographics by coastal catchment area v and year t (1990-2018)
-            dem = pd.read_csv(
-                "data\\" + self.data["shared"][1], index_col=[0, 1]
-            ).sort_index()
+            if "all_demographics.csv" in os.listdir("output"):  #  use existing dataset
+                Dem = pd.read_csv("output\\all_demographics.csv", index_col=[0, 1])
 
-            # Years used for interpolation of demographics
-            t_old = np.arange(self.year_first + 1, 2018 + 1)
-            t_new = np.arange(self.year_first + 1, self.year_last + 1)
+            else:
+                dem = pd.read_csv(
+                    "data\\" + self.data["shared"][1], index_col=[0, 1]
+                ).sort_index()
 
-            # For each coastal catchment area v, extrapolate demographics to 2019-2020
-            frames_v = {}  #  dictionary to store df for each coastal catchment area v
-            for v in dem.index.get_level_values("v").unique():
-                df = pd.DataFrame(
-                    index=t_new
-                )  #  empty df to store values for each year t
-                for col in dem.columns:
-                    # Function for linear extrapolation
-                    f = interpolate.interp1d(
-                        t_old, dem.loc[v, col], fill_value="extrapolate"
-                    )
-                    df[col] = f(t_new)
-                frames_v[v] = df  #  store df in dictionary of DataFrames
-            dfDem = pd.concat(frames_v).sort_index()
-            dfDem.index.names = ["v", "t"]
+                # Existing demographics data for extrapolating demographics to 2018-2020
+                t_old = np.arange(self.year_first + 1, 2018 + 1)  # known data 1990-2018
+                t_new = np.arange(self.year_first + 1, self.year_last + 1)  #  2019-2020
 
-            # Consumer Price Index by year t (1990-2020)
-            CPI = pd.read_excel("data\\" + self.data["shared"][0], index_col=0)
+                # For each catchment area v, extrapolate demographics data to 2019-2020
+                frames_v = {}  #  dictionary to store df for each catchment area v
+                for v in dem.index.get_level_values("v").unique():
+                    df = pd.DataFrame(
+                        index=t_new
+                    )  #  empty df to store values by year t
+                    for col in dem.columns:
+                        # Function for linear extrapolation
+                        f = interpolate.interp1d(
+                            t_old, dem.loc[v, col], fill_value="extrapolate"
+                        )
+                        df[col] = f(t_new)
+                    frames_v[v] = df  #  store df in dictionary of DataFrames by area v
+                dfDem = pd.concat(frames_v).sort_index()
+                dfDem.index.names = ["v", "t"]
 
-            # Merge CPI with demographics by v and t (households, age, and hh income)
-            Dem = dfDem[["N"]].merge(
-                CPI["CPI"], "left", left_index=True, right_index=True
-            )
+                # Consumer Price Index by year t (1990-2020)
+                CPI = pd.read_excel("data\\" + self.data["shared"][0], index_col=0)
 
-            # Dummy for mean age > 45 in catchment area
-            Dem["D age"] = np.select([dfDem["age"] > 45], [1])
+                # Merge CPI with demographics by v and t (households, age, and hh income)
+                Dem = dfDem[["N", "age"]].merge(
+                    CPI["CPI"], "left", left_index=True, right_index=True
+                )
 
-            # Mean gross real household income (100,000 DKK, 2018 prices) by v and t
-            Dem["y"] = dfDem["income"] * CPI.loc[2018, "CPI"] / Dem["CPI"] / 100000
-            Dem["ln y"] = np.log(Dem["y"])  #  log mean gross real household income
+                # Dummy for mean age > 45 in catchment area
+                Dem["D age"] = np.select([dfDem["age"] > 45], [1])
+
+                # Mean gross real household income (100,000 DKK, 2018 prices) by v and t
+                Dem["y"] = dfDem["income"] * CPI.loc[2018, "CPI"] / Dem["CPI"] / 100000
+                Dem["ln y"] = np.log(Dem["y"])  #  log mean gross real household income
+                Dem = Dem.drop(columns=["CPI"])  #  drop CPI column
+
+                Dem.to_csv("output\\all_demographics.csv")  #  save for next iteration
+
+            # Limit demographics data to cover the catchment areas where j is present
             Dem = Dem.loc[j_present].reorder_levels([1, 0]).sort_index()
 
             # Geographical data by coastal catchment area v (assumed time-invariant)
