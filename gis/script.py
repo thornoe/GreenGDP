@@ -17,12 +17,13 @@ Author:     Thor Donsby Noe
 ########################################################################################
 #   0. Imports
 ########################################################################################
-# Import Operation System (os) and ArcPy package (requires ArcGIS Pro installed)
+# Import Operation System (os)
 import os
 
+# Import ArcPy package (requires ArcGIS Pro installed), pandas, and ticker.FuncFormatter
 import arcpy
-import matplotlib.pyplot as plt
 import pandas as pd
+from matplotlib.ticker import FuncFormatter
 
 ########################################################################################
 #   1. Setup
@@ -340,8 +341,8 @@ for d, df, suffix in zip([IV_driver, IV_driver_v], [IV_j, IV_vj], ["", "_v"]):
         for dataFrame in d, df:
             dataFrame.loc["mean IV", :] = dataFrame.mean()  #  mean yearly IV by driver
         d["demographics (%)"] = 100 * d["demographics"] / d["total"]  #  % of total IV
-        print("Yearly IV due to water quality improvements & demographics respectively")
-        print(d, "\n")
+        print("Yearly IV due to demographics (residual after water qual. improvements)")
+        print(d.loc["mean IV", "demographics (%)"], "\n")
 
         # How many % of IV for category j is due to demographics?
         dict_j = {}  #  dictionary to store df of decomposed IV for each category j
@@ -353,16 +354,26 @@ for d, df, suffix in zip([IV_driver, IV_driver_v], [IV_j, IV_vj], ["", "_v"]):
             IV_driver_j["demographics (\%)"] = 100 * (1 - d[j] / df[j])
             dict_j[j] = IV_driver_j
         IV_j_driver = pd.concat(dict_j, axis=1, names=["j", "driver"])
-        print("Yearly IV for j due to water quality improvements & demog. respectively")
-        print(IV_j_driver, "\n")
+        for col in IV_j_driver.columns:
+            if col[1] == "demographics (\%)":
+                print(
+                    "{0}% of yearly IV due to demographics for {1}\n".format(
+                        round(IV_j_driver.loc["mean IV", col]), col[0]
+                    )
+                )
         # Mean yearly IV for each category j decomposed by water quality and demographics
         mean = IV_j_driver.loc["mean IV", :].unstack(level=0)
         f = {
-            row: "{:0.2f}".format if row == mean.index[-1] else "{:0,.0f}".format
-            for row in mean.index
+            "demographics": "{:0.2f}",
+            "water quality": "{:0,.0f}",
+            "total": "{:0,.0f}",
+            "demographics (\%)": "{:0.2f}",
         }
+        for row in mean.index:
+            if row in f:
+                mean.loc[row] = mean.loc[row].map(lambda x: f[row].format(x))
         with open("output\\all_investment_decomposed.tex", "w") as tf:  #  save TeX file
-            tf.write(mean.apply(f).to_latex(column_format="lrrr"))
+            tf.write(mean.to_latex(column_format="lrrr"))
 
     d.to_csv("output\\all_investment_decomposed" + suffix + ".csv")  #  save as CSV
 
@@ -445,5 +456,71 @@ for j, (c1, c2, ls) in categories.items():
     print(d.tail(3), "\n")
 
 ########################################################################################
-#   6. Robustness check: Treat DK as a single catchment area
+#   6. Descriptive statistics for geographical variables; Box plot demographics
 ########################################################################################
+# Geographical data (assumed time-invariant)
+SL = pd.read_excel(  #  total shore length by category j (regardless of water quality)
+    "data\\" + data["shared"][2], sheet_name="all_VP_shore length", index_col=0
+)
+SL.columns = [
+    "Coastline",
+    "Shore length of lakes in VP3",
+    "Shore length of streams in VP3",
+    "Shore length of all water bodies in VP3",
+]
+PAL = pd.read_excel(
+    "data\\" + data["shared"][2], index_col=0
+)  #  proportion arable land
+PAL["Proportion of arable land"] = np.exp(PAL["ln PAL"])
+
+# Descriptive statistics for geographical variables
+Geo = SL.merge(PAL[["Proportion of arable land"]], on="v").describe().T
+Geo.rename(
+    columns={"count": "n", "25%": "25\%", "50%": "50\%", "75%": "75\%"}, inplace=True
+)
+f = {col: "{:0,.0f}".format if col == "n" else "{:0.2f}".format for col in Geo.columns}
+col_f = "lrrrrrrrr"  #  right-aligned column format; match number of columns
+with open("output\\all_VP_shore length_stats.tex", "w") as tf:
+    tf.write(Geo.apply(f).to_latex(column_format=col_f))  #  column alignment
+
+# Demographics by catchment area v and year t (using extrapolated data for 2019-2020)
+Dem = pd.read_csv("output\\all_demographics.csv")  #  reset index (no v & t multiindex)
+
+# Box plot for mean real income
+plt.figure()
+sns.boxplot(x="t", y="y", data=Dem, palette=["#CCBB44"])
+plt.title("Distribution of mean real household income over catchment areas")
+plt.xlabel("")  #  omit x-axis label
+plt.ylabel("Mean real household income (100,000 DKK, 2018 prices)")
+plt.xticks(rotation=90)
+plt.tight_layout()
+plt.savefig("output\\all_demographics_y.pdf", bbox_inches="tight")
+plt.close()  #  close plot to free up memory
+
+# Box plot for number of households
+Dem["N"] = Dem["N"] / 100000  #  convert number of households to 100,000
+plt.figure()
+sns.boxplot(x="t", y="N", data=Dem, palette=["#AA3377"])
+plt.title("Distribution of households over catchment areas")
+plt.xlabel("")  #  omit x-axis label
+plt.ylabel("Number of households (100,000)")
+plt.xticks(rotation=90)
+plt.tight_layout()
+plt.savefig("output\\all_demographics_N.pdf", bbox_inches="tight")
+plt.close()  #  close plot to free up memory
+
+# Box plot for mean age
+plt.figure()
+sns.boxplot(x="t", y="age", data=Dem, palette=["#EE6677"])
+plt.title("Distribution of mean age over catchment areas")
+plt.xlabel("")  #  omit x-axis label
+plt.ylabel("Mean age")
+plt.yticks([35, 40, 45, 50, 55])  # set specific tick positions on y-axis
+plt.axhline(y=45, color="black", linestyle=":")
+plt.xticks(rotation=90)
+plt.tight_layout()
+plt.savefig("output\\all_demographics_age.pdf", bbox_inches="tight")
+plt.close()  #  close plot to free up memory
+n = Dem.groupby("t")["D age"].sum()  #  number of catchment areas w. mean age > 45 years
+pd.DataFrame({"n": n, "s (%)": 100 * n / 108})  #  number and share: mean age > 45 years
+pd.DataFrame({"n": n, "s (%)": 100 * n / 108})  #  number and share: mean age > 45 years

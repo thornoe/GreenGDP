@@ -10,7 +10,7 @@ Rqmts:      ArcGIS Pro must be installed on the system and be up to date.
 Usage:      This module supports script.py and WaterbodiesScriptTool in gis.tbx.
             See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
 
-Functions:  The class in this module contains 10 functions of which some are nested:
+Functions:  The class in this module contains 13 functions of which some are nested:
             - get_data(), get_fc_from_WFS(), map_book(), and values_by_catchment_area() are standalone functions.
             - observed_indicator() calls:
                 - longitudinal()
@@ -41,8 +41,6 @@ from cycler import cycler
 from scipy import interpolate
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
-
-arcpy.env.overwriteOutput = True  # set overwrite option
 
 
 class Water_Quality:
@@ -88,10 +86,15 @@ class Water_Quality:
         color_cycler = cycler(color=list(colors.values()))  #  color cycler w. 7 colors
         linestyle_cycler = cycler(linestyle=["-", "--", ":", "-", "--", ":", "-."])  # 7
         plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
-        plt.rc("figure", figsize=[10, 6.2])  #  golden ratio
+        plt.rc("figure", figsize=[10, 6.18])  #  golden ratio
 
-        # Set the ArcPy workspace
-        arcpy.env.workspace = self.arcPath
+        # Set the default display format for floating-point numbers
+        pd.options.display.float_format = "{:.2f}".format
+        # pd.reset_option("display.float_format")
+
+        # Setup ArcPy
+        arcpy.env.workspace = self.arcPath  # set the ArcPy workspace
+        arcpy.env.overwriteOutput = True  # set overwrite option
 
         # Check that folders for data, output, and linkage files exist or create them
         self.get_data()
@@ -549,7 +552,7 @@ class Water_Quality:
                     len(df),
                     len(join),
                 )
-            # print(msg)  # print number of stations in Python
+            print(msg)  # print number of stations in Python
             arcpy.AddMessage(msg)  # return number of stations in ArcGIS
 
             return allVP, dfVP
@@ -949,7 +952,7 @@ class Water_Quality:
                     round(stats.drop("Basis")["known"].mean() / 100 * totalLength),
                     round(stats.drop("Basis")["known"].mean()),
                 )
-                # print(msg)  # print statistics in Python
+                print(msg)  # print statistics in Python
                 arcpy.AddMessage(msg)  # return statistics in ArcGIS
 
                 return dfEco[dfEcoObs.columns], stats["not good"], indexSorted
@@ -1062,26 +1065,18 @@ class Water_Quality:
 
     def missing_values_graph(self, j, frame, suffix="obs", index=None):
         """Heatmap visualizing observations of ecological status as either missing or using the EU index of ecological status, i.e., from 0-4 for Bad, Poor, Moderate, Good, and High water quality respectively.
-        Saves a figure of the heatmap."""
+        Saves a figure of the heatmap (using the same index for imputed data)."""
         try:
-            # Subset DataFrame to for span of natural capital account & basis analysis
-            df = frame[self.years + ["Basis"]].copy()
+            # Missing values will be imputed to be around the mean (other things equal)
+            frame["Mean"] = frame.iloc[:, :-1].mean(axis=1)
+            mean = frame["Mean"].mean()
 
-            if suffix == "obs":
-                # Sort by eco status in basis analysis then number of observed values
-                df["n"] = df.count(axis=1)
-                df = df.sort_values(["Basis", "n"], ascending=False).drop(columns="n")
-
-                # Save index to reuse the order after imputing the missing values
-                index = df.index
-
-            else:
-                # Sort by status in basis analysis & number of observed values as above
-                df = df.reindex(index)
+            # Subset frame to the years of the natural capital accounts and the Mean
+            df = frame[self.years[1:] + ["Basis", "Mean"]].copy()
 
             # Check df for the presence of any missing values
             if df.isna().sum().sum() > 0:
-                # Replace missing values with -1
+                # Replace missing values with -1 for heatmap
                 df.fillna(-1, inplace=True)
 
                 # Specify heatmap to show missing values as gray (xkcd spells it "grey")
@@ -1097,9 +1092,28 @@ class Water_Quality:
                 uniqueValues = [0, 1, 2, 3, 4]
                 description = "Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
 
+            if suffix == "obs":
+                # Sort by ecological status in Basis Analysis & observed values
+                df = df.replace(-1, mean)  #  set missing as the observed mean
+                df = df.sort_values(["Basis", "Mean"], ascending=False)
+                df = df.drop(columns=["Mean"]).replace(mean, -1)  # set as -1 again
+
+                # Save index to reuse the order after imputing the missing values
+                index = df.index
+
+            else:
+                # Sort by ecological status in Basis Analysis & observed values as above
+                df = df.drop(columns=["Mean"]).reindex(index)
+
+            if j == "coastal":
+                type = "coastal waters"
+
+            else:
+                type = j  # type of water body
+
             # Plot heatmap
             colorMap = sns.xkcd_palette(colors)
-            plt.figure(figsize=(10, 10))
+            plt.figure(figsize=(10, 14))
             ax = sns.heatmap(
                 df,
                 cmap=colorMap,
@@ -1107,7 +1121,9 @@ class Water_Quality:
                 cbar_kws={"ticks": uniqueValues},
             )
             ax.set(yticklabels=[])
-            plt.ylabel(str(len(df)) + " " + j + " ordered by number of missing values")
+            plt.ylabel(
+                str(len(df)) + " " + type + " ordered by observed ecological status"
+            )
             plt.title(description)
             plt.tight_layout()
             plt.savefig("output\\" + j + "_eco_" + suffix + ".pdf", bbox_inches="tight")
@@ -1430,7 +1446,7 @@ class Water_Quality:
             if factor is None:
                 # Calculate factor that MWTP is increased by if using estimated income ε
                 df2018 = df1[df1.index.get_level_values("t") == 2018].copy()
-                df2018["elastMWTP"] = BT(df2018, elast=1.453)  #  meta reg income ε
+                df2018["elastMWTP"] = self.BT(df2018, elast=1.453)  #  meta reg income ε
                 df2018["factor"] = df2018["elastMWTP"] / df2018["unityMWTP"]
                 df2018 = df2018.droplevel("t")
                 factor = df2018.loc[("coastal"), :][["factor"]]
@@ -1519,7 +1535,7 @@ class Water_Quality:
             tb = sys.exc_info()[2]  # get traceback object for Python errors
             tbinfo = traceback.format_tb(tb)[0]
             msg = "Could not apply valuation to df {0}:\nTraceback info:\n{1}Error Info:\n{2}".format(
-                d, tbinfo, str(sys.exc_info()[1])
+                df, tbinfo, str(sys.exc_info()[1])
             )
             print(msg)  # print error message in Python
             arcpy.AddError(msg)  # return error message in ArcGIS
