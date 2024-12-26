@@ -47,7 +47,7 @@ colors = {
 color_cycler = cycler(color=list(colors.values()))  #  color cycler with 7 colors
 linestyle_cycler = cycler(linestyle=["-", "--", ":", "-", "--", ":", "-."])  #  7 styles
 plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
-plt.rc("figure", figsize=[10, 6.2])  #  golden ratio
+plt.rc("figure", figsize=[10, 6.18])  #  golden ratio
 
 # Set the default display format for floating-point numbers
 pd.options.display.float_format = "{:.2f}".format
@@ -526,28 +526,31 @@ with open("output\\all_VP_shore length_stats.tex", "w") as tf:
 # Demographics by catchment area v and year t (extrapolated for 2019-2020)
 Dem = pd.read_csv("output\\all_demographics.csv")  #  reset index (no v & t multiindex)
 Dem["N"] = Dem["N"] / 100000  #  convert number of households to 100,000
+n = Dem.groupby("t")["D age"].sum()  #  number of catchment areas w. mean age > 45 years
+pd.DataFrame({"n": n, "s (%)": 100 * n / 108})  #  number and share: mean age > 45 years
 
 # Box plot demographics for each year (distribution of age, income, n by catchment area)
 fig, axes = plt.subplots(3, 1, figsize=(10, 16.18))  #  create 3 subplots (golden ratio)
 
 # Box plot for income
 sns.boxplot(ax=axes[0], x="t", y="y", data=Dem, palette=["#CCBB44"])
-axes[0].set_title("A: Distribution of mean real household income over catchment areas")
+axes[0].set_title("Distribution of mean real household income over catchment areas")
 axes[0].set_xlabel("")  #  hide x-axis label
 axes[0].set_ylabel("Mean real household income (100,000 DKK, 2018 prices)")
 axes[0].set_xticklabels(axes[0].get_xticklabels(), rotation=90)
 
 # Box plot for age
 sns.boxplot(ax=axes[1], x="t", y="age", data=Dem, palette=["#EE6677"])
-axes[1].set_title("B: Distribution of mean age over catchment areas")
+axes[1].set_title("Distribution of mean age over catchment areas")
 axes[1].set_xlabel("")  #  hide x-axis label
 axes[1].set_ylabel("Mean age")
 axes[1].set_yticks([35, 40, 45, 50, 55])  # set specific tick positions on y-axis
+axes[1].axhline(y=45, color="black", linestyle=":")
 axes[1].set_xticklabels(axes[0].get_xticklabels(), rotation=90)
 
 # Box plot for N
 sns.boxplot(ax=axes[2], x="t", y="N", data=Dem, palette=["#AA3377"])
-axes[2].set_title("C: Distribution of households over catchment areas")
+axes[2].set_title("Distribution of households over catchment areas")
 axes[2].set_xlabel("")  #  hide x-axis label
 axes[2].set_ylabel("Number of households (100,000)")
 axes[2].set_xticklabels(axes[0].get_xticklabels(), rotation=90)
