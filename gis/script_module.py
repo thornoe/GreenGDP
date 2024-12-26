@@ -1079,12 +1079,12 @@ class Water_Quality:
                 # Replace missing values with -1 for heatmap
                 df.fillna(-1, inplace=True)
 
-                # Specify heatmap to show missing values as gray (xkcd spells it "grey")
-                colors = ["grey", "red", "orange", "yellow", "green", "blue"]
+                # Specify heatmap to show missing values as white
+                colors = ["white", "red", "orange", "yellow", "green", "blue"]
                 uniqueValues = [-1, 0, 1, 2, 3, 4]
 
                 # Description for heatmap of observed eco status (instead of fig legend)
-                description = "Missing value (gray), Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
+                description = "Missing value (white), Bad (red), Poor (orange), Moderate (yellow), Good (green), High (blue)"
 
             else:
                 # Specify heatmap without any missing values (only for imputed coastal)
