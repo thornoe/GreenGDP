@@ -523,41 +523,46 @@ col_f = "lrrrrrrrr"  #  right-aligned column format; match number of columns
 with open("output\\all_VP_shore length_stats.tex", "w") as tf:
     tf.write(Geo.apply(f).to_latex(column_format=col_f))  #  column alignment
 
-# Demographics by catchment area v and year t (extrapolated for 2019-2020)
+# Demographics by catchment area v and year t (using extrapolated data for 2019-2020)
 Dem = pd.read_csv("output\\all_demographics.csv")  #  reset index (no v & t multiindex)
+
+# Box plot for mean real income
+plt.figure()
+sns.boxplot(x="t", y="y", data=Dem, palette=["#CCBB44"])
+plt.title("Distribution of mean real household income over catchment areas")
+plt.xlabel("")  #  omit x-axis label
+plt.ylabel("Mean real household income (100,000 DKK, 2018 prices)")
+plt.xticks(rotation=90)
+plt.tight_layout()
+plt.savefig("output\\all_demographics_y.pdf", bbox_inches="tight")
+plt.close()  #  close plot to free up memory
+
+# Box plot for number of households
 Dem["N"] = Dem["N"] / 100000  #  convert number of households to 100,000
+plt.figure()
+sns.boxplot(x="t", y="N", data=Dem, palette=["#AA3377"])
+plt.title("Distribution of households over catchment areas")
+plt.xlabel("")  #  omit x-axis label
+plt.ylabel("Number of households (100,000)")
+plt.xticks(rotation=90)
+plt.tight_layout()
+plt.savefig("output\\all_demographics_N.pdf", bbox_inches="tight")
+plt.close()  #  close plot to free up memory
+
+# Box plot for mean age
+plt.figure()
+sns.boxplot(x="t", y="age", data=Dem, palette=["#EE6677"])
+plt.title("Distribution of mean age over catchment areas")
+plt.xlabel("")  #  omit x-axis label
+plt.ylabel("Mean age")
+plt.yticks([35, 40, 45, 50, 55])  # set specific tick positions on y-axis
+plt.axhline(y=45, color="black", linestyle=":")
+plt.xticks(rotation=90)
+plt.tight_layout()
+plt.savefig("output\\all_demographics_age.pdf", bbox_inches="tight")
+plt.close()  #  close plot to free up memory
 n = Dem.groupby("t")["D age"].sum()  #  number of catchment areas w. mean age > 45 years
 pd.DataFrame({"n": n, "s (%)": 100 * n / 108})  #  number and share: mean age > 45 years
-
-# Box plot demographics for each year (distribution of age, income, n by catchment area)
-fig, axes = plt.subplots(3, 1, figsize=(10, 16.18))  #  create 3 subplots (golden ratio)
-
-# Box plot for income
-sns.boxplot(ax=axes[0], x="t", y="y", data=Dem, palette=["#CCBB44"])
-axes[0].set_title("Distribution of mean real household income over catchment areas")
-axes[0].set_xlabel("")  #  hide x-axis label
-axes[0].set_ylabel("Mean real household income (100,000 DKK, 2018 prices)")
-axes[0].set_xticklabels(axes[0].get_xticklabels(), rotation=90)
-
-# Box plot for age
-sns.boxplot(ax=axes[1], x="t", y="age", data=Dem, palette=["#EE6677"])
-axes[1].set_title("Distribution of mean age over catchment areas")
-axes[1].set_xlabel("")  #  hide x-axis label
-axes[1].set_ylabel("Mean age")
-axes[1].set_yticks([35, 40, 45, 50, 55])  # set specific tick positions on y-axis
-axes[1].axhline(y=45, color="black", linestyle=":")
-axes[1].set_xticklabels(axes[0].get_xticklabels(), rotation=90)
-
-# Box plot for N
-sns.boxplot(ax=axes[2], x="t", y="N", data=Dem, palette=["#AA3377"])
-axes[2].set_title("Distribution of households over catchment areas")
-axes[2].set_xlabel("")  #  hide x-axis label
-axes[2].set_ylabel("Number of households (100,000)")
-axes[2].set_xticklabels(axes[0].get_xticklabels(), rotation=90)
-
-# Adjust layout and save the figure
-fig.savefig("output\\all_demographics.pdf", bbox_inches="tight")  #  save figure as PDF
-plt.close(fig)  #  close figure to free up memory
 
 ########################################################################################
 #   7. Sandbox: Run the functions in script_module.py line-by-line
