@@ -5,12 +5,12 @@ Label:      Construct and map longitudinal data of ecological status of water bo
 
 Summary:    ThorNoe.GitHub.io/GreenGDP explains the overall approach and methodology.
 
-Rqmts:      ArcGIS Pro must be installed on the system and be up to date.
+Rqmts:      script_module.py in working directory. ArcGIS Pro 3.2 or later installed.
 
 Usage:      This script supports WaterbodiesScriptTool in the gis.tbx toolbox.
             See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
 
-License:    MIT Copyright (c) 2024
+License:    MIT Copyright (c) 2025
 Author:     Thor Donsby Noe
 """
 
@@ -32,18 +32,17 @@ from matplotlib.ticker import FuncFormatter
 arcpy.env.overwriteOutput = True
 
 # Specify the parent folder as the working directory of the operating system
-root = r"C:\Users\au687527\GitHub\GreenGDP"
-path = root + "\\gis"
-os.chdir(path)
-# os.chdir(arcpy.GetParameterAsText(0))
+# path = r"C:\Users\au687527\GitHub\GreenGDP\gis"
+# os.chdir(path)
+os.chdir(arcpy.GetParameterAsText(0))
 
 # Specify whether to replace existing feature classes downloaded from WFS service
-wfs_replace = 0
-# wfs_replace = arcpy.GetParameterAsText(1)
+# wfs_replace = 0
+wfs_replace = arcpy.GetParameterAsText(1)
 
 # Specify whether to keep the geodatabase when the script finishes
-keep_gdb = 1
-# keep_gdb = arcpy.GetParameterAsText(2)
+# keep_gdb = 1
+keep_gdb = arcpy.GetParameterAsText(2)
 
 ########################################################################################
 #   2. Specifications

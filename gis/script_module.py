@@ -5,7 +5,7 @@ Label:      Set up longitudinal data, impute missing values, and apply valuation
 
 Summary:    ThorNoe.GitHub.io/GreenGDP explains the overall approach and methodology.
 
-Rqmts:      ArcGIS Pro must be installed on the system and be up to date.
+Rqmts:      ArcGIS Pro 3.2 or later must be installed on the system.
 
 Usage:      This module supports script.py and WaterbodiesScriptTool in gis.tbx.
             See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
@@ -23,7 +23,7 @@ Functions:  The class in this module contains 13 functions of which some are nes
                     - BT()
             Descriptions can be seen under each function.
 
-License:    MIT Copyright (c) 2024
+License:    MIT Copyright (c) 2025
 Author:     Thor Donsby Noe
 """
 

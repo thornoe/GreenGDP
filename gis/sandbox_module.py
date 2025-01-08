@@ -22,7 +22,7 @@ Usage:      Compared to script_module.py, this module does not contain ArcPy com
 
             Descriptions can be seen under each function.
 
-License:    MIT Copyright (c) 2024
+License:    MIT Copyright (c) 2025
 Author:     Thor Donsby Noe
 """
 
@@ -37,6 +37,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 from cycler import cycler
+
 # from scipy import interpolate
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer

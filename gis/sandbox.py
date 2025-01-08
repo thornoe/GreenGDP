@@ -1,16 +1,16 @@
 """
 Name:       sandbox.py
 
-Label:      Line-by-line implementation of script.py using sandbox_module.py.
+Label:      Implementation of the parts of script.py that does not use ArcPy.
 
 Summary:    ThorNoe.GitHub.io/GreenGDP explains the overall approach and methodology.
 
-Rqmts:      Does not require ArcGIS Pro to be installed.
+Rqmts:      sandbox_module.py in working directory.
 
-Usage:      Compared to script.py, this sandbox does not import functions from 
+Usage:      Compared to script.py, this sandbox does not import or run functions from 
             script_module.py that use ArcPy commands, but only the remaining functions covered by sandbox_module.py.
 
-License:    MIT Copyright (c) 2024
+License:    MIT Copyright (c) 2025
 Author:     Thor Donsby Noe
 """
 
@@ -28,8 +28,7 @@ from matplotlib.ticker import FuncFormatter
 #   1. Setup
 ########################################################################################
 # Specify the parent folder as the working directory of the operating system
-root = r"C:\Users\au687527\GitHub\GreenGDP"
-path = root + "\\gis"
+path = r"C:\Users\au687527\GitHub\GreenGDP\gis"
 os.chdir(path)
 
 ########################################################################################
