@@ -607,7 +607,7 @@ class Water_Quality:
 
             # Plot heatmap
             colorMap = sns.xkcd_palette(colors)
-            plt.figure(figsize=(10, 14))
+            plt.figure(figsize=(10, 12))
             ax = sns.heatmap(
                 df,
                 cmap=colorMap,
