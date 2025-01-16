@@ -261,6 +261,10 @@ distr = pd.get_dummies(dfVP["distr_id"]).astype(int)
 dfDistrict = dfNatural.merge(distr["DK2"], on="wb")
 cols.append("DK2")
 
+# Soft-bottom streams are not covered by the basis analysis
+dfDistrict["Soft bottom"].eq(1).sum()  #  261 soft-bottom streams
+dfDistrict[dfDistrict["Soft bottom"] == 1]["Basis"].dropna(how="all").shape[0]  #  1
+
 # Set up DataFrames for descriptive statistics
 dfSparse = dfDistrict.merge(sparse[[]], on="wb")  #  subset w. status observed 1-3 times
 
@@ -316,7 +320,7 @@ for a, b in zip([sparse, dfEcoObs], [dfSparse, dfDistrict]):
         VPstats["All in VP3"] = d.loc["All in VP3", :]  #  distribution of all in VP3
         d.to_csv("output/streams_VP_stats_yearly.csv")  #  save yearly distributions
 VPstats  #  underrepresentation of Medium, Large, DK2 in sparse (share < 50% of mean VP3)
-VPbasis  #  in sparse, GES is overrepresented for Large streams but otherwise ±.02 of BA
+VPbasis  #  in sparse, GES is underrepresented for Large streams but otherwise ±.02 of BA
 
 # Save descriptive statistics and mean basis analysis to CSV and LaTeX
 for a, b in zip([VPstats, VPbasis], ["VP_stats", "VP_basis"]):

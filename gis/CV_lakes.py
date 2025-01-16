@@ -242,6 +242,10 @@ dfSparse = dfDistrict.merge(sparse[[]], on="wb")  #  subset w. status observed 1
 dfBasis = dfDistrict[dfDistrict["Basis"].notna()]
 basis = dfEcoObs.merge(dfBasis[[]], on="wb")
 
+# Overrepresentation of deep lakes
+dfDistrict["Deep"].eq(1).sum()  #  151 deep lakes, of which only 6 are unobserved
+dfDistrict[dfDistrict["Deep"] == 1][dfEcoObs.columns].dropna(how="all").shape[0]  #  145
+
 # Empty dfs for storing distribution and mean ecological status by dummy respectively
 VPstats = pd.DataFrame(columns=["Sparse subset", "Observed subset", "All in VP3"])
 VPbasis = pd.DataFrame(
