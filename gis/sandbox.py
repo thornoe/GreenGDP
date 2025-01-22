@@ -485,7 +485,7 @@ plt.savefig("output\\all_demographics_N.pdf", bbox_inches="tight")
 plt.close()  #  close plot to free up memory
 
 # Box plot for mean age
-plt.figure()
+plt.figure(figsize=(10, 12))
 sns.boxplot(x="t", y="age", data=Dem, palette=["#EE6677"])
 # plt.title("Distribution of mean age over catchment areas")
 plt.xlabel("")  #  omit x-axis label
