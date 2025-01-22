@@ -20,8 +20,11 @@ Author:     Thor Donsby Noe
 # Import Operation System (os)
 import os
 
-# Import Pandas and ticker.FuncFormatter
+# Import pyplot, NumPy, Pandas, seaborn, and matplotlib.ticker.FuncFormatter
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+import seaborn as sns
 from matplotlib.ticker import FuncFormatter
 
 ########################################################################################
@@ -436,9 +439,9 @@ SL = pd.read_excel(  #  total shore length by category j (regardless of water qu
 )
 SL.columns = [
     "Coastline",
-    "Shore length of lakes in VP3",
-    "Shore length of streams in VP3",
-    "Shore length of all water bodies in VP3",
+    "Lake shores in RBMP3",
+    "Stream shores in RBMP3",
+    "All shores in RBMP3",
 ]
 PAL = pd.read_excel(
     "data\\" + data["shared"][2], index_col=0
@@ -461,7 +464,7 @@ Dem = pd.read_csv("output\\all_demographics.csv")  #  reset index (no v & t mult
 # Box plot for mean real income
 plt.figure()
 sns.boxplot(x="t", y="y", data=Dem, palette=["#CCBB44"])
-plt.title("Distribution of mean real household income over catchment areas")
+# plt.title("Distribution of mean real household income over catchment areas")
 plt.xlabel("")  #  omit x-axis label
 plt.ylabel("Mean real household income (100,000 DKK, 2018 prices)")
 plt.xticks(rotation=90)
@@ -473,7 +476,7 @@ plt.close()  #  close plot to free up memory
 Dem["N"] = Dem["N"] / 100000  #  convert number of households to 100,000
 plt.figure()
 sns.boxplot(x="t", y="N", data=Dem, palette=["#AA3377"])
-plt.title("Distribution of households over catchment areas")
+# plt.title("Distribution of number of households over catchment areas")
 plt.xlabel("")  #  omit x-axis label
 plt.ylabel("Number of households (100,000)")
 plt.xticks(rotation=90)
@@ -484,7 +487,7 @@ plt.close()  #  close plot to free up memory
 # Box plot for mean age
 plt.figure()
 sns.boxplot(x="t", y="age", data=Dem, palette=["#EE6677"])
-plt.title("Distribution of mean age over catchment areas")
+# plt.title("Distribution of mean age over catchment areas")
 plt.xlabel("")  #  omit x-axis label
 plt.ylabel("Mean age")
 plt.yticks([35, 40, 45, 50, 55])  # set specific tick positions on y-axis
@@ -494,5 +497,4 @@ plt.tight_layout()
 plt.savefig("output\\all_demographics_age.pdf", bbox_inches="tight")
 plt.close()  #  close plot to free up memory
 n = Dem.groupby("t")["D age"].sum()  #  number of catchment areas w. mean age > 45 years
-pd.DataFrame({"n": n, "s (%)": 100 * n / 108})  #  number and share: mean age > 45 years
 pd.DataFrame({"n": n, "s (%)": 100 * n / 108})  #  number and share: mean age > 45 years
