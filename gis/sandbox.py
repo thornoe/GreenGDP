@@ -455,10 +455,10 @@ Geo.rename(
 )
 f = {col: "{:0,.0f}".format if col == "n" else "{:0.2f}".format for col in Geo.columns}
 col_f = "lrrrrrrrr"  #  right-aligned column format; match number of columns
-with open("output\\all_VP_shore length_stats.tex", "w") as tf:
+with open("output\\all_VP_shore length_PAL_stats.tex", "w") as tf:
     tf.write(Geo.apply(f).to_latex(column_format=col_f))  #  column alignment
 
-# Demographics by catchment area v and year t (using extrapolated data for 2019-2020)
+# Demographics by< catchment area v and year t (using extrapolated data for 2019-2020)
 Dem = pd.read_csv("output\\all_demographics.csv")  #  reset index (no v & t multiindex)
 
 # Box plot for mean real income
