@@ -8,7 +8,7 @@ Summary:    ThorNoe.GitHub.io/GreenGDP explains the overall approach and methodo
 Rqmts:      Does not require ArcGIS Pro to be installed.
 
 Usage:      Compared to script_module.py, this module does not contain ArcPy commands.
-            
+
             Therefore, it lags the following 6 functions: get_data(), get_fc_from_WFS(), map_book(), values_by_catchment_area(), observed_indicator(), longitudinal()
 
             Instead, this class only contains 7 functions that are all nested:
@@ -86,7 +86,7 @@ class Water_Quality:
         color_cycler = cycler(color=list(colors.values()))  #  color cycler w. 7 colors
         linestyle_cycler = cycler(linestyle=["-", "--", ":", "-", "--", ":", "-."])  # 7
         plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
-        plt.rc("figure", figsize=[10, 6.18])  #  golden ratio
+        plt.rc("figure", figsize=[10, 5])  #  golden ratio is 10 × 6.18
 
         # Set the default display format for floating-point numbers
         pd.options.display.float_format = "{:.2f}".format
@@ -607,7 +607,7 @@ class Water_Quality:
 
             # Plot heatmap
             colorMap = sns.xkcd_palette(colors)
-            plt.figure(figsize=(10, 12))
+            plt.figure(figsize=(10, 11))
             ax = sns.heatmap(
                 df,
                 cmap=colorMap,

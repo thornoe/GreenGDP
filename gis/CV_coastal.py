@@ -346,11 +346,11 @@ f1 = (  #  bar plot accuracy scores
 )
 f1.savefig("output/coastal_eco_imp_accuracy.pdf", bbox_inches="tight")  #  save PDF
 
-# Share of streams with less than good ecological status by year and selected predictors
+# Share of coastal waters with less than GES by year and selected predictors
 status.index = status.index.astype(str)  #  convert index to string (to mimic read_csv)
 status_years = status.drop(["1989", "Total"])  #  cover years in natural capital account
 imp = status_years.drop(columns=["n", "Obs"])  #  imputed status by selected predictors
-obs = status_years[["Obs"]]  #  ecological status of streams observed the given year
+obs = status_years[["Obs"]]  #  ecological status of coastal waters obs the given year
 obs.columns = ["Observed"]  #  rename 'Obs' to 'Observed'
 sta = imp.merge(obs, left_index=True, right_index=True)  #  add Observed as last column
 f2 = sta.plot(  # Plot share of coastal waters with less than good ecological status
