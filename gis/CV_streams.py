@@ -5,13 +5,13 @@ Label:      Impute missing values in longitudinal data on ecological status of s
 
 Summary:    ThorNoe.GitHub.io/GreenGDP explains the overall approach and methodology.
 
-Usage:      This is a standalone script that only serves to evaluates the robustness of 
-            the imputation method coded up in script_module.py and applied by script.py, 
+Usage:      This is a standalone script that only serves to evaluates the robustness of
+            the imputation method coded up in script_module.py and applied by script.py,
             which supports WaterbodiesScriptTool in the gis.tbx toolbox.
             See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
 
 License:    MIT Copyright (c) 2024
-Author:     Thor Donsby Noe 
+Author:     Thor Donsby Noe
 """
 
 ########################################################################################
@@ -240,30 +240,29 @@ typ.columns = [
     "Soft bottom",  #  only 1 out of 261 streams in basis analysis but it's not observed
 ]
 
-# List dummies for typology
-cols = ["Small", "Medium", "Large", "Soft bottom"]
-
-# Merge DataFrames for typology and observed biophysical indicator
-dfTypology = dfObs.merge(typ[cols], on="wb")
+# Add dummies for size → DataFrame on observed biophysical indicator
+dfSize = dfObs.merge(typ[["Small", "Medium", "Large"]], on="wb")
 
 # Create dummies for natural, artificial, and heavily modified waterbodies
 natural = pd.get_dummies(dfVP["na_kun_stm"]).astype(int)
 natural.columns = ["Artificial", "Natural", "Heavily modified"]
 
-# Merge DataFrames for typology and natural waterbodies
-dfNatural = dfTypology.merge(natural["Natural"], on="wb")
-cols.append("Natural")  #  add to list of dummies
+# Add dummies for natural & soft bottom → df on size & observed biophysical indicator
+dfTyp = dfSize.merge(natural["Natural"], on="wb").merge(typ["Soft bottom"], on="wb")
+
+# Soft-bottom streams are not covered by the basis analysis
+dfTyp["Soft bottom"].eq(1).sum()  #  261 soft-bottom streams
+dfTyp[dfTyp["Soft bottom"] == 1]["Basis"].dropna(how="all")  #  1 soft-bottom stream
+# dfTyp.loc[2312]  # the soft-bottom stream with basis analysis wasn't observed by 2023
 
 # Create dummies for waterbody district
 distr = pd.get_dummies(dfVP["distr_id"]).astype(int)
 
-# Extend dfNatural with dummy for district DK2 (Sealand, Lolland, Falster, and Møn)
-dfDistrict = dfNatural.merge(distr["DK2"], on="wb")
-cols.append("DK2")
+# Add dummy for district DK2 (Sealand, Lolland, Falster, and Møn)
+dfDistrict = dfTyp.merge(distr["DK2"], on="wb")
 
-# Soft-bottom streams are not covered by the basis analysis
-dfDistrict["Soft bottom"].eq(1).sum()  #  261 soft-bottom streams
-dfDistrict[dfDistrict["Soft bottom"] == 1]["Basis"].dropna(how="all").shape[0]  #  1
+# List all dummies
+cols = ["Small", "Medium", "Large", "Natural", "Soft bottom", "DK2"]
 
 # Set up DataFrames for descriptive statistics
 dfSparse = dfDistrict.merge(sparse[[]], on="wb")  #  subset w. status observed 1-3 times

@@ -5,13 +5,13 @@ Label:      Impute missing longitudinal data on ecological status of coastal wat
 
 Summary:    ThorNoe.GitHub.io/GreenGDP explains the overall approach and methodology.
 
-Usage:      This is a standalone script that only serves to evaluates the robustness of 
-            the imputation method coded up in script_module.py and applied by script.py, 
+Usage:      This is a standalone script that only serves to evaluates the robustness of
+            the imputation method coded up in script_module.py and applied by script.py,
             which supports WaterbodiesScriptTool in the gis.tbx toolbox.
             See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
 
 License:    MIT Copyright (c) 2024
-Author:     Thor Donsby Noe 
+Author:     Thor Donsby Noe
 """
 
 ########################################################################################
@@ -231,21 +231,21 @@ typ = dfVP[["ov_typ"]].copy()
 
 # Define the dictionaries
 dict1 = {
-    "No": "North Sea",  # Nordsø
-    "K": "Kattegat",  # Kattegat
-    "B": "Belt Sea",  # Bælthav
     "Ø": "Baltic Sea",  # Østersøen
-    "Fj": "Fjord",  # Fjord
+    "B": "Belt Sea",  # Bælthavet
+    "K": "Kattegat",  # Kattegat
+    "Fj": "Fjord",  # fjord
+    "No": "North Sea",  # Nordsøen
     "Vf": "North Sea fjord",  # Vesterhavsfjord
 }
 dict2 = {
-    "Vu": "Water exchange",  # vandudveksling
-    "F": "Freshwater inflow",  # ferskvandspåvirkning
     "D": "Deep",  # vanddybde
-    "L": "Stratified",  # lagdeling
-    "Se": "Sediment",  # sediment
+    "F": "Freshwater inflow",  # ferskvandspåvirkning
     "Sa": "Saline",  # salinitet
+    "Se": "Sediment",  # sediment
+    "L": "Stratified",  # lagdeling
     "T": "Tide",  # tidevand
+    "Vu": "Water exchange",  # vandudveksling
 }
 
 # Apply the function to typ["ov_typ"] to create a new DataFrame with the dummy variables

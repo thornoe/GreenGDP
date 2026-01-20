@@ -5,13 +5,13 @@ Label:      Impute missing values in longitudinal data on ecological status of l
 
 Summary:    ThorNoe.GitHub.io/GreenGDP explains the overall approach and methodology.
 
-Usage:      This is a standalone script that only serves to evaluates the robustness of 
-            the imputation method coded up in script_module.py and applied by script.py, 
+Usage:      This is a standalone script that only serves to evaluates the robustness of
+            the imputation method coded up in script_module.py and applied by script.py,
             which supports WaterbodiesScriptTool in the gis.tbx toolbox.
             See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
 
 License:    MIT Copyright (c) 2024
-Author:     Thor Donsby Noe 
+Author:     Thor Donsby Noe
 """
 
 ########################################################################################
@@ -219,13 +219,13 @@ cond1 = [(typ["type"] >= 9) & (typ["type"] <= 16), typ["type"] == 17]
 typ["Alkalinity"] = np.select(cond1, [1, np.nan], default=0)
 cond2 = [typ["type"].isin([5, 6, 7, 8, 13, 14, 15, 16]), typ["type"] == 17]
 typ["Brown"] = np.select(cond2, [1, np.nan], default=0)
-cond3 = [typ["type"].isin([2, 3, 7, 8, 11, 12, 15, 16]), typ["type"] == 17]
-typ["Saline"] = np.select(cond3, [1, np.nan], default=0)
-cond4 = [typ["type"].isin(np.arange(2, 17, 2)), typ["type"] == 17]
-typ["Deep"] = np.select(cond4, [1, np.nan], default=0)
+cond3 = [typ["type"].isin(np.arange(2, 17, 2)), typ["type"] == 17]
+typ["Deep"] = np.select(cond3, [1, np.nan], default=0)
+cond4 = [typ["type"].isin([2, 3, 7, 8, 11, 12, 15, 16]), typ["type"] == 17]
+typ["Saline"] = np.select(cond4, [1, np.nan], default=0)
 
 # List dummies for typology
-cols = ["Alkalinity", "Brown", "Saline", "Deep"]
+cols = ["Alkalinity", "Brown", "Deep", "Saline"]
 
 # Merge DataFrames for typology and observed ecological status
 dfTypology = dfObs.merge(typ[cols], on="wb")
@@ -297,7 +297,7 @@ for a, b in zip([sparse, dfEcoObs], [dfSparse, dfDistrict]):
         VPstats["All in VP3"] = d.loc["All in VP3", :]  #  distribution of all in VP3
         d.to_csv("output/lakes_VP_stats_yearly.csv")  #  save yearly distributions
 VPstats  #  overrepresentation of Brown and Saline lakes in sparse (share is ~50% above)
-VPbasis  #  GES is overrepresented for Deep but underrepresented for DK2 and Brown
+VPbasis  #  < GES is underrepresented for Deep but overrepresented for Brown and DK2
 
 # Save descriptive statistics and mean basis analysis to CSV and LaTeX
 for a, b in zip([VPstats, VPbasis], ["VP_stats", "VP_basis"]):
