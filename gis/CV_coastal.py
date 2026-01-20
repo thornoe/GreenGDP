@@ -233,8 +233,8 @@ typ = dfVP[["ov_typ"]].copy()
 dict1 = {
     "Ø": "Baltic Sea",  # Østersøen
     "B": "Belt Sea",  # Bælthavet
-    "K": "Kattegat",  # Kattegat
     "Fj": "Fjord",  # fjord
+    "K": "Kattegat",  # Kattegat
     "No": "North Sea",  # Nordsøen
     "Vf": "North Sea fjord",  # Vesterhavsfjord
 }
