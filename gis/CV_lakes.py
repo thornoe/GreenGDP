@@ -10,7 +10,7 @@ Usage:      This is a standalone script that only serves to evaluates the robust
             which supports WaterbodiesScriptTool in the gis.tbx toolbox.
             See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
 
-License:    MIT Copyright (c) 2024
+License:    MIT Copyright (c) 2024–2026
 Author:     Thor Donsby Noe
 """
 
@@ -46,7 +46,7 @@ colors = {
 color_cycler = cycler(color=list(colors.values()))  #  color cycler with 7 colors
 linestyle_cycler = cycler(linestyle=["-", "--", "-.", ":", "-", "--", ":"])  #  7 styles
 plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
-plt.rc("figure", figsize=[10, 6.2])  #  golden ratio
+plt.rc("figure", figsize=[10, 5])  #  golden ratio is 10 × 6.18
 
 
 # Function for accuracy score of predicted ecological status
@@ -352,9 +352,9 @@ status
 # Accuracy score by year and selected predictors
 scores.index = scores.index.astype(str)  #  convert index to string (to mimic read_csv)
 sco = scores.drop(columns="n").drop(["1989", "Total"])  #  subset to relevant years
-f1 = sco.plot(  #  bar plot accuracy scores
-    kind="bar", ylabel="Accuracy in predicting observed ecological status"
-).get_figure()
+ax1 = sco.plot(kind="bar", ylabel="Accuracy in predicting observed ecological status")
+ax1.legend(fontsize="small")
+f1 = ax1.get_figure()
 f1.savefig("output/lakes_eco_imp_accuracy.pdf", bbox_inches="tight")  #  save to PDF
 
 # Share of lakes with less than good ecological status by year and selected predictors
@@ -364,7 +364,9 @@ imp = status_years.drop(columns=["n", "Obs"])  #  imputed status by selected pre
 obs = status_years[["Obs"]]  #  ecological status of lakes observed the given year
 obs.columns = ["Observed"]  #  rename 'Obs' to 'Observed'
 sta = imp.merge(obs, left_index=True, right_index=True)  #  add Observed as last column
-f2 = sta.plot(  #  plot share of lakes with less than good ecological status
+ax2 = sta.plot(  # Plot share of lakes with less than good ecological status
     ylabel="Share of lakes with less than good ecological status"
-).get_figure()
+)
+ax2.legend(fontsize="small")
+f2 = ax2.get_figure()
 f2.savefig("output/lakes_eco_imp_LessThanGood.pdf", bbox_inches="tight")  #  save to PDF

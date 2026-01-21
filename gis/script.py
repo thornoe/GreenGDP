@@ -10,7 +10,7 @@ Rqmts:      script_module.py in working directory. ArcGIS Pro 3.2 or later insta
 Usage:      This script supports WaterbodiesScriptTool in the gis.tbx toolbox.
             See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
 
-License:    MIT Copyright (c) 2025
+License:    MIT Copyright (c) 2024–2026
 Author:     Thor Donsby Noe
 """
 
@@ -20,9 +20,13 @@ Author:     Thor Donsby Noe
 # Import Operation System (os)
 import os
 
-# Import ArcPy package (requires ArcGIS Pro installed), pandas, and ticker.FuncFormatter
-import arcpy
+# Import ArcPy, NumPy, Pandas, seaborn, and Matplotlib functionality
+import arcpy  # requires ArcGIS Pro installed
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
+import seaborn as sns
+from cycler import cycler
 from matplotlib.ticker import FuncFormatter
 
 ########################################################################################
@@ -485,33 +489,35 @@ with open("output\\all_VP_shore length_stats.tex", "w") as tf:
 # Demographics by catchment area v and year t (using extrapolated data for 2019-2020)
 Dem = pd.read_csv("output\\all_demographics.csv")  #  reset index (no v & t multiindex)
 
-# Box plot for mean real income
-plt.figure()
-sns.boxplot(x="t", y="y", data=Dem, palette=["#CCBB44"])
-plt.title("Distribution of mean real household income over catchment areas")
-plt.xlabel("")  #  omit x-axis label
-plt.ylabel("Mean real household income (100,000 DKK, 2018 prices)")
-plt.xticks(rotation=90)
-plt.tight_layout()
-plt.savefig("output\\all_demographics_y.pdf", bbox_inches="tight")
-plt.close()  #  close plot to free up memory
-
 # Box plot for number of households
 Dem["N"] = Dem["N"] / 100000  #  convert number of households to 100,000
-plt.figure()
+plt.figure(figsize=(10, 12))
 sns.boxplot(x="t", y="N", data=Dem, palette=["#AA3377"])
-plt.title("Distribution of households over catchment areas")
+# plt.title("Distribution of number of households over catchment areas")
 plt.xlabel("")  #  omit x-axis label
 plt.ylabel("Number of households (100,000)")
+plt.ylim(bottom=0)  #  fix the bottom of the y-axis to start at exactly 0
 plt.xticks(rotation=90)
 plt.tight_layout()
 plt.savefig("output\\all_demographics_N.pdf", bbox_inches="tight")
 plt.close()  #  close plot to free up memory
 
+# Box plot for mean real income
+plt.figure()
+sns.boxplot(x="t", y="y", data=Dem, palette=["#CCBB44"])
+# plt.title("Distribution of mean real household income over catchment areas")
+plt.xlabel("")  #  omit x-axis label
+plt.ylabel("Mean real household income (100,000 DKK, 2018 prices)")
+plt.axhline(y=5, color="black", linestyle=":")
+plt.xticks(rotation=90)
+plt.tight_layout()
+plt.savefig("output\\all_demographics_y.pdf", bbox_inches="tight")
+plt.close()  #  close plot to free up memory
+
 # Box plot for mean age
 plt.figure()
 sns.boxplot(x="t", y="age", data=Dem, palette=["#EE6677"])
-plt.title("Distribution of mean age over catchment areas")
+# plt.title("Distribution of mean age over catchment areas")
 plt.xlabel("")  #  omit x-axis label
 plt.ylabel("Mean age")
 plt.yticks([35, 40, 45, 50, 55])  # set specific tick positions on y-axis
@@ -521,5 +527,4 @@ plt.tight_layout()
 plt.savefig("output\\all_demographics_age.pdf", bbox_inches="tight")
 plt.close()  #  close plot to free up memory
 n = Dem.groupby("t")["D age"].sum()  #  number of catchment areas w. mean age > 45 years
-pd.DataFrame({"n": n, "s (%)": 100 * n / 108})  #  number and share: mean age > 45 years
 pd.DataFrame({"n": n, "s (%)": 100 * n / 108})  #  number and share: mean age > 45 years

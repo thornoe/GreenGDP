@@ -22,7 +22,7 @@ Usage:      Compared to script_module.py, this module does not contain ArcPy com
 
             Descriptions can be seen under each function.
 
-License:    MIT Copyright (c) 2025
+License:    MIT Copyright (c) 2024–2026
 Author:     Thor Donsby Noe
 """
 

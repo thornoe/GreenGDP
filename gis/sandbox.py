@@ -10,7 +10,7 @@ Rqmts:      sandbox_module.py in working directory.
 Usage:      Compared to script.py, this sandbox does not import or run functions from
             script_module.py that use ArcPy commands, but only the remaining functions covered by sandbox_module.py.
 
-License:    MIT Copyright (c) 2025
+License:    MIT Copyright (c) 2024–2026
 Author:     Thor Donsby Noe
 """
 
@@ -20,7 +20,7 @@ Author:     Thor Donsby Noe
 # Import Operation System (os)
 import os
 
-# Import pyplot, NumPy, Pandas, seaborn, and matplotlib.ticker.FuncFormatter
+# Import NumPy, Pandas, seaborn, and Matplotlib functionality
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
@@ -459,7 +459,7 @@ col_f = "lrrrrrrrr"  #  right-aligned column format; match number of columns
 with open("output\\all_VP_shore length_PAL_stats.tex", "w") as tf:
     tf.write(Geo.apply(f).to_latex(column_format=col_f))  #  column alignment
 
-# Demographics by< catchment area v and year t (using extrapolated data for 2019-2020)
+# Demographics by catchment area v and year t (using extrapolated data for 2019-2020)
 Dem = pd.read_csv("output\\all_demographics.csv")  #  reset index (no v & t multiindex)
 
 # Box plot for number of households

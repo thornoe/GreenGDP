@@ -23,7 +23,7 @@ Functions:  The class in this module contains 13 functions of which some are nes
                     - BT()
             Descriptions can be seen under each function.
 
-License:    MIT Copyright (c) 2025
+License:    MIT Copyright (c) 2024–2026
 Author:     Thor Donsby Noe
 """
 
@@ -86,7 +86,7 @@ class Water_Quality:
         color_cycler = cycler(color=list(colors.values()))  #  color cycler w. 7 colors
         linestyle_cycler = cycler(linestyle=["-", "--", ":", "-", "--", ":", "-."])  # 7
         plt.rc("axes", prop_cycle=(color_cycler + linestyle_cycler))
-        plt.rc("figure", figsize=[10, 6.18])  #  golden ratio
+        plt.rc("figure", figsize=[10, 5])  #  golden ratio is 10 × 6.18
 
         # Set the default display format for floating-point numbers
         pd.options.display.float_format = "{:.2f}".format
