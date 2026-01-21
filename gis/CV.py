@@ -10,7 +10,7 @@ Usage:      This is a standalone script that only serves to evaluates the robust
             which supports WaterbodiesScriptTool in the gis.tbx toolbox.
             See GitHub.com/ThorNoe/GreenGDP for instructions to run or update it all.
 
-License:    MIT Copyright (c) 2024
+License:    MIT Copyright (c) 2024–2026
 Author:     Thor Donsby Noe
 """
 
@@ -18,7 +18,7 @@ Author:     Thor Donsby Noe
 #   0. Functions
 ########################################################################################
 import os
- 
+
 import pandas as pd
 
 ########################################################################################
