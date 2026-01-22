@@ -171,7 +171,7 @@ for key, dict in stats_method.items():
     # Plot share of category j with less than good ecological status by year
     for format in (".pdf", ".png"):
         f1 = (
-            stats.loc[list(range(year_first + 1, year_last + 1)), :]
+            stats.loc[list(range(year_first + 1, year_last + 1))]
             .plot(ylabel="Share of category with less than good ecological status")
             .get_figure()
         )

@@ -210,7 +210,7 @@ def y_f(x, pos):
 
 
 # IV line plot (total) and stacked bar plot (coastal, lakes, and streams)
-IV_label = "Investment in water quality improvement (million DKK, 2023 prices)"
+IV_label = "Investment in water quality (million DKK, 2023 prices)"
 fig, ax = plt.subplots()  #  create figure and axis
 IV_j.iloc[:, -1].plot(  #  line plot for total IV
     kind="line",
